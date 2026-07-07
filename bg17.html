@@ -137,6 +137,59 @@
     word-break:break-word;
   }
 
+  /* ===== RESUMEN DEL DÍA ===== */
+  #resumenDia{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:20px;
+  }
+  #resumenDia h3{
+    font-size:14px;
+    color:var(--texto-suave);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    margin-bottom:12px;
+  }
+  .filaResumen{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:6px 0;
+    font-size:15px;
+  }
+  .filaResumen .etiquetaR{ color:var(--texto-suave); }
+  .filaResumen .valorR{ font-weight:600; }
+  .filaResumen.resta .valorR{ color:var(--rojo); }
+  .filaResumen.info{
+    font-size:13px;
+    padding-top:2px;
+  }
+  .filaResumen.info .etiquetaR,
+  .filaResumen.info .valorR{
+    color:var(--texto-suave);
+    font-weight:400;
+  }
+  .lineaDivision{
+    border-top:1px solid var(--borde);
+    margin:10px 0;
+  }
+  .filaResumen.total{
+    padding-top:4px;
+  }
+  .filaResumen.total .etiquetaR{
+    color:var(--texto);
+    font-weight:700;
+    font-size:16px;
+  }
+  .filaResumen.total .valorR{
+    color:var(--verde);
+    font-weight:800;
+    font-size:24px;
+  }
+
   /* ===== BOTONES PRINCIPALES ===== */
   #btnCobroManual{
     width:100%;
@@ -187,7 +240,6 @@
     justify-content:space-between;
     align-items:baseline;
   }
-  .tituloSeccion:first-of-type{ margin-top:0; }
   #totalDia{ color:var(--ambar); font-weight:700; font-size:17px; }
   #totalMovimientos{ color:var(--rojo); font-weight:700; font-size:15px; }
   #contadorPendientes{
@@ -472,6 +524,37 @@
     </div>
   </header>
   <main>
+
+    <!-- RESUMEN DEL DÍA -->
+    <div id="resumenDia">
+      <h3>Resumen del día</h3>
+      <div class="filaResumen">
+        <span class="etiquetaR">Producción</span>
+        <span class="valorR" id="resProduccion">$0</span>
+      </div>
+      <div class="filaResumen resta">
+        <span class="etiquetaR">TC VTA (tarjeta)</span>
+        <span class="valorR" id="resTarjeta">−$0</span>
+      </div>
+      <div class="filaResumen info">
+        <span class="etiquetaR">Comisión tarjeta 4% (informativa)</span>
+        <span class="valorR" id="resComision">$0</span>
+      </div>
+      <div class="filaResumen resta">
+        <span class="etiquetaR">Gastos</span>
+        <span class="valorR" id="resGastos">−$0</span>
+      </div>
+      <div class="filaResumen resta">
+        <span class="etiquetaR">Adelantos</span>
+        <span class="valorR" id="resAdelantos">−$0</span>
+      </div>
+      <div class="lineaDivision"></div>
+      <div class="filaResumen total">
+        <span class="etiquetaR">Efectivo en caja</span>
+        <span class="valorR" id="resEfectivo">$0</span>
+      </div>
+    </div>
+
     <button id="btnCobroManual">+ Cobro manual</button>
     <div class="filaBotones">
       <button class="btnSecundario" id="btnGasto">− Gasto</button>
@@ -640,7 +723,9 @@
 
   // ----- Utilidades -----
   function formatoDinero(n){
-    return "$" + n.toLocaleString("es-MX");
+    // Redondear a 2 decimales y quitar decimales si son .00
+    const redondeado = Math.round(n * 100) / 100;
+    return "$" + redondeado.toLocaleString("es-MX");
   }
 
   function formatoHora(ts){
@@ -651,6 +736,38 @@
     const ampm = h >= 12 ? "p.m." : "a.m.";
     h = h % 12; if(h === 0) h = 12;
     return h + ":" + m + " " + ampm;
+  }
+
+  // ============================================================
+  // RESUMEN DEL DÍA
+  // Fórmula: Efectivo = Producción − TC VTA − Gastos − Adelantos
+  // ============================================================
+  const resProduccion = document.getElementById("resProduccion");
+  const resTarjeta    = document.getElementById("resTarjeta");
+  const resComision   = document.getElementById("resComision");
+  const resGastos     = document.getElementById("resGastos");
+  const resAdelantos  = document.getElementById("resAdelantos");
+  const resEfectivo   = document.getElementById("resEfectivo");
+
+  // Estos totales se actualizan desde los listeners de tickets y movimientos
+  let totProduccion = 0;
+  let totTarjeta    = 0;
+  let totGastos     = 0;
+  let totAdelantos  = 0;
+
+  function actualizarResumen(){
+    const comision = totTarjeta * 0.04;
+    const efectivo = totProduccion - totTarjeta - totGastos - totAdelantos;
+
+    resProduccion.textContent = formatoDinero(totProduccion);
+    resTarjeta.textContent    = "−" + formatoDinero(totTarjeta);
+    resComision.textContent   = formatoDinero(comision);
+    resGastos.textContent     = "−" + formatoDinero(totGastos);
+    resAdelantos.textContent  = "−" + formatoDinero(totAdelantos);
+    resEfectivo.textContent   = formatoDinero(efectivo);
+
+    // Si el efectivo queda negativo, mostrarlo en rojo
+    resEfectivo.style.color = efectivo < 0 ? "#e05c5c" : "#4caf50";
   }
 
   // ============================================================
@@ -755,8 +872,8 @@
   const movCancelar    = document.getElementById("movCancelar");
   const movMsg         = document.getElementById("movMsg");
 
-  let tipoMov = "gasto";        // "gasto" o "adelanto"
-  let quienAdelanto = null;     // 1-5 o "R" (Recepción)
+  let tipoMov = "gasto";
+  let quienAdelanto = null;
   let guardandoMov = false;
 
   function abrirModalMov(tipo){
@@ -796,7 +913,7 @@
       b.classList.remove("activo");
     });
     btn.classList.add("activo");
-    quienAdelanto = btn.dataset.quien; // "1".."5" o "R"
+    quienAdelanto = btn.dataset.quien;
   });
 
   movGuardar.addEventListener("click", async function(){
@@ -824,7 +941,6 @@
     movMsg.style.color = "#9a9a9a";
     movMsg.textContent = "Guardando...";
 
-    // Armar el documento
     const datos = {
       tipo: tipoMov,
       monto: monto,
@@ -872,9 +988,17 @@
       return tb - ta;
     });
 
+    // Totales por tipo (para el resumen)
+    totGastos = 0;
+    totAdelantos = 0;
     let total = 0;
-    movs.forEach(function(m){ total += m.monto; });
+    movs.forEach(function(m){
+      total += m.monto;
+      if(m.tipo === "gasto") totGastos += m.monto;
+      else totAdelantos += m.monto;
+    });
     totalMovimientos.textContent = "−" + formatoDinero(total);
+    actualizarResumen();
 
     if(movs.length === 0){
       listaMovimientos.innerHTML = '<div class="vacio">Sin gastos ni adelantos hoy.</div>';
@@ -1165,9 +1289,15 @@
       return tb - ta;
     });
 
-    let total = 0;
-    cobros.forEach(function(c){ total += c.monto; });
-    totalDia.textContent = formatoDinero(total);
+    // Totales para el resumen
+    totProduccion = 0;
+    totTarjeta = 0;
+    cobros.forEach(function(c){
+      totProduccion += c.monto;
+      if(c.metodo === "tarjeta") totTarjeta += c.monto;
+    });
+    totalDia.textContent = formatoDinero(totProduccion);
+    actualizarResumen();
 
     if(cobros.length === 0){
       listaCobros.innerHTML = '<div class="vacio">Aún no hay cobros registrados hoy.</div>';
