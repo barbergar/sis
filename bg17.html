@@ -734,6 +734,13 @@
         <div class="vacio">Cargando barberos...</div>
       </div>
       <div id="msgAdmin"></div>
+
+      <div class="tituloSeccion">
+        <span>Tickets de hoy (editar / eliminar)</span>
+      </div>
+      <div id="listaTicketsAdmin">
+        <div class="vacio">Sin tickets hoy.</div>
+      </div>
     </div>
 
     <div id="detalleError"></div>
@@ -749,6 +756,39 @@
     <button class="btnGuardarModal" id="btnEntrarAdmin">Entrar</button>
     <div class="msgModal" id="msgPassAdmin"></div>
     <button class="btnCancelarModal" id="btnCancelarAdmin">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL EDITAR TICKET (solo Admin) -->
+<div class="fondoModal" id="modalEditarTicket">
+  <div class="modal">
+    <h3>Editar ticket</h3>
+
+    <label>Barbero</label>
+    <div class="filaBarberos" id="tickFilaBarberos">
+      <button class="btnBarbero" data-num="1">1</button>
+      <button class="btnBarbero" data-num="2">2</button>
+      <button class="btnBarbero" data-num="3">3</button>
+      <button class="btnBarbero" data-num="4">4</button>
+      <button class="btnBarbero" data-num="5">5</button>
+    </div>
+
+    <label>Concepto</label>
+    <input type="text" id="tickConcepto" autocomplete="off">
+
+    <label>Monto ($)</label>
+    <input type="number" id="tickMonto" inputmode="numeric" min="0">
+
+    <label>Método de pago</label>
+    <div class="filaToggles">
+      <button class="btnToggle" id="tickEfectivo">Efectivo</button>
+      <button class="btnToggle" id="tickTarjeta">Tarjeta</button>
+    </div>
+
+    <button class="btnGuardarModal" id="tickGuardar">Guardar cambios</button>
+    <div class="msgModal" id="tickMsg"></div>
+    <button class="btnDescartar" id="tickEliminar">Eliminar ticket</button>
+    <button class="btnCancelarModal" id="tickCancelar">Cancelar</button>
   </div>
 </div>
 
@@ -874,7 +914,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
-    getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteField,
+    getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteField, deleteDoc,
     query, where, onSnapshot, serverTimestamp, writeBatch
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -957,7 +997,7 @@
 
   // Actualiza los botones de selección de barbero con sus nombres
   function actualizarNombresBotones(){
-    document.querySelectorAll("#filaBarberos .btnBarbero").forEach(function(btn){
+    document.querySelectorAll("#filaBarberos .btnBarbero, #tickFilaBarberos .btnBarbero").forEach(function(btn){
       btn.textContent = nombreCorto(parseInt(btn.dataset.num, 10));
     });
     document.querySelectorAll("#movFilaQuien .btnBarbero").forEach(function(btn){
@@ -1825,6 +1865,9 @@
     totalDia.textContent = formatoDinero(totProduccion);
     actualizarResumen();
 
+    // También alimenta la lista de tickets del modo Admin
+    renderTicketsAdmin(cobros);
+
     if(cobros.length === 0){
       listaCobros.innerHTML = '<div class="vacio">Aún no hay cobros registrados hoy.</div>';
       return;
@@ -1869,6 +1912,193 @@
     });
   }, function(err){
     mostrarError(err);
+  });
+
+  // ============================================================
+  // EDITAR / ELIMINAR TICKETS (solo Admin — Capa 2C)
+  // ============================================================
+  const listaTicketsAdmin = document.getElementById("listaTicketsAdmin");
+  const modalTicket    = document.getElementById("modalEditarTicket");
+  const tickFilaBarberos = document.getElementById("tickFilaBarberos");
+  const tickConcepto   = document.getElementById("tickConcepto");
+  const tickMonto      = document.getElementById("tickMonto");
+  const tickEfectivo   = document.getElementById("tickEfectivo");
+  const tickTarjeta    = document.getElementById("tickTarjeta");
+  const tickGuardar    = document.getElementById("tickGuardar");
+  const tickEliminar   = document.getElementById("tickEliminar");
+  const tickCancelar   = document.getElementById("tickCancelar");
+  const tickMsg        = document.getElementById("tickMsg");
+
+  let ticketEditando = null;
+  let tickBarbero = null;
+  let tickMetodo = null;
+  let guardandoTicket = false;
+  let confirmandoEliminar = false;
+
+  function renderTicketsAdmin(cobros){
+    if(cobros.length === 0){
+      listaTicketsAdmin.innerHTML = '<div class="vacio">Sin tickets hoy.</div>';
+      return;
+    }
+
+    listaTicketsAdmin.innerHTML = "";
+    cobros.forEach(function(c){
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjetaCobro";
+
+      const info = document.createElement("div");
+      info.className = "info";
+
+      const nombre = document.createElement("div");
+      nombre.className = "barbero";
+      nombre.textContent = nombreBarbero(c.barbero);
+
+      const concepto = document.createElement("div");
+      concepto.className = "concepto";
+      concepto.textContent = c.concepto;
+
+      const hora = document.createElement("div");
+      hora.className = "hora";
+      hora.textContent = formatoHora(c.creado);
+
+      const etiqueta = document.createElement("span");
+      etiqueta.className = "etiqueta " + c.metodo;
+      etiqueta.textContent = c.metodo === "tarjeta" ? "Tarjeta" : "Efectivo";
+
+      info.appendChild(nombre);
+      info.appendChild(concepto);
+      info.appendChild(hora);
+      info.appendChild(etiqueta);
+
+      const derecha = document.createElement("div");
+      derecha.style.display = "flex";
+      derecha.style.flexDirection = "column";
+      derecha.style.alignItems = "flex-end";
+      derecha.style.gap = "8px";
+
+      const monto = document.createElement("div");
+      monto.className = "monto";
+      monto.textContent = formatoDinero(c.monto);
+
+      const btnEditar = document.createElement("button");
+      btnEditar.className = "btnEditarBarbero";
+      btnEditar.style.marginTop = "0";
+      btnEditar.textContent = "Editar";
+      btnEditar.addEventListener("click", function(){
+        abrirEditarTicket(c);
+      });
+
+      derecha.appendChild(monto);
+      derecha.appendChild(btnEditar);
+
+      tarjeta.appendChild(info);
+      tarjeta.appendChild(derecha);
+      listaTicketsAdmin.appendChild(tarjeta);
+    });
+  }
+
+  function pintarBarberoTicket(){
+    tickFilaBarberos.querySelectorAll(".btnBarbero").forEach(function(b){
+      b.classList.toggle("activo", parseInt(b.dataset.num, 10) === tickBarbero);
+    });
+  }
+
+  function pintarMetodoTicket(){
+    tickEfectivo.classList.toggle("activo", tickMetodo === "efectivo");
+    tickTarjeta.classList.toggle("activo", tickMetodo === "tarjeta");
+  }
+
+  function abrirEditarTicket(c){
+    ticketEditando = c;
+    tickBarbero = c.barbero;
+    tickMetodo = c.metodo;
+    tickConcepto.value = c.concepto || "";
+    tickMonto.value = c.monto;
+    tickMsg.textContent = "";
+    tickEliminar.textContent = "Eliminar ticket";
+    confirmandoEliminar = false;
+    guardandoTicket = false;
+    tickGuardar.disabled = false;
+    pintarBarberoTicket();
+    pintarMetodoTicket();
+    modalTicket.classList.add("abierto");
+  }
+
+  tickCancelar.addEventListener("click", function(){
+    modalTicket.classList.remove("abierto");
+    ticketEditando = null;
+  });
+
+  tickFilaBarberos.addEventListener("click", function(e){
+    const btn = e.target.closest(".btnBarbero");
+    if(!btn) return;
+    tickBarbero = parseInt(btn.dataset.num, 10);
+    pintarBarberoTicket();
+  });
+
+  tickEfectivo.addEventListener("click", function(){
+    tickMetodo = "efectivo";
+    pintarMetodoTicket();
+  });
+
+  tickTarjeta.addEventListener("click", function(){
+    tickMetodo = "tarjeta";
+    pintarMetodoTicket();
+  });
+
+  tickGuardar.addEventListener("click", async function(){
+    if(guardandoTicket || !ticketEditando) return;
+
+    const monto = parseFloat(tickMonto.value);
+    if(isNaN(monto) || monto <= 0){
+      tickMsg.style.color = "#e05c5c";
+      tickMsg.textContent = "Escribe un monto válido";
+      return;
+    }
+
+    guardandoTicket = true;
+    tickGuardar.disabled = true;
+    tickMsg.style.color = "#9a9a9a";
+    tickMsg.textContent = "Guardando...";
+
+    try{
+      await updateDoc(doc(db, "tickets", ticketEditando.id), {
+        barbero: tickBarbero,
+        concepto: tickConcepto.value.trim() || "Cobro",
+        monto: monto,
+        metodo: tickMetodo,
+        editado: serverTimestamp() // marca de que fue modificado por Admin
+      });
+      modalTicket.classList.remove("abierto");
+      ticketEditando = null;
+    } catch(err){
+      tickMsg.style.color = "#e05c5c";
+      tickMsg.textContent = "Error al guardar: " + err.message;
+    }
+
+    guardandoTicket = false;
+    tickGuardar.disabled = false;
+  });
+
+  tickEliminar.addEventListener("click", async function(){
+    if(guardandoTicket || !ticketEditando) return;
+
+    if(!confirmandoEliminar){
+      confirmandoEliminar = true;
+      tickEliminar.textContent = "¿Seguro? Toca de nuevo para eliminar";
+      return;
+    }
+
+    guardandoTicket = true;
+    try{
+      await deleteDoc(doc(db, "tickets", ticketEditando.id));
+      modalTicket.classList.remove("abierto");
+      ticketEditando = null;
+    } catch(err){
+      tickMsg.style.color = "#e05c5c";
+      tickMsg.textContent = "Error al eliminar: " + err.message;
+    }
+    guardandoTicket = false;
   });
 </script>
 
