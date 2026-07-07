@@ -12,6 +12,8 @@
     --texto:#eaeaea;
     --texto-suave:#9a9a9a;
     --ambar:#e8a33d;
+    --verde:#4caf50;
+    --rojo:#e05c5c;
   }
   *{ box-sizing:border-box; margin:0; padding:0; }
   body{
@@ -75,7 +77,7 @@
     cursor:pointer;
   }
   #msgLogin{
-    color:#e05c5c;
+    color:var(--rojo);
     font-size:14px;
     margin-top:10px;
     min-height:18px;
@@ -93,6 +95,11 @@
   }
   header h2{ font-size:18px; }
   header h2 span{ color:var(--ambar); }
+  .ladoDerecho{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
   #btnSalir{
     background:none;
     border:1px solid var(--borde);
@@ -116,6 +123,35 @@
     color:var(--texto-suave);
     font-size:15px;
   }
+
+  /* ===== INDICADOR DE FIREBASE ===== */
+  #estadoFirebase{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:13px;
+    color:var(--texto-suave);
+  }
+  #puntoFirebase{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:#777; /* gris = conectando */
+  }
+  #puntoFirebase.ok{ background:var(--verde); }
+  #puntoFirebase.error{ background:var(--rojo); }
+
+  #detalleError{
+    display:none;
+    margin-top:16px;
+    background:#2a1a1a;
+    border:1px solid #5c3030;
+    border-radius:10px;
+    padding:14px;
+    font-size:13px;
+    color:#e0a0a0;
+    word-break:break-word;
+  }
 </style>
 </head>
 <body>
@@ -131,25 +167,73 @@
   </div>
 </div>
 
-<!-- PANTALLA PRINCIPAL (por ahora vacía) -->
+<!-- PANTALLA PRINCIPAL -->
 <div id="pantallaCaja">
   <header>
     <h2>Caja — <span>Garage</span></h2>
-    <button id="btnSalir">Salir</button>
+    <div class="ladoDerecho">
+      <div id="estadoFirebase">
+        <div id="puntoFirebase"></div>
+        <span id="textoFirebase">Conectando...</span>
+      </div>
+      <button id="btnSalir">Salir</button>
+    </div>
   </header>
   <main>
     <div class="aviso">
       Sesión iniciada correctamente.<br>
       Aquí irán los tickets, cobros y el resumen del día (próximas capas).
     </div>
+    <div id="detalleError"></div>
   </main>
 </div>
 
+<!-- ===== FIREBASE (versión modular por CDN) ===== -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // ----- Configuración del proyecto "agend" -----
+  const firebaseConfig = {
+    apiKey: "AIzaSyCPJ_Sp727Gsq0qholS8466L2xoF6ju6Qs",
+    authDomain: "agend-1d0e5.firebaseapp.com",
+    projectId: "agend-1d0e5",
+    appId: "1:536059431228:web:f7a186659845111e09b639"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  // Guardamos la conexión para usarla en próximas capas
+  window.db = db;
+
+  // ----- Prueba de conexión: intentar leer la colección "ajustes" -----
+  const punto  = document.getElementById("puntoFirebase");
+  const texto  = document.getElementById("textoFirebase");
+  const detalle = document.getElementById("detalleError");
+
+  async function probarConexion(){
+    try{
+      await getDocs(collection(db, "ajustes"));
+      // Si llega aquí, la conexión funciona (aunque la colección esté vacía)
+      punto.classList.add("ok");
+      texto.textContent = "Firebase conectado";
+    } catch(err){
+      punto.classList.add("error");
+      texto.textContent = "Error de conexión";
+      detalle.style.display = "block";
+      detalle.textContent = "Detalle del error: " + err.message;
+    }
+  }
+
+  probarConexion();
+</script>
+
+<!-- ===== LOGIN Y SESIÓN ===== -->
 <script>
-  // ===== CONFIGURACIÓN DE SESIÓN =====
   const PASS_CAJA = "peluqueriacochera1720";
   const CLAVE_SESION = "garageSesion";
-  const DURACION_SESION = 5 * 60 * 60 * 1000; // 5 horas en milisegundos
+  const DURACION_SESION = 5 * 60 * 60 * 1000; // 5 horas
 
   const pantallaLogin = document.getElementById("pantallaLogin");
   const pantallaCaja  = document.getElementById("pantallaCaja");
@@ -158,7 +242,6 @@
   const btnSalir      = document.getElementById("btnSalir");
   const msgLogin      = document.getElementById("msgLogin");
 
-  // ¿Hay una sesión válida guardada?
   function sesionValida(){
     const guardado = localStorage.getItem(CLAVE_SESION);
     if(!guardado) return false;
@@ -199,7 +282,6 @@
     mostrarLogin();
   });
 
-  // Al abrir la página: si la sesión sigue viva, entra directo
   if(sesionValida()){
     mostrarCaja();
   }
