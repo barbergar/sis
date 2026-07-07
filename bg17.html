@@ -661,6 +661,10 @@
       <div id="resumenDia">
         <h3>Resumen del día</h3>
         <div class="filaResumen">
+          <span class="etiquetaR">Clientes atendidos</span>
+          <span class="valorR" id="resClientes">0</span>
+        </div>
+        <div class="filaResumen">
           <span class="etiquetaR">Producción</span>
           <span class="valorR" id="resProduccion">$0</span>
         </div>
@@ -1313,6 +1317,7 @@
   // RESUMEN DEL DÍA
   // Fórmula: Efectivo = Producción − TC VTA − Gastos − Adelantos
   // ============================================================
+  const resClientes   = document.getElementById("resClientes");
   const resProduccion = document.getElementById("resProduccion");
   const resTarjeta    = document.getElementById("resTarjeta");
   const resComision   = document.getElementById("resComision");
@@ -1863,6 +1868,7 @@
       if(c.metodo === "tarjeta") totTarjeta += c.monto;
     });
     totalDia.textContent = formatoDinero(totProduccion);
+    resClientes.textContent = cobros.length;
     actualizarResumen();
 
     // También alimenta la lista de tickets del modo Admin
