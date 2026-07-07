@@ -137,7 +137,7 @@
     word-break:break-word;
   }
 
-  /* ===== BOTÓN COBRO MANUAL ===== */
+  /* ===== BOTONES PRINCIPALES ===== */
   #btnCobroManual{
     width:100%;
     padding:16px;
@@ -148,20 +148,85 @@
     background:var(--ambar);
     color:#121212;
     cursor:pointer;
+    margin-bottom:14px;
+  }
+  #btnTicketPrueba{
+    width:100%;
+    padding:10px;
+    font-size:13px;
+    border:1px dashed var(--borde);
+    border-radius:10px;
+    background:none;
+    color:var(--texto-suave);
+    cursor:pointer;
     margin-bottom:24px;
   }
 
-  /* ===== LISTA DE COBROS DEL DÍA ===== */
+  /* ===== SECCIONES ===== */
   .tituloSeccion{
     font-size:15px;
     color:var(--texto-suave);
-    margin-bottom:10px;
+    margin:22px 0 10px;
     display:flex;
     justify-content:space-between;
     align-items:baseline;
   }
+  .tituloSeccion:first-of-type{ margin-top:0; }
   #totalDia{ color:var(--ambar); font-weight:700; font-size:17px; }
-  #listaCobros{ display:flex; flex-direction:column; gap:8px; }
+  #contadorPendientes{
+    background:var(--ambar);
+    color:#121212;
+    font-weight:700;
+    font-size:13px;
+    padding:2px 10px;
+    border-radius:20px;
+    display:none;
+  }
+
+  #listaPendientes, #listaCobros{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  /* ===== TARJETA DE PENDIENTE ===== */
+  .tarjetaPendiente{
+    background:#241d10;
+    border:1px solid #4a3a1c;
+    border-radius:12px;
+    padding:12px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+  .tarjetaPendiente .info{ flex:1; min-width:0; }
+  .tarjetaPendiente .barbero{ font-weight:600; font-size:15px; }
+  .tarjetaPendiente .servicios{
+    color:#c9b48a;
+    font-size:13px;
+    margin-top:2px;
+  }
+  .tarjetaPendiente .hora{ color:var(--texto-suave); font-size:12px; margin-top:2px; }
+  .tarjetaPendiente .monto{
+    font-weight:700;
+    font-size:16px;
+    white-space:nowrap;
+    color:var(--ambar);
+  }
+  .btnCobrarPend{
+    padding:10px 16px;
+    font-size:14px;
+    font-weight:700;
+    border:none;
+    border-radius:10px;
+    background:var(--ambar);
+    color:#121212;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+
+  /* ===== TARJETA DE COBRO ===== */
   .tarjetaCobro{
     background:var(--panel);
     border:1px solid var(--borde);
@@ -202,7 +267,7 @@
     font-size:14px;
   }
 
-  /* ===== MODAL (propio, no confirm del navegador) ===== */
+  /* ===== MODALES ===== */
   .fondoModal{
     display:none;
     position:fixed;
@@ -277,9 +342,9 @@
     cursor:pointer;
   }
   .btnMetodo:disabled{ opacity:0.5; cursor:default; }
-  #btnEfectivo{ background:#2e5c33; color:#d9f2db; }
-  #btnTarjeta{ background:#2b4a6b; color:#dbeafd; }
-  #btnCancelarCobro{
+  .btnMetodo.efectivo{ background:#2e5c33; color:#d9f2db; }
+  .btnMetodo.tarjeta{ background:#2b4a6b; color:#dbeafd; }
+  .btnCancelarModal{
     width:100%;
     margin-top:12px;
     padding:12px;
@@ -290,12 +355,35 @@
     border-radius:10px;
     cursor:pointer;
   }
-  #msgModal{
+  .btnDescartar{
+    width:100%;
+    margin-top:10px;
+    padding:12px;
+    font-size:14px;
+    background:none;
+    border:1px solid #5c3030;
+    color:var(--rojo);
+    border-radius:10px;
+    cursor:pointer;
+  }
+  .msgModal{
     color:var(--rojo);
     font-size:13px;
     margin-top:10px;
     min-height:16px;
     text-align:center;
+  }
+  .datosPendiente{
+    background:var(--fondo);
+    border:1px solid var(--borde);
+    border-radius:12px;
+    padding:14px;
+  }
+  .datosPendiente .barbero{ font-weight:700; font-size:16px; }
+  .datosPendiente .servicios{
+    color:var(--texto-suave);
+    font-size:14px;
+    margin-top:4px;
   }
 </style>
 </head>
@@ -326,6 +414,15 @@
   </header>
   <main>
     <button id="btnCobroManual">+ Cobro manual</button>
+    <button id="btnTicketPrueba">🧪 Ticket de prueba (temporal, se quita cuando exista bg18)</button>
+
+    <div class="tituloSeccion">
+      <span>Tickets pendientes</span>
+      <span id="contadorPendientes">0</span>
+    </div>
+    <div id="listaPendientes">
+      <div class="vacio">No hay tickets pendientes.</div>
+    </div>
 
     <div class="tituloSeccion">
       <span>Cobros de hoy</span>
@@ -360,20 +457,43 @@
     <input type="number" id="inputMonto" placeholder="0" inputmode="numeric" min="0">
 
     <div class="filaMetodo">
-      <button class="btnMetodo" id="btnEfectivo">Efectivo</button>
-      <button class="btnMetodo" id="btnTarjeta">Tarjeta</button>
+      <button class="btnMetodo efectivo" id="btnEfectivo">Efectivo</button>
+      <button class="btnMetodo tarjeta" id="btnTarjeta">Tarjeta</button>
     </div>
-    <div id="msgModal"></div>
-    <button id="btnCancelarCobro">Cancelar</button>
+    <div class="msgModal" id="msgModal"></div>
+    <button class="btnCancelarModal" id="btnCancelarCobro">Cancelar</button>
   </div>
 </div>
 
-<!-- ===== FIREBASE + LÓGICA DE COBROS ===== -->
+<!-- MODAL DE COBRO DE TICKET PENDIENTE -->
+<div class="fondoModal" id="modalPendiente">
+  <div class="modal">
+    <h3>Cobrar ticket</h3>
+
+    <div class="datosPendiente">
+      <div class="barbero" id="pendBarbero">Barbero</div>
+      <div class="servicios" id="pendServicios">Servicios</div>
+    </div>
+
+    <label>Monto ($) — puedes ajustarlo</label>
+    <input type="number" id="pendMonto" placeholder="0" inputmode="numeric" min="0">
+
+    <div class="filaMetodo">
+      <button class="btnMetodo efectivo" id="pendEfectivo">Efectivo</button>
+      <button class="btnMetodo tarjeta" id="pendTarjeta">Tarjeta</button>
+    </div>
+    <div class="msgModal" id="pendMsg"></div>
+    <button class="btnDescartar" id="pendDescartar">Descartar ticket</button>
+    <button class="btnCancelarModal" id="pendCancelar">Cancelar</button>
+  </div>
+</div>
+
+<!-- ===== FIREBASE + LÓGICA ===== -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
-    getFirestore, collection, getDocs, addDoc,
-    query, where, onSnapshot, serverTimestamp
+    getFirestore, collection, getDocs, addDoc, doc,
+    query, where, onSnapshot, serverTimestamp, writeBatch
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   // ----- Configuración del proyecto "agend" -----
@@ -388,7 +508,7 @@
   const db  = getFirestore(app);
   window.db = db;
 
-  // ----- Fecha de hoy en formato AAAA-MM-DD (hora local) -----
+  // ----- Fecha de hoy AAAA-MM-DD (hora local) -----
   function fechaHoy(){
     const d = new Date();
     const a = d.getFullYear();
@@ -418,98 +538,7 @@
     mostrarError(err);
   }
 
-  // ===== MODAL DE COBRO MANUAL =====
-  const modalCobro    = document.getElementById("modalCobro");
-  const btnCobro      = document.getElementById("btnCobroManual");
-  const btnCancelar   = document.getElementById("btnCancelarCobro");
-  const filaBarberos  = document.getElementById("filaBarberos");
-  const inputConcepto = document.getElementById("inputConcepto");
-  const inputMonto    = document.getElementById("inputMonto");
-  const btnEfectivo   = document.getElementById("btnEfectivo");
-  const btnTarjeta    = document.getElementById("btnTarjeta");
-  const msgModal      = document.getElementById("msgModal");
-
-  let barberoElegido = null;
-  let guardando = false; // flag para evitar duplicados
-
-  function abrirModal(){
-    barberoElegido = null;
-    inputConcepto.value = "";
-    inputMonto.value = "";
-    msgModal.textContent = "";
-    document.querySelectorAll(".btnBarbero").forEach(function(b){
-      b.classList.remove("activo");
-    });
-    modalCobro.classList.add("abierto");
-  }
-
-  function cerrarModal(){
-    modalCobro.classList.remove("abierto");
-  }
-
-  btnCobro.addEventListener("click", abrirModal);
-  btnCancelar.addEventListener("click", cerrarModal);
-
-  // Elegir barbero (un solo listener para toda la fila)
-  filaBarberos.addEventListener("click", function(e){
-    const btn = e.target.closest(".btnBarbero");
-    if(!btn) return;
-    document.querySelectorAll(".btnBarbero").forEach(function(b){
-      b.classList.remove("activo");
-    });
-    btn.classList.add("activo");
-    barberoElegido = parseInt(btn.dataset.num, 10);
-  });
-
-  // ----- Guardar cobro en Firestore -----
-  async function guardarCobro(metodo){
-    if(guardando) return; // ya hay un guardado en proceso
-
-    const monto = parseFloat(inputMonto.value);
-
-    if(barberoElegido === null){
-      msgModal.textContent = "Elige un barbero";
-      return;
-    }
-    if(isNaN(monto) || monto <= 0){
-      msgModal.textContent = "Escribe un monto válido";
-      return;
-    }
-
-    guardando = true;
-    btnEfectivo.disabled = true;
-    btnTarjeta.disabled = true;
-    msgModal.textContent = "Guardando...";
-    msgModal.style.color = "#9a9a9a";
-
-    try{
-      await addDoc(collection(db, "tickets"), {
-        barbero: barberoElegido,
-        concepto: inputConcepto.value.trim() || "Cobro manual",
-        monto: monto,
-        metodo: metodo,           // "efectivo" o "tarjeta"
-        fecha: fechaHoy(),        // "2026-07-06"
-        origen: "manual",
-        creado: serverTimestamp()
-      });
-      cerrarModal();
-    } catch(err){
-      msgModal.style.color = "#e05c5c";
-      msgModal.textContent = "Error al guardar: " + err.message;
-    }
-
-    guardando = false;
-    btnEfectivo.disabled = false;
-    btnTarjeta.disabled = false;
-  }
-
-  btnEfectivo.addEventListener("click", function(){ guardarCobro("efectivo"); });
-  btnTarjeta.addEventListener("click", function(){ guardarCobro("tarjeta"); });
-
-  // ===== LISTA DE COBROS DEL DÍA (en tiempo real) =====
-  const listaCobros = document.getElementById("listaCobros");
-  const totalDia    = document.getElementById("totalDia");
-
+  // ----- Utilidades -----
   function formatoDinero(n){
     return "$" + n.toLocaleString("es-MX");
   }
@@ -524,6 +553,325 @@
     return h + ":" + m + " " + ampm;
   }
 
+  // ============================================================
+  // COBRO MANUAL (igual que la capa anterior)
+  // ============================================================
+  const modalCobro    = document.getElementById("modalCobro");
+  const btnCobro      = document.getElementById("btnCobroManual");
+  const btnCancelar   = document.getElementById("btnCancelarCobro");
+  const filaBarberos  = document.getElementById("filaBarberos");
+  const inputConcepto = document.getElementById("inputConcepto");
+  const inputMonto    = document.getElementById("inputMonto");
+  const btnEfectivo   = document.getElementById("btnEfectivo");
+  const btnTarjeta    = document.getElementById("btnTarjeta");
+  const msgModal      = document.getElementById("msgModal");
+
+  let barberoElegido = null;
+  let guardando = false;
+
+  function abrirModalCobro(){
+    barberoElegido = null;
+    inputConcepto.value = "";
+    inputMonto.value = "";
+    msgModal.textContent = "";
+    document.querySelectorAll(".btnBarbero").forEach(function(b){
+      b.classList.remove("activo");
+    });
+    modalCobro.classList.add("abierto");
+  }
+
+  btnCobro.addEventListener("click", abrirModalCobro);
+  btnCancelar.addEventListener("click", function(){
+    modalCobro.classList.remove("abierto");
+  });
+
+  filaBarberos.addEventListener("click", function(e){
+    const btn = e.target.closest(".btnBarbero");
+    if(!btn) return;
+    document.querySelectorAll(".btnBarbero").forEach(function(b){
+      b.classList.remove("activo");
+    });
+    btn.classList.add("activo");
+    barberoElegido = parseInt(btn.dataset.num, 10);
+  });
+
+  async function guardarCobroManual(metodo){
+    if(guardando) return;
+    const monto = parseFloat(inputMonto.value);
+
+    if(barberoElegido === null){
+      msgModal.style.color = "#e05c5c";
+      msgModal.textContent = "Elige un barbero";
+      return;
+    }
+    if(isNaN(monto) || monto <= 0){
+      msgModal.style.color = "#e05c5c";
+      msgModal.textContent = "Escribe un monto válido";
+      return;
+    }
+
+    guardando = true;
+    btnEfectivo.disabled = true;
+    btnTarjeta.disabled = true;
+    msgModal.style.color = "#9a9a9a";
+    msgModal.textContent = "Guardando...";
+
+    try{
+      await addDoc(collection(db, "tickets"), {
+        barbero: barberoElegido,
+        concepto: inputConcepto.value.trim() || "Cobro manual",
+        monto: monto,
+        metodo: metodo,
+        fecha: fechaHoy(),
+        origen: "manual",
+        creado: serverTimestamp()
+      });
+      modalCobro.classList.remove("abierto");
+    } catch(err){
+      msgModal.style.color = "#e05c5c";
+      msgModal.textContent = "Error al guardar: " + err.message;
+    }
+
+    guardando = false;
+    btnEfectivo.disabled = false;
+    btnTarjeta.disabled = false;
+  }
+
+  btnEfectivo.addEventListener("click", function(){ guardarCobroManual("efectivo"); });
+  btnTarjeta.addEventListener("click", function(){ guardarCobroManual("tarjeta"); });
+
+  // ============================================================
+  // BOTÓN TEMPORAL: CREAR TICKET DE PRUEBA
+  // (simula lo que hará bg18.html — se quita en esa capa)
+  // ============================================================
+  const btnPrueba = document.getElementById("btnTicketPrueba");
+  const ejemplos = [
+    { barbero: 1, servicios: ["Corte VIP", "Arreglo barba VIP"], monto: 400 },
+    { barbero: 2, servicios: ["Corte"], monto: 150 },
+    { barbero: 3, servicios: ["Paquete Papi Chulo"], monto: 330 },
+    { barbero: 4, servicios: ["Corte", "Limpieza cejas"], monto: 200 },
+    { barbero: 5, servicios: ["Paquete Rey"], monto: 570 }
+  ];
+
+  btnPrueba.addEventListener("click", async function(){
+    btnPrueba.disabled = true;
+    const ej = ejemplos[Math.floor(Math.random() * ejemplos.length)];
+    try{
+      await addDoc(collection(db, "pendientes"), {
+        barbero: ej.barbero,
+        servicios: ej.servicios,
+        monto: ej.monto,
+        fecha: fechaHoy(),
+        creado: serverTimestamp()
+      });
+    } catch(err){
+      mostrarError(err);
+    }
+    btnPrueba.disabled = false;
+  });
+
+  // ============================================================
+  // TICKETS PENDIENTES (en tiempo real)
+  // ============================================================
+  const listaPendientes    = document.getElementById("listaPendientes");
+  const contadorPendientes = document.getElementById("contadorPendientes");
+
+  // Modal de pendiente
+  const modalPendiente = document.getElementById("modalPendiente");
+  const pendBarbero    = document.getElementById("pendBarbero");
+  const pendServicios  = document.getElementById("pendServicios");
+  const pendMonto      = document.getElementById("pendMonto");
+  const pendEfectivo   = document.getElementById("pendEfectivo");
+  const pendTarjeta    = document.getElementById("pendTarjeta");
+  const pendDescartar  = document.getElementById("pendDescartar");
+  const pendCancelar   = document.getElementById("pendCancelar");
+  const pendMsg        = document.getElementById("pendMsg");
+
+  let pendienteAbierto = null;   // datos del ticket que se está cobrando
+  let procesando = false;        // flag para evitar duplicados
+  let confirmandoDescarte = false;
+
+  function abrirModalPendiente(p){
+    pendienteAbierto = p;
+    procesando = false;
+    confirmandoDescarte = false;
+    pendBarbero.textContent = "Barbero " + p.barbero;
+    pendServicios.textContent = Array.isArray(p.servicios) ? p.servicios.join(" + ") : String(p.servicios || "");
+    pendMonto.value = p.monto;
+    pendMsg.textContent = "";
+    pendDescartar.textContent = "Descartar ticket";
+    pendEfectivo.disabled = false;
+    pendTarjeta.disabled = false;
+    modalPendiente.classList.add("abierto");
+  }
+
+  function cerrarModalPendiente(){
+    modalPendiente.classList.remove("abierto");
+    pendienteAbierto = null;
+  }
+
+  pendCancelar.addEventListener("click", cerrarModalPendiente);
+
+  // ----- Cobrar pendiente: batch atómico (guardar ticket + borrar pendiente) -----
+  async function cobrarPendiente(metodo){
+    if(procesando || !pendienteAbierto) return;
+
+    const monto = parseFloat(pendMonto.value);
+    if(isNaN(monto) || monto <= 0){
+      pendMsg.style.color = "#e05c5c";
+      pendMsg.textContent = "Escribe un monto válido";
+      return;
+    }
+
+    procesando = true;
+    pendEfectivo.disabled = true;
+    pendTarjeta.disabled = true;
+    pendMsg.style.color = "#9a9a9a";
+    pendMsg.textContent = "Procesando...";
+
+    try{
+      const batch = writeBatch(db);
+
+      // 1) Crear el ticket cobrado
+      const nuevoTicket = doc(collection(db, "tickets"));
+      batch.set(nuevoTicket, {
+        barbero: pendienteAbierto.barbero,
+        concepto: Array.isArray(pendienteAbierto.servicios)
+                    ? pendienteAbierto.servicios.join(" + ")
+                    : String(pendienteAbierto.servicios || "Ticket"),
+        monto: monto,
+        metodo: metodo,
+        fecha: fechaHoy(),
+        origen: "ticket",
+        creado: serverTimestamp()
+      });
+
+      // 2) Borrar el pendiente
+      batch.delete(doc(db, "pendientes", pendienteAbierto.id));
+
+      // Todo o nada
+      await batch.commit();
+      cerrarModalPendiente();
+    } catch(err){
+      pendMsg.style.color = "#e05c5c";
+      pendMsg.textContent = "Error: " + err.message;
+      procesando = false;
+      pendEfectivo.disabled = false;
+      pendTarjeta.disabled = false;
+    }
+  }
+
+  pendEfectivo.addEventListener("click", function(){ cobrarPendiente("efectivo"); });
+  pendTarjeta.addEventListener("click", function(){ cobrarPendiente("tarjeta"); });
+
+  // ----- Descartar pendiente (doble toque para confirmar) -----
+  pendDescartar.addEventListener("click", async function(){
+    if(procesando || !pendienteAbierto) return;
+
+    if(!confirmandoDescarte){
+      confirmandoDescarte = true;
+      pendDescartar.textContent = "¿Seguro? Toca de nuevo para descartar";
+      return;
+    }
+
+    procesando = true;
+    try{
+      const batch = writeBatch(db);
+      batch.delete(doc(db, "pendientes", pendienteAbierto.id));
+      await batch.commit();
+      cerrarModalPendiente();
+    } catch(err){
+      pendMsg.style.color = "#e05c5c";
+      pendMsg.textContent = "Error: " + err.message;
+      procesando = false;
+    }
+  });
+
+  // ----- Escuchar pendientes en tiempo real -----
+  onSnapshot(collection(db, "pendientes"), function(snap){
+    const pendientes = [];
+    snap.forEach(function(d){
+      pendientes.push({ id: d.id, ...d.data() });
+    });
+
+    // Más antiguos primero (orden de llegada)
+    pendientes.sort(function(a, b){
+      const ta = a.creado ? a.creado.toMillis() : Date.now();
+      const tb = b.creado ? b.creado.toMillis() : Date.now();
+      return ta - tb;
+    });
+
+    // Contador
+    if(pendientes.length > 0){
+      contadorPendientes.style.display = "inline-block";
+      contadorPendientes.textContent = pendientes.length;
+    } else {
+      contadorPendientes.style.display = "none";
+    }
+
+    if(pendientes.length === 0){
+      listaPendientes.innerHTML = '<div class="vacio">No hay tickets pendientes.</div>';
+      return;
+    }
+
+    listaPendientes.innerHTML = "";
+    pendientes.forEach(function(p){
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjetaPendiente";
+
+      const info = document.createElement("div");
+      info.className = "info";
+
+      const nombre = document.createElement("div");
+      nombre.className = "barbero";
+      nombre.textContent = "Barbero " + p.barbero;
+
+      const servicios = document.createElement("div");
+      servicios.className = "servicios";
+      servicios.textContent = Array.isArray(p.servicios) ? p.servicios.join(" + ") : String(p.servicios || "");
+
+      const hora = document.createElement("div");
+      hora.className = "hora";
+      hora.textContent = formatoHora(p.creado);
+
+      info.appendChild(nombre);
+      info.appendChild(servicios);
+      info.appendChild(hora);
+
+      const derecha = document.createElement("div");
+      derecha.style.display = "flex";
+      derecha.style.flexDirection = "column";
+      derecha.style.alignItems = "flex-end";
+      derecha.style.gap = "8px";
+
+      const monto = document.createElement("div");
+      monto.className = "monto";
+      monto.textContent = formatoDinero(p.monto);
+
+      const btnCobrar = document.createElement("button");
+      btnCobrar.className = "btnCobrarPend";
+      btnCobrar.textContent = "Cobrar";
+      btnCobrar.addEventListener("click", function(){
+        abrirModalPendiente(p);
+      });
+
+      derecha.appendChild(monto);
+      derecha.appendChild(btnCobrar);
+
+      tarjeta.appendChild(info);
+      tarjeta.appendChild(derecha);
+      listaPendientes.appendChild(tarjeta);
+    });
+  }, function(err){
+    mostrarError(err);
+  });
+
+  // ============================================================
+  // COBROS DE HOY (en tiempo real, igual que la capa anterior)
+  // ============================================================
+  const listaCobros = document.getElementById("listaCobros");
+  const totalDia    = document.getElementById("totalDia");
+
   const consultaHoy = query(
     collection(db, "tickets"),
     where("fecha", "==", fechaHoy())
@@ -531,23 +879,20 @@
 
   onSnapshot(consultaHoy, function(snap){
     const cobros = [];
-    snap.forEach(function(doc){
-      cobros.push({ id: doc.id, ...doc.data() });
+    snap.forEach(function(d){
+      cobros.push({ id: d.id, ...d.data() });
     });
 
-    // Ordenar del más reciente al más antiguo (por hora de creación)
     cobros.sort(function(a, b){
       const ta = a.creado ? a.creado.toMillis() : Date.now();
       const tb = b.creado ? b.creado.toMillis() : Date.now();
       return tb - ta;
     });
 
-    // Total del día
     let total = 0;
     cobros.forEach(function(c){ total += c.monto; });
     totalDia.textContent = formatoDinero(total);
 
-    // Pintar la lista
     if(cobros.length === 0){
       listaCobros.innerHTML = '<div class="vacio">Aún no hay cobros registrados hoy.</div>';
       return;
