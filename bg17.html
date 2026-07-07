@@ -22,6 +22,7 @@
     font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     min-height:100vh;
   }
+  button{ font-family:inherit; }
 
   /* ===== PANTALLA DE LOGIN ===== */
   #pantallaLogin{
@@ -40,10 +41,7 @@
     max-width:360px;
     text-align:center;
   }
-  .cajaLogin h1{
-    font-size:22px;
-    margin-bottom:4px;
-  }
+  .cajaLogin h1{ font-size:22px; margin-bottom:4px; }
   .cajaLogin h1 span{ color:var(--ambar); }
   .cajaLogin p{
     color:var(--texto-suave);
@@ -61,10 +59,7 @@
     text-align:center;
     margin-bottom:12px;
   }
-  .cajaLogin input:focus{
-    outline:none;
-    border-color:var(--ambar);
-  }
+  .cajaLogin input:focus{ outline:none; border-color:var(--ambar); }
   .cajaLogin button{
     width:100%;
     padding:14px;
@@ -92,14 +87,13 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
+    position:sticky;
+    top:0;
+    z-index:10;
   }
   header h2{ font-size:18px; }
   header h2 span{ color:var(--ambar); }
-  .ladoDerecho{
-    display:flex;
-    align-items:center;
-    gap:12px;
-  }
+  .ladoDerecho{ display:flex; align-items:center; gap:12px; }
   #btnSalir{
     background:none;
     border:1px solid var(--borde);
@@ -110,18 +104,9 @@
     cursor:pointer;
   }
   main{
-    padding:20px 16px;
+    padding:20px 16px 60px;
     max-width:600px;
     margin:0 auto;
-  }
-  .aviso{
-    background:var(--panel);
-    border:1px dashed var(--borde);
-    border-radius:12px;
-    padding:24px;
-    text-align:center;
-    color:var(--texto-suave);
-    font-size:15px;
   }
 
   /* ===== INDICADOR DE FIREBASE ===== */
@@ -133,10 +118,9 @@
     color:var(--texto-suave);
   }
   #puntoFirebase{
-    width:10px;
-    height:10px;
+    width:10px; height:10px;
     border-radius:50%;
-    background:#777; /* gris = conectando */
+    background:#777;
   }
   #puntoFirebase.ok{ background:var(--verde); }
   #puntoFirebase.error{ background:var(--rojo); }
@@ -151,6 +135,167 @@
     font-size:13px;
     color:#e0a0a0;
     word-break:break-word;
+  }
+
+  /* ===== BOTÓN COBRO MANUAL ===== */
+  #btnCobroManual{
+    width:100%;
+    padding:16px;
+    font-size:17px;
+    font-weight:600;
+    border:none;
+    border-radius:12px;
+    background:var(--ambar);
+    color:#121212;
+    cursor:pointer;
+    margin-bottom:24px;
+  }
+
+  /* ===== LISTA DE COBROS DEL DÍA ===== */
+  .tituloSeccion{
+    font-size:15px;
+    color:var(--texto-suave);
+    margin-bottom:10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+  }
+  #totalDia{ color:var(--ambar); font-weight:700; font-size:17px; }
+  #listaCobros{ display:flex; flex-direction:column; gap:8px; }
+  .tarjetaCobro{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:12px;
+    padding:12px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+  .tarjetaCobro .info{ flex:1; min-width:0; }
+  .tarjetaCobro .barbero{ font-weight:600; font-size:15px; }
+  .tarjetaCobro .concepto{
+    color:var(--texto-suave);
+    font-size:13px;
+    margin-top:2px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .tarjetaCobro .hora{ color:var(--texto-suave); font-size:12px; margin-top:2px; }
+  .tarjetaCobro .monto{ font-weight:700; font-size:16px; white-space:nowrap; }
+  .etiqueta{
+    display:inline-block;
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:20px;
+    margin-top:4px;
+  }
+  .etiqueta.efectivo{ background:#1e3320; color:#8fd694; }
+  .etiqueta.tarjeta{ background:#1d2a3a; color:#8ab8e8; }
+  .vacio{
+    background:var(--panel);
+    border:1px dashed var(--borde);
+    border-radius:12px;
+    padding:20px;
+    text-align:center;
+    color:var(--texto-suave);
+    font-size:14px;
+  }
+
+  /* ===== MODAL (propio, no confirm del navegador) ===== */
+  .fondoModal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.7);
+    z-index:100;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .fondoModal.abierto{ display:flex; }
+  .modal{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:18px 18px 0 0;
+    padding:22px 18px 28px;
+    width:100%;
+    max-width:600px;
+  }
+  @media(min-width:640px){
+    .fondoModal{ align-items:center; }
+    .modal{ border-radius:18px; }
+  }
+  .modal h3{ font-size:18px; margin-bottom:16px; }
+  .modal label{
+    display:block;
+    font-size:13px;
+    color:var(--texto-suave);
+    margin:14px 0 6px;
+  }
+  .filaBarberos{
+    display:grid;
+    grid-template-columns:repeat(5, 1fr);
+    gap:8px;
+  }
+  .btnBarbero{
+    padding:12px 0;
+    font-size:15px;
+    font-weight:600;
+    border-radius:10px;
+    border:1px solid var(--borde);
+    background:var(--fondo);
+    color:var(--texto);
+    cursor:pointer;
+  }
+  .btnBarbero.activo{
+    background:var(--ambar);
+    color:#121212;
+    border-color:var(--ambar);
+  }
+  .modal input{
+    width:100%;
+    padding:13px;
+    font-size:16px;
+    border-radius:10px;
+    border:1px solid var(--borde);
+    background:var(--fondo);
+    color:var(--texto);
+  }
+  .modal input:focus{ outline:none; border-color:var(--ambar); }
+  .filaMetodo{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:18px;
+  }
+  .btnMetodo{
+    padding:15px 0;
+    font-size:16px;
+    font-weight:700;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+  }
+  .btnMetodo:disabled{ opacity:0.5; cursor:default; }
+  #btnEfectivo{ background:#2e5c33; color:#d9f2db; }
+  #btnTarjeta{ background:#2b4a6b; color:#dbeafd; }
+  #btnCancelarCobro{
+    width:100%;
+    margin-top:12px;
+    padding:12px;
+    font-size:14px;
+    background:none;
+    border:1px solid var(--borde);
+    color:var(--texto-suave);
+    border-radius:10px;
+    cursor:pointer;
+  }
+  #msgModal{
+    color:var(--rojo);
+    font-size:13px;
+    margin-top:10px;
+    min-height:16px;
+    text-align:center;
   }
 </style>
 </head>
@@ -180,18 +325,56 @@
     </div>
   </header>
   <main>
-    <div class="aviso">
-      Sesión iniciada correctamente.<br>
-      Aquí irán los tickets, cobros y el resumen del día (próximas capas).
+    <button id="btnCobroManual">+ Cobro manual</button>
+
+    <div class="tituloSeccion">
+      <span>Cobros de hoy</span>
+      <span id="totalDia">$0</span>
     </div>
+    <div id="listaCobros">
+      <div class="vacio">Aún no hay cobros registrados hoy.</div>
+    </div>
+
     <div id="detalleError"></div>
   </main>
 </div>
 
-<!-- ===== FIREBASE (versión modular por CDN) ===== -->
+<!-- MODAL DE COBRO MANUAL -->
+<div class="fondoModal" id="modalCobro">
+  <div class="modal">
+    <h3>Cobro manual</h3>
+
+    <label>Barbero</label>
+    <div class="filaBarberos" id="filaBarberos">
+      <button class="btnBarbero" data-num="1">1</button>
+      <button class="btnBarbero" data-num="2">2</button>
+      <button class="btnBarbero" data-num="3">3</button>
+      <button class="btnBarbero" data-num="4">4</button>
+      <button class="btnBarbero" data-num="5">5</button>
+    </div>
+
+    <label>Concepto (servicio)</label>
+    <input type="text" id="inputConcepto" placeholder="Ej. Corte" autocomplete="off">
+
+    <label>Monto ($)</label>
+    <input type="number" id="inputMonto" placeholder="0" inputmode="numeric" min="0">
+
+    <div class="filaMetodo">
+      <button class="btnMetodo" id="btnEfectivo">Efectivo</button>
+      <button class="btnMetodo" id="btnTarjeta">Tarjeta</button>
+    </div>
+    <div id="msgModal"></div>
+    <button id="btnCancelarCobro">Cancelar</button>
+  </div>
+</div>
+
+<!-- ===== FIREBASE + LÓGICA DE COBROS ===== -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import {
+    getFirestore, collection, getDocs, addDoc,
+    query, where, onSnapshot, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   // ----- Configuración del proyecto "agend" -----
   const firebaseConfig = {
@@ -203,30 +386,213 @@
 
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
-
-  // Guardamos la conexión para usarla en próximas capas
   window.db = db;
 
-  // ----- Prueba de conexión: intentar leer la colección "ajustes" -----
-  const punto  = document.getElementById("puntoFirebase");
-  const texto  = document.getElementById("textoFirebase");
-  const detalle = document.getElementById("detalleError");
-
-  async function probarConexion(){
-    try{
-      await getDocs(collection(db, "ajustes"));
-      // Si llega aquí, la conexión funciona (aunque la colección esté vacía)
-      punto.classList.add("ok");
-      texto.textContent = "Firebase conectado";
-    } catch(err){
-      punto.classList.add("error");
-      texto.textContent = "Error de conexión";
-      detalle.style.display = "block";
-      detalle.textContent = "Detalle del error: " + err.message;
-    }
+  // ----- Fecha de hoy en formato AAAA-MM-DD (hora local) -----
+  function fechaHoy(){
+    const d = new Date();
+    const a = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dia = String(d.getDate()).padStart(2, "0");
+    return a + "-" + m + "-" + dia;
   }
 
-  probarConexion();
+  // ----- Indicador de conexión -----
+  const punto   = document.getElementById("puntoFirebase");
+  const texto   = document.getElementById("textoFirebase");
+  const detalle = document.getElementById("detalleError");
+
+  function mostrarError(err){
+    punto.classList.remove("ok");
+    punto.classList.add("error");
+    texto.textContent = "Error de conexión";
+    detalle.style.display = "block";
+    detalle.textContent = "Detalle del error: " + err.message;
+  }
+
+  try{
+    await getDocs(collection(db, "ajustes"));
+    punto.classList.add("ok");
+    texto.textContent = "Firebase conectado";
+  } catch(err){
+    mostrarError(err);
+  }
+
+  // ===== MODAL DE COBRO MANUAL =====
+  const modalCobro    = document.getElementById("modalCobro");
+  const btnCobro      = document.getElementById("btnCobroManual");
+  const btnCancelar   = document.getElementById("btnCancelarCobro");
+  const filaBarberos  = document.getElementById("filaBarberos");
+  const inputConcepto = document.getElementById("inputConcepto");
+  const inputMonto    = document.getElementById("inputMonto");
+  const btnEfectivo   = document.getElementById("btnEfectivo");
+  const btnTarjeta    = document.getElementById("btnTarjeta");
+  const msgModal      = document.getElementById("msgModal");
+
+  let barberoElegido = null;
+  let guardando = false; // flag para evitar duplicados
+
+  function abrirModal(){
+    barberoElegido = null;
+    inputConcepto.value = "";
+    inputMonto.value = "";
+    msgModal.textContent = "";
+    document.querySelectorAll(".btnBarbero").forEach(function(b){
+      b.classList.remove("activo");
+    });
+    modalCobro.classList.add("abierto");
+  }
+
+  function cerrarModal(){
+    modalCobro.classList.remove("abierto");
+  }
+
+  btnCobro.addEventListener("click", abrirModal);
+  btnCancelar.addEventListener("click", cerrarModal);
+
+  // Elegir barbero (un solo listener para toda la fila)
+  filaBarberos.addEventListener("click", function(e){
+    const btn = e.target.closest(".btnBarbero");
+    if(!btn) return;
+    document.querySelectorAll(".btnBarbero").forEach(function(b){
+      b.classList.remove("activo");
+    });
+    btn.classList.add("activo");
+    barberoElegido = parseInt(btn.dataset.num, 10);
+  });
+
+  // ----- Guardar cobro en Firestore -----
+  async function guardarCobro(metodo){
+    if(guardando) return; // ya hay un guardado en proceso
+
+    const monto = parseFloat(inputMonto.value);
+
+    if(barberoElegido === null){
+      msgModal.textContent = "Elige un barbero";
+      return;
+    }
+    if(isNaN(monto) || monto <= 0){
+      msgModal.textContent = "Escribe un monto válido";
+      return;
+    }
+
+    guardando = true;
+    btnEfectivo.disabled = true;
+    btnTarjeta.disabled = true;
+    msgModal.textContent = "Guardando...";
+    msgModal.style.color = "#9a9a9a";
+
+    try{
+      await addDoc(collection(db, "tickets"), {
+        barbero: barberoElegido,
+        concepto: inputConcepto.value.trim() || "Cobro manual",
+        monto: monto,
+        metodo: metodo,           // "efectivo" o "tarjeta"
+        fecha: fechaHoy(),        // "2026-07-06"
+        origen: "manual",
+        creado: serverTimestamp()
+      });
+      cerrarModal();
+    } catch(err){
+      msgModal.style.color = "#e05c5c";
+      msgModal.textContent = "Error al guardar: " + err.message;
+    }
+
+    guardando = false;
+    btnEfectivo.disabled = false;
+    btnTarjeta.disabled = false;
+  }
+
+  btnEfectivo.addEventListener("click", function(){ guardarCobro("efectivo"); });
+  btnTarjeta.addEventListener("click", function(){ guardarCobro("tarjeta"); });
+
+  // ===== LISTA DE COBROS DEL DÍA (en tiempo real) =====
+  const listaCobros = document.getElementById("listaCobros");
+  const totalDia    = document.getElementById("totalDia");
+
+  function formatoDinero(n){
+    return "$" + n.toLocaleString("es-MX");
+  }
+
+  function formatoHora(ts){
+    if(!ts) return "";
+    const d = ts.toDate();
+    let h = d.getHours();
+    const m = String(d.getMinutes()).padStart(2, "0");
+    const ampm = h >= 12 ? "p.m." : "a.m.";
+    h = h % 12; if(h === 0) h = 12;
+    return h + ":" + m + " " + ampm;
+  }
+
+  const consultaHoy = query(
+    collection(db, "tickets"),
+    where("fecha", "==", fechaHoy())
+  );
+
+  onSnapshot(consultaHoy, function(snap){
+    const cobros = [];
+    snap.forEach(function(doc){
+      cobros.push({ id: doc.id, ...doc.data() });
+    });
+
+    // Ordenar del más reciente al más antiguo (por hora de creación)
+    cobros.sort(function(a, b){
+      const ta = a.creado ? a.creado.toMillis() : Date.now();
+      const tb = b.creado ? b.creado.toMillis() : Date.now();
+      return tb - ta;
+    });
+
+    // Total del día
+    let total = 0;
+    cobros.forEach(function(c){ total += c.monto; });
+    totalDia.textContent = formatoDinero(total);
+
+    // Pintar la lista
+    if(cobros.length === 0){
+      listaCobros.innerHTML = '<div class="vacio">Aún no hay cobros registrados hoy.</div>';
+      return;
+    }
+
+    listaCobros.innerHTML = "";
+    cobros.forEach(function(c){
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjetaCobro";
+
+      const info = document.createElement("div");
+      info.className = "info";
+
+      const nombre = document.createElement("div");
+      nombre.className = "barbero";
+      nombre.textContent = "Barbero " + c.barbero;
+
+      const concepto = document.createElement("div");
+      concepto.className = "concepto";
+      concepto.textContent = c.concepto;
+
+      const hora = document.createElement("div");
+      hora.className = "hora";
+      hora.textContent = formatoHora(c.creado);
+
+      const etiqueta = document.createElement("span");
+      etiqueta.className = "etiqueta " + c.metodo;
+      etiqueta.textContent = c.metodo === "tarjeta" ? "Tarjeta" : "Efectivo";
+
+      info.appendChild(nombre);
+      info.appendChild(concepto);
+      info.appendChild(hora);
+      info.appendChild(etiqueta);
+
+      const monto = document.createElement("div");
+      monto.className = "monto";
+      monto.textContent = formatoDinero(c.monto);
+
+      tarjeta.appendChild(info);
+      tarjeta.appendChild(monto);
+      listaCobros.appendChild(tarjeta);
+    });
+  }, function(err){
+    mostrarError(err);
+  });
 </script>
 
 <!-- ===== LOGIN Y SESIÓN ===== -->
