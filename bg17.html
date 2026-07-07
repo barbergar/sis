@@ -93,8 +93,8 @@
   }
   header h2{ font-size:18px; }
   header h2 span{ color:var(--ambar); }
-  .ladoDerecho{ display:flex; align-items:center; gap:12px; }
-  #btnSalir{
+  .ladoDerecho{ display:flex; align-items:center; gap:10px; }
+  #btnSalir, #btnAdmin{
     background:none;
     border:1px solid var(--borde);
     color:var(--texto-suave);
@@ -102,6 +102,10 @@
     border-radius:8px;
     font-size:14px;
     cursor:pointer;
+  }
+  #btnAdmin.activo{
+    border-color:var(--ambar);
+    color:var(--ambar);
   }
   main{
     padding:20px 16px 60px;
@@ -176,9 +180,7 @@
     border-top:1px solid var(--borde);
     margin:10px 0;
   }
-  .filaResumen.total{
-    padding-top:4px;
-  }
+  .filaResumen.total{ padding-top:4px; }
   .filaResumen.total .etiquetaR{
     color:var(--texto);
     font-weight:700;
@@ -252,7 +254,7 @@
     display:none;
   }
 
-  #listaPendientes, #listaCobros, #listaMovimientos{
+  #listaPendientes, #listaCobros, #listaMovimientos, #listaBarberos{
     display:flex;
     flex-direction:column;
     gap:8px;
@@ -328,6 +330,8 @@
   .etiqueta.tarjeta{ background:#1d2a3a; color:#8ab8e8; }
   .etiqueta.gasto{ background:#3a2020; color:#e8a0a0; }
   .etiqueta.adelanto{ background:#33261d; color:#e0b890; }
+  .etiqueta.vip{ background:#3a2f14; color:#e8c060; }
+  .etiqueta.transferencia{ background:#1d3330; color:#7fd8c8; }
   .vacio{
     background:var(--panel);
     border:1px dashed var(--borde);
@@ -358,6 +362,127 @@
     font-size:16px;
     white-space:nowrap;
     color:var(--rojo);
+  }
+
+  /* ===== VISTA ADMIN ===== */
+  #vistaAdmin{ display:none; }
+  .barraAdmin{
+    background:#241d10;
+    border:1px solid #4a3a1c;
+    border-radius:12px;
+    padding:12px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+  }
+  .barraAdmin span{
+    color:var(--ambar);
+    font-weight:700;
+    font-size:15px;
+  }
+  #btnSalirAdmin{
+    background:none;
+    border:1px solid #4a3a1c;
+    color:var(--ambar);
+    padding:8px 14px;
+    border-radius:8px;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .tarjetaBarbero{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:12px;
+    padding:14px;
+  }
+  .tarjetaBarbero .fila1{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .tarjetaBarbero .nombre{ font-weight:700; font-size:16px; }
+  .tarjetaBarbero .porcentaje{
+    color:var(--ambar);
+    font-weight:800;
+    font-size:18px;
+  }
+  .tarjetaBarbero .detalles{
+    color:var(--texto-suave);
+    font-size:13px;
+    margin-top:6px;
+    line-height:1.6;
+  }
+  #btnCrearBarberos{
+    width:100%;
+    padding:15px;
+    font-size:16px;
+    font-weight:700;
+    border:none;
+    border-radius:12px;
+    background:var(--ambar);
+    color:#121212;
+    cursor:pointer;
+  }
+  #btnCrearBarberos:disabled{ opacity:0.5; cursor:default; }
+  #msgAdmin{
+    color:var(--texto-suave);
+    font-size:13px;
+    margin-top:10px;
+    min-height:16px;
+    text-align:center;
+  }
+  .btnEditarBarbero{
+    margin-top:10px;
+    padding:9px 16px;
+    font-size:13px;
+    font-weight:600;
+    border:1px solid var(--borde);
+    border-radius:8px;
+    background:none;
+    color:var(--texto);
+    cursor:pointer;
+    display:block;
+  }
+  .filaToggles{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .btnToggle{
+    padding:12px 0;
+    font-size:14px;
+    font-weight:600;
+    border-radius:10px;
+    border:1px solid var(--borde);
+    background:var(--fondo);
+    color:var(--texto-suave);
+    cursor:pointer;
+  }
+  .btnToggle.activo{
+    background:var(--ambar);
+    color:#121212;
+    border-color:var(--ambar);
+  }
+  .filaDias{
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    gap:6px;
+  }
+  .btnDia{
+    padding:12px 0;
+    font-size:13px;
+    font-weight:600;
+    border-radius:10px;
+    border:1px solid var(--borde);
+    background:var(--fondo);
+    color:var(--texto);
+    cursor:pointer;
+  }
+  .btnDia.activo{
+    background:var(--ambar);
+    color:#121212;
+    border-color:var(--ambar);
   }
 
   /* ===== MODALES ===== */
@@ -520,74 +645,142 @@
         <div id="puntoFirebase"></div>
         <span id="textoFirebase">Conectando...</span>
       </div>
+      <button id="btnAdmin">Admin</button>
       <button id="btnSalir">Salir</button>
     </div>
   </header>
   <main>
 
-    <!-- RESUMEN DEL DÍA -->
-    <div id="resumenDia">
-      <h3>Resumen del día</h3>
-      <div class="filaResumen">
-        <span class="etiquetaR">Producción</span>
-        <span class="valorR" id="resProduccion">$0</span>
+    <!-- ===== VISTA CAJA (normal) ===== -->
+    <div id="vistaCaja">
+
+      <!-- RESUMEN DEL DÍA -->
+      <div id="resumenDia">
+        <h3>Resumen del día</h3>
+        <div class="filaResumen">
+          <span class="etiquetaR">Producción</span>
+          <span class="valorR" id="resProduccion">$0</span>
+        </div>
+        <div class="filaResumen resta">
+          <span class="etiquetaR">TC VTA (tarjeta)</span>
+          <span class="valorR" id="resTarjeta">−$0</span>
+        </div>
+        <div class="filaResumen info">
+          <span class="etiquetaR">Comisión tarjeta 4% (informativa)</span>
+          <span class="valorR" id="resComision">$0</span>
+        </div>
+        <div class="filaResumen resta">
+          <span class="etiquetaR">Gastos</span>
+          <span class="valorR" id="resGastos">−$0</span>
+        </div>
+        <div class="filaResumen resta">
+          <span class="etiquetaR">Adelantos</span>
+          <span class="valorR" id="resAdelantos">−$0</span>
+        </div>
+        <div class="lineaDivision"></div>
+        <div class="filaResumen total">
+          <span class="etiquetaR">Efectivo en caja</span>
+          <span class="valorR" id="resEfectivo">$0</span>
+        </div>
       </div>
-      <div class="filaResumen resta">
-        <span class="etiquetaR">TC VTA (tarjeta)</span>
-        <span class="valorR" id="resTarjeta">−$0</span>
+
+      <button id="btnCobroManual">+ Cobro manual</button>
+      <div class="filaBotones">
+        <button class="btnSecundario" id="btnGasto">− Gasto</button>
+        <button class="btnSecundario" id="btnAdelanto">− Adelanto</button>
       </div>
-      <div class="filaResumen info">
-        <span class="etiquetaR">Comisión tarjeta 4% (informativa)</span>
-        <span class="valorR" id="resComision">$0</span>
+      <button id="btnTicketPrueba">🧪 Ticket de prueba (temporal, se quita cuando exista bg18)</button>
+
+      <div class="tituloSeccion">
+        <span>Tickets pendientes</span>
+        <span id="contadorPendientes">0</span>
       </div>
-      <div class="filaResumen resta">
-        <span class="etiquetaR">Gastos</span>
-        <span class="valorR" id="resGastos">−$0</span>
+      <div id="listaPendientes">
+        <div class="vacio">No hay tickets pendientes.</div>
       </div>
-      <div class="filaResumen resta">
-        <span class="etiquetaR">Adelantos</span>
-        <span class="valorR" id="resAdelantos">−$0</span>
+
+      <div class="tituloSeccion">
+        <span>Cobros de hoy</span>
+        <span id="totalDia">$0</span>
       </div>
-      <div class="lineaDivision"></div>
-      <div class="filaResumen total">
-        <span class="etiquetaR">Efectivo en caja</span>
-        <span class="valorR" id="resEfectivo">$0</span>
+      <div id="listaCobros">
+        <div class="vacio">Aún no hay cobros registrados hoy.</div>
       </div>
+
+      <div class="tituloSeccion">
+        <span>Gastos y adelantos de hoy</span>
+        <span id="totalMovimientos">−$0</span>
+      </div>
+      <div id="listaMovimientos">
+        <div class="vacio">Sin gastos ni adelantos hoy.</div>
+      </div>
+
     </div>
 
-    <button id="btnCobroManual">+ Cobro manual</button>
-    <div class="filaBotones">
-      <button class="btnSecundario" id="btnGasto">− Gasto</button>
-      <button class="btnSecundario" id="btnAdelanto">− Adelanto</button>
-    </div>
-    <button id="btnTicketPrueba">🧪 Ticket de prueba (temporal, se quita cuando exista bg18)</button>
+    <!-- ===== VISTA ADMIN ===== -->
+    <div id="vistaAdmin">
+      <div class="barraAdmin">
+        <span>⚙️ Modo Admin</span>
+        <button id="btnSalirAdmin">Volver a caja</button>
+      </div>
 
-    <div class="tituloSeccion">
-      <span>Tickets pendientes</span>
-      <span id="contadorPendientes">0</span>
-    </div>
-    <div id="listaPendientes">
-      <div class="vacio">No hay tickets pendientes.</div>
-    </div>
-
-    <div class="tituloSeccion">
-      <span>Cobros de hoy</span>
-      <span id="totalDia">$0</span>
-    </div>
-    <div id="listaCobros">
-      <div class="vacio">Aún no hay cobros registrados hoy.</div>
-    </div>
-
-    <div class="tituloSeccion">
-      <span>Gastos y adelantos de hoy</span>
-      <span id="totalMovimientos">−$0</span>
-    </div>
-    <div id="listaMovimientos">
-      <div class="vacio">Sin gastos ni adelantos hoy.</div>
+      <div class="tituloSeccion">
+        <span>Barberos</span>
+      </div>
+      <div id="listaBarberos">
+        <div class="vacio">Cargando barberos...</div>
+      </div>
+      <div id="msgAdmin"></div>
     </div>
 
     <div id="detalleError"></div>
   </main>
+</div>
+
+<!-- MODAL CONTRASEÑA ADMIN -->
+<div class="fondoModal" id="modalAdmin">
+  <div class="modal">
+    <h3>Acceso Admin</h3>
+    <label>Contraseña de administrador</label>
+    <input type="password" id="inputPassAdmin" placeholder="****" autocomplete="off" inputmode="numeric">
+    <button class="btnGuardarModal" id="btnEntrarAdmin">Entrar</button>
+    <div class="msgModal" id="msgPassAdmin"></div>
+    <button class="btnCancelarModal" id="btnCancelarAdmin">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL EDITAR BARBERO -->
+<div class="fondoModal" id="modalEditarBarbero">
+  <div class="modal">
+    <h3 id="editTitulo">Editar Barbero</h3>
+
+    <label>Porcentaje de destajo (%)</label>
+    <input type="number" id="editPorcentaje" placeholder="40" inputmode="numeric" min="0" max="100">
+
+    <label>PIN (4 dígitos)</label>
+    <input type="text" id="editPin" placeholder="0000" maxlength="4" inputmode="numeric" autocomplete="off">
+
+    <label>Opciones</label>
+    <div class="filaToggles">
+      <button class="btnToggle" id="editVip">VIP</button>
+      <button class="btnToggle" id="editTransferencia">Solo transferencia</button>
+    </div>
+
+    <label>Días de descanso</label>
+    <div class="filaDias" id="editDias">
+      <button class="btnDia" data-dia="lunes">L</button>
+      <button class="btnDia" data-dia="martes">M</button>
+      <button class="btnDia" data-dia="miércoles">X</button>
+      <button class="btnDia" data-dia="jueves">J</button>
+      <button class="btnDia" data-dia="viernes">V</button>
+      <button class="btnDia" data-dia="sábado">S</button>
+      <button class="btnDia" data-dia="domingo">D</button>
+    </div>
+
+    <button class="btnGuardarModal" id="editGuardar">Guardar cambios</button>
+    <div class="msgModal" id="editMsg"></div>
+    <button class="btnCancelarModal" id="editCancelar">Cancelar</button>
+  </div>
 </div>
 
 <!-- MODAL DE COBRO MANUAL -->
@@ -675,7 +868,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
-    getFirestore, collection, getDocs, addDoc, doc,
+    getFirestore, collection, getDocs, addDoc, doc, updateDoc,
     query, where, onSnapshot, serverTimestamp, writeBatch
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -723,7 +916,6 @@
 
   // ----- Utilidades -----
   function formatoDinero(n){
-    // Redondear a 2 decimales y quitar decimales si son .00
     const redondeado = Math.round(n * 100) / 100;
     return "$" + redondeado.toLocaleString("es-MX");
   }
@@ -739,6 +931,303 @@
   }
 
   // ============================================================
+  // MODO ADMIN (Capa 2A)
+  // ============================================================
+  const PASS_ADMIN = "4764";
+
+  const btnAdmin        = document.getElementById("btnAdmin");
+  const modalAdmin      = document.getElementById("modalAdmin");
+  const inputPassAdmin  = document.getElementById("inputPassAdmin");
+  const btnEntrarAdmin  = document.getElementById("btnEntrarAdmin");
+  const btnCancelarAdmin= document.getElementById("btnCancelarAdmin");
+  const msgPassAdmin    = document.getElementById("msgPassAdmin");
+  const vistaCaja       = document.getElementById("vistaCaja");
+  const vistaAdmin      = document.getElementById("vistaAdmin");
+  const btnSalirAdmin   = document.getElementById("btnSalirAdmin");
+
+  let modoAdmin = false;
+
+  function entrarAdmin(){
+    modoAdmin = true;
+    vistaCaja.style.display  = "none";
+    vistaAdmin.style.display = "block";
+    btnAdmin.classList.add("activo");
+    modalAdmin.classList.remove("abierto");
+  }
+
+  function salirAdmin(){
+    modoAdmin = false;
+    vistaAdmin.style.display = "none";
+    vistaCaja.style.display  = "block";
+    btnAdmin.classList.remove("activo");
+  }
+
+  btnAdmin.addEventListener("click", function(){
+    if(modoAdmin){
+      salirAdmin();
+      return;
+    }
+    inputPassAdmin.value = "";
+    msgPassAdmin.textContent = "";
+    modalAdmin.classList.add("abierto");
+  });
+
+  btnCancelarAdmin.addEventListener("click", function(){
+    modalAdmin.classList.remove("abierto");
+  });
+
+  function validarPassAdmin(){
+    if(inputPassAdmin.value === PASS_ADMIN){
+      entrarAdmin();
+    } else {
+      msgPassAdmin.textContent = "Contraseña incorrecta";
+      inputPassAdmin.value = "";
+    }
+  }
+
+  btnEntrarAdmin.addEventListener("click", validarPassAdmin);
+  inputPassAdmin.addEventListener("keydown", function(e){
+    if(e.key === "Enter") validarPassAdmin();
+  });
+
+  btnSalirAdmin.addEventListener("click", salirAdmin);
+
+  // ----- Barberos: valores iniciales -----
+  const BARBEROS_INICIALES = [
+    { num: 1, porcentaje: 60,  pin: "1111", vip: true,  transferencia: false, descanso: ["miércoles"] },
+    { num: 2, porcentaje: 40,  pin: "2222", vip: false, transferencia: false, descanso: ["domingo"] },
+    { num: 3, porcentaje: 40,  pin: "3333", vip: false, transferencia: false, descanso: ["lunes", "martes"] },
+    { num: 4, porcentaje: 40,  pin: "4444", vip: false, transferencia: false, descanso: ["miércoles"] },
+    { num: 5, porcentaje: 100, pin: "5555", vip: false, transferencia: true,  descanso: [] }
+  ];
+
+  const listaBarberos = document.getElementById("listaBarberos");
+  const msgAdmin      = document.getElementById("msgAdmin");
+
+  let barberosCache = []; // copia local para validaciones (ej. PIN duplicado)
+
+  let creandoBarberos = false;
+
+  async function crearBarberosIniciales(){
+    if(creandoBarberos) return;
+    creandoBarberos = true;
+    msgAdmin.textContent = "Creando barberos...";
+
+    try{
+      // Batch atómico: se crean los 5 o ninguno
+      const batch = writeBatch(db);
+      BARBEROS_INICIALES.forEach(function(b){
+        // Usamos el número como ID del documento: barberos/1, barberos/2...
+        const ref = doc(db, "barberos", String(b.num));
+        batch.set(ref, {
+          num: b.num,
+          porcentaje: b.porcentaje,
+          pin: b.pin,
+          vip: b.vip,
+          transferencia: b.transferencia,
+          descanso: b.descanso,
+          creado: serverTimestamp()
+        });
+      });
+      await batch.commit();
+      msgAdmin.textContent = "Barberos creados correctamente ✓";
+    } catch(err){
+      msgAdmin.textContent = "Error al crear barberos: " + err.message;
+    }
+    creandoBarberos = false;
+  }
+
+  // ----- Lista de barberos en tiempo real -----
+  onSnapshot(collection(db, "barberos"), function(snap){
+    const barberos = [];
+    snap.forEach(function(d){
+      barberos.push({ id: d.id, ...d.data() });
+    });
+
+    barberos.sort(function(a, b){ return a.num - b.num; });
+    barberosCache = barberos;
+
+    if(barberos.length === 0){
+      // No hay barberos: mostrar botón para crearlos
+      listaBarberos.innerHTML = "";
+      const aviso = document.createElement("div");
+      aviso.className = "vacio";
+      aviso.textContent = "Aún no hay barberos configurados.";
+      aviso.style.marginBottom = "12px";
+
+      const btnCrear = document.createElement("button");
+      btnCrear.id = "btnCrearBarberos";
+      btnCrear.textContent = "Crear los 5 barberos iniciales";
+      btnCrear.addEventListener("click", crearBarberosIniciales);
+
+      listaBarberos.appendChild(aviso);
+      listaBarberos.appendChild(btnCrear);
+      return;
+    }
+
+    listaBarberos.innerHTML = "";
+    barberos.forEach(function(b){
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjetaBarbero";
+
+      const fila1 = document.createElement("div");
+      fila1.className = "fila1";
+
+      const nombre = document.createElement("div");
+      nombre.className = "nombre";
+      nombre.textContent = "Barbero " + b.num;
+
+      const porcentaje = document.createElement("div");
+      porcentaje.className = "porcentaje";
+      porcentaje.textContent = b.porcentaje + "%";
+
+      fila1.appendChild(nombre);
+      fila1.appendChild(porcentaje);
+
+      const detalles = document.createElement("div");
+      detalles.className = "detalles";
+      const descansoTexto = (b.descanso && b.descanso.length > 0)
+        ? b.descanso.join(", ")
+        : "variable";
+      detalles.textContent = "PIN: " + b.pin + " · Descanso: " + descansoTexto;
+
+      tarjeta.appendChild(fila1);
+      tarjeta.appendChild(detalles);
+
+      // Etiquetas VIP / Transferencia
+      if(b.vip){
+        const et = document.createElement("span");
+        et.className = "etiqueta vip";
+        et.textContent = "VIP";
+        et.style.marginRight = "6px";
+        tarjeta.appendChild(et);
+      }
+      if(b.transferencia){
+        const et = document.createElement("span");
+        et.className = "etiqueta transferencia";
+        et.textContent = "Solo transferencia";
+        tarjeta.appendChild(et);
+      }
+
+      const btnEditar = document.createElement("button");
+      btnEditar.className = "btnEditarBarbero";
+      btnEditar.textContent = "Editar";
+      btnEditar.addEventListener("click", function(){
+        abrirEditarBarbero(b);
+      });
+      tarjeta.appendChild(btnEditar);
+
+      listaBarberos.appendChild(tarjeta);
+    });
+  }, function(err){
+    mostrarError(err);
+  });
+
+  // ----- Editar barbero (Capa 2B) -----
+  const modalEditar       = document.getElementById("modalEditarBarbero");
+  const editTitulo        = document.getElementById("editTitulo");
+  const editPorcentaje    = document.getElementById("editPorcentaje");
+  const editPin           = document.getElementById("editPin");
+  const editVip           = document.getElementById("editVip");
+  const editTransferencia = document.getElementById("editTransferencia");
+  const editDias          = document.getElementById("editDias");
+  const editGuardar       = document.getElementById("editGuardar");
+  const editCancelar      = document.getElementById("editCancelar");
+  const editMsg           = document.getElementById("editMsg");
+
+  let barberoEditando = null;
+  let guardandoEdicion = false;
+
+  function abrirEditarBarbero(b){
+    barberoEditando = b;
+    editTitulo.textContent = "Editar Barbero " + b.num;
+    editPorcentaje.value = b.porcentaje;
+    editPin.value = b.pin;
+    editVip.classList.toggle("activo", !!b.vip);
+    editTransferencia.classList.toggle("activo", !!b.transferencia);
+    editDias.querySelectorAll(".btnDia").forEach(function(btn){
+      const activo = (b.descanso || []).includes(btn.dataset.dia);
+      btn.classList.toggle("activo", activo);
+    });
+    editMsg.textContent = "";
+    modalEditar.classList.add("abierto");
+  }
+
+  editCancelar.addEventListener("click", function(){
+    modalEditar.classList.remove("abierto");
+    barberoEditando = null;
+  });
+
+  editVip.addEventListener("click", function(){
+    editVip.classList.toggle("activo");
+  });
+
+  editTransferencia.addEventListener("click", function(){
+    editTransferencia.classList.toggle("activo");
+  });
+
+  editDias.addEventListener("click", function(e){
+    const btn = e.target.closest(".btnDia");
+    if(!btn) return;
+    btn.classList.toggle("activo");
+  });
+
+  editGuardar.addEventListener("click", async function(){
+    if(guardandoEdicion || !barberoEditando) return;
+
+    const porcentaje = parseFloat(editPorcentaje.value);
+    const pin = editPin.value.trim();
+
+    if(isNaN(porcentaje) || porcentaje < 0 || porcentaje > 100){
+      editMsg.style.color = "#e05c5c";
+      editMsg.textContent = "El porcentaje debe estar entre 0 y 100";
+      return;
+    }
+    if(!/^\d{4}$/.test(pin)){
+      editMsg.style.color = "#e05c5c";
+      editMsg.textContent = "El PIN debe ser de 4 dígitos";
+      return;
+    }
+    // PIN duplicado: otro barbero ya lo usa (importante para bg18)
+    const pinRepetido = barberosCache.some(function(x){
+      return x.id !== barberoEditando.id && x.pin === pin;
+    });
+    if(pinRepetido){
+      editMsg.style.color = "#e05c5c";
+      editMsg.textContent = "Ese PIN ya lo usa otro barbero";
+      return;
+    }
+
+    const descanso = [];
+    editDias.querySelectorAll(".btnDia.activo").forEach(function(btn){
+      descanso.push(btn.dataset.dia);
+    });
+
+    guardandoEdicion = true;
+    editGuardar.disabled = true;
+    editMsg.style.color = "#9a9a9a";
+    editMsg.textContent = "Guardando...";
+
+    try{
+      await updateDoc(doc(db, "barberos", barberoEditando.id), {
+        porcentaje: porcentaje,
+        pin: pin,
+        vip: editVip.classList.contains("activo"),
+        transferencia: editTransferencia.classList.contains("activo"),
+        descanso: descanso
+      });
+      modalEditar.classList.remove("abierto");
+      barberoEditando = null;
+    } catch(err){
+      editMsg.style.color = "#e05c5c";
+      editMsg.textContent = "Error al guardar: " + err.message;
+    }
+
+    guardandoEdicion = false;
+    editGuardar.disabled = false;
+  });
+
+  // ============================================================
   // RESUMEN DEL DÍA
   // Fórmula: Efectivo = Producción − TC VTA − Gastos − Adelantos
   // ============================================================
@@ -749,7 +1238,6 @@
   const resAdelantos  = document.getElementById("resAdelantos");
   const resEfectivo   = document.getElementById("resEfectivo");
 
-  // Estos totales se actualizan desde los listeners de tickets y movimientos
   let totProduccion = 0;
   let totTarjeta    = 0;
   let totGastos     = 0;
@@ -765,9 +1253,7 @@
     resGastos.textContent     = "−" + formatoDinero(totGastos);
     resAdelantos.textContent  = "−" + formatoDinero(totAdelantos);
     resEfectivo.textContent   = formatoDinero(efectivo);
-
-    // Si el efectivo queda negativo, mostrarlo en rojo
-    resEfectivo.style.color = efectivo < 0 ? "#e05c5c" : "#4caf50";
+    resEfectivo.style.color   = efectivo < 0 ? "#e05c5c" : "#4caf50";
   }
 
   // ============================================================
@@ -988,7 +1474,6 @@
       return tb - ta;
     });
 
-    // Totales por tipo (para el resumen)
     totGastos = 0;
     totAdelantos = 0;
     let total = 0;
@@ -1289,7 +1774,6 @@
       return tb - ta;
     });
 
-    // Totales para el resumen
     totProduccion = 0;
     totTarjeta = 0;
     cobros.forEach(function(c){
