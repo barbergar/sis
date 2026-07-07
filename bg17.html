@@ -148,7 +148,23 @@
     background:var(--ambar);
     color:#121212;
     cursor:pointer;
-    margin-bottom:14px;
+    margin-bottom:10px;
+  }
+  .filaBotones{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .btnSecundario{
+    padding:13px;
+    font-size:15px;
+    font-weight:600;
+    border:1px solid var(--borde);
+    border-radius:12px;
+    background:var(--panel);
+    color:var(--texto);
+    cursor:pointer;
   }
   #btnTicketPrueba{
     width:100%;
@@ -173,6 +189,7 @@
   }
   .tituloSeccion:first-of-type{ margin-top:0; }
   #totalDia{ color:var(--ambar); font-weight:700; font-size:17px; }
+  #totalMovimientos{ color:var(--rojo); font-weight:700; font-size:15px; }
   #contadorPendientes{
     background:var(--ambar);
     color:#121212;
@@ -183,7 +200,7 @@
     display:none;
   }
 
-  #listaPendientes, #listaCobros{
+  #listaPendientes, #listaCobros, #listaMovimientos{
     display:flex;
     flex-direction:column;
     gap:8px;
@@ -257,6 +274,8 @@
   }
   .etiqueta.efectivo{ background:#1e3320; color:#8fd694; }
   .etiqueta.tarjeta{ background:#1d2a3a; color:#8ab8e8; }
+  .etiqueta.gasto{ background:#3a2020; color:#e8a0a0; }
+  .etiqueta.adelanto{ background:#33261d; color:#e0b890; }
   .vacio{
     background:var(--panel);
     border:1px dashed var(--borde);
@@ -265,6 +284,28 @@
     text-align:center;
     color:var(--texto-suave);
     font-size:14px;
+  }
+
+  /* ===== TARJETA DE MOVIMIENTO ===== */
+  .tarjetaMov{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:12px;
+    padding:12px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+  .tarjetaMov .info{ flex:1; min-width:0; }
+  .tarjetaMov .concepto{ font-weight:600; font-size:15px; }
+  .tarjetaMov .quien{ color:var(--texto-suave); font-size:13px; margin-top:2px; }
+  .tarjetaMov .hora{ color:var(--texto-suave); font-size:12px; margin-top:2px; }
+  .tarjetaMov .monto{
+    font-weight:700;
+    font-size:16px;
+    white-space:nowrap;
+    color:var(--rojo);
   }
 
   /* ===== MODALES ===== */
@@ -285,6 +326,8 @@
     padding:22px 18px 28px;
     width:100%;
     max-width:600px;
+    max-height:90vh;
+    overflow-y:auto;
   }
   @media(min-width:640px){
     .fondoModal{ align-items:center; }
@@ -301,6 +344,9 @@
     display:grid;
     grid-template-columns:repeat(5, 1fr);
     gap:8px;
+  }
+  .filaBarberos.conRecepcion{
+    grid-template-columns:repeat(6, 1fr);
   }
   .btnBarbero{
     padding:12px 0;
@@ -344,6 +390,19 @@
   .btnMetodo:disabled{ opacity:0.5; cursor:default; }
   .btnMetodo.efectivo{ background:#2e5c33; color:#d9f2db; }
   .btnMetodo.tarjeta{ background:#2b4a6b; color:#dbeafd; }
+  .btnGuardarModal{
+    width:100%;
+    margin-top:18px;
+    padding:15px;
+    font-size:16px;
+    font-weight:700;
+    border:none;
+    border-radius:12px;
+    background:var(--ambar);
+    color:#121212;
+    cursor:pointer;
+  }
+  .btnGuardarModal:disabled{ opacity:0.5; cursor:default; }
   .btnCancelarModal{
     width:100%;
     margin-top:12px;
@@ -414,6 +473,10 @@
   </header>
   <main>
     <button id="btnCobroManual">+ Cobro manual</button>
+    <div class="filaBotones">
+      <button class="btnSecundario" id="btnGasto">− Gasto</button>
+      <button class="btnSecundario" id="btnAdelanto">− Adelanto</button>
+    </div>
     <button id="btnTicketPrueba">🧪 Ticket de prueba (temporal, se quita cuando exista bg18)</button>
 
     <div class="tituloSeccion">
@@ -430,6 +493,14 @@
     </div>
     <div id="listaCobros">
       <div class="vacio">Aún no hay cobros registrados hoy.</div>
+    </div>
+
+    <div class="tituloSeccion">
+      <span>Gastos y adelantos de hoy</span>
+      <span id="totalMovimientos">−$0</span>
+    </div>
+    <div id="listaMovimientos">
+      <div class="vacio">Sin gastos ni adelantos hoy.</div>
     </div>
 
     <div id="detalleError"></div>
@@ -485,6 +556,35 @@
     <div class="msgModal" id="pendMsg"></div>
     <button class="btnDescartar" id="pendDescartar">Descartar ticket</button>
     <button class="btnCancelarModal" id="pendCancelar">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL DE GASTO / ADELANTO -->
+<div class="fondoModal" id="modalMov">
+  <div class="modal">
+    <h3 id="movTitulo">Gasto</h3>
+
+    <div id="movBloqueQuien" style="display:none;">
+      <label>¿Para quién es el adelanto?</label>
+      <div class="filaBarberos conRecepcion" id="movFilaQuien">
+        <button class="btnBarbero" data-quien="1">1</button>
+        <button class="btnBarbero" data-quien="2">2</button>
+        <button class="btnBarbero" data-quien="3">3</button>
+        <button class="btnBarbero" data-quien="4">4</button>
+        <button class="btnBarbero" data-quien="5">5</button>
+        <button class="btnBarbero" data-quien="R">R</button>
+      </div>
+    </div>
+
+    <label id="movLabelConcepto">Concepto</label>
+    <input type="text" id="movConcepto" placeholder="Ej. Agua, luz, insumos" autocomplete="off">
+
+    <label>Monto ($)</label>
+    <input type="number" id="movMonto" placeholder="0" inputmode="numeric" min="0">
+
+    <button class="btnGuardarModal" id="movGuardar">Guardar</button>
+    <div class="msgModal" id="movMsg"></div>
+    <button class="btnCancelarModal" id="movCancelar">Cancelar</button>
   </div>
 </div>
 
@@ -554,7 +654,7 @@
   }
 
   // ============================================================
-  // COBRO MANUAL (igual que la capa anterior)
+  // COBRO MANUAL
   // ============================================================
   const modalCobro    = document.getElementById("modalCobro");
   const btnCobro      = document.getElementById("btnCobroManual");
@@ -569,18 +669,17 @@
   let barberoElegido = null;
   let guardando = false;
 
-  function abrirModalCobro(){
+  btnCobro.addEventListener("click", function(){
     barberoElegido = null;
     inputConcepto.value = "";
     inputMonto.value = "";
     msgModal.textContent = "";
-    document.querySelectorAll(".btnBarbero").forEach(function(b){
+    filaBarberos.querySelectorAll(".btnBarbero").forEach(function(b){
       b.classList.remove("activo");
     });
     modalCobro.classList.add("abierto");
-  }
+  });
 
-  btnCobro.addEventListener("click", abrirModalCobro);
   btnCancelar.addEventListener("click", function(){
     modalCobro.classList.remove("abierto");
   });
@@ -588,7 +687,7 @@
   filaBarberos.addEventListener("click", function(e){
     const btn = e.target.closest(".btnBarbero");
     if(!btn) return;
-    document.querySelectorAll(".btnBarbero").forEach(function(b){
+    filaBarberos.querySelectorAll(".btnBarbero").forEach(function(b){
       b.classList.remove("activo");
     });
     btn.classList.add("activo");
@@ -641,8 +740,194 @@
   btnTarjeta.addEventListener("click", function(){ guardarCobroManual("tarjeta"); });
 
   // ============================================================
+  // GASTOS Y ADELANTOS (colección "movimientos")
+  // ============================================================
+  const modalMov       = document.getElementById("modalMov");
+  const btnGasto       = document.getElementById("btnGasto");
+  const btnAdelanto    = document.getElementById("btnAdelanto");
+  const movTitulo      = document.getElementById("movTitulo");
+  const movBloqueQuien = document.getElementById("movBloqueQuien");
+  const movFilaQuien   = document.getElementById("movFilaQuien");
+  const movLabelConcepto = document.getElementById("movLabelConcepto");
+  const movConcepto    = document.getElementById("movConcepto");
+  const movMonto       = document.getElementById("movMonto");
+  const movGuardar     = document.getElementById("movGuardar");
+  const movCancelar    = document.getElementById("movCancelar");
+  const movMsg         = document.getElementById("movMsg");
+
+  let tipoMov = "gasto";        // "gasto" o "adelanto"
+  let quienAdelanto = null;     // 1-5 o "R" (Recepción)
+  let guardandoMov = false;
+
+  function abrirModalMov(tipo){
+    tipoMov = tipo;
+    quienAdelanto = null;
+    movConcepto.value = "";
+    movMonto.value = "";
+    movMsg.textContent = "";
+    movFilaQuien.querySelectorAll(".btnBarbero").forEach(function(b){
+      b.classList.remove("activo");
+    });
+
+    if(tipo === "gasto"){
+      movTitulo.textContent = "Registrar gasto";
+      movBloqueQuien.style.display = "none";
+      movLabelConcepto.textContent = "Concepto";
+      movConcepto.placeholder = "Ej. Agua, luz, insumos";
+    } else {
+      movTitulo.textContent = "Registrar adelanto";
+      movBloqueQuien.style.display = "block";
+      movLabelConcepto.textContent = "Nota (opcional)";
+      movConcepto.placeholder = "Ej. Adelanto de sueldo";
+    }
+    modalMov.classList.add("abierto");
+  }
+
+  btnGasto.addEventListener("click", function(){ abrirModalMov("gasto"); });
+  btnAdelanto.addEventListener("click", function(){ abrirModalMov("adelanto"); });
+  movCancelar.addEventListener("click", function(){
+    modalMov.classList.remove("abierto");
+  });
+
+  movFilaQuien.addEventListener("click", function(e){
+    const btn = e.target.closest(".btnBarbero");
+    if(!btn) return;
+    movFilaQuien.querySelectorAll(".btnBarbero").forEach(function(b){
+      b.classList.remove("activo");
+    });
+    btn.classList.add("activo");
+    quienAdelanto = btn.dataset.quien; // "1".."5" o "R"
+  });
+
+  movGuardar.addEventListener("click", async function(){
+    if(guardandoMov) return;
+    const monto = parseFloat(movMonto.value);
+
+    if(tipoMov === "adelanto" && quienAdelanto === null){
+      movMsg.style.color = "#e05c5c";
+      movMsg.textContent = "Elige para quién es el adelanto";
+      return;
+    }
+    if(tipoMov === "gasto" && movConcepto.value.trim() === ""){
+      movMsg.style.color = "#e05c5c";
+      movMsg.textContent = "Escribe el concepto del gasto";
+      return;
+    }
+    if(isNaN(monto) || monto <= 0){
+      movMsg.style.color = "#e05c5c";
+      movMsg.textContent = "Escribe un monto válido";
+      return;
+    }
+
+    guardandoMov = true;
+    movGuardar.disabled = true;
+    movMsg.style.color = "#9a9a9a";
+    movMsg.textContent = "Guardando...";
+
+    // Armar el documento
+    const datos = {
+      tipo: tipoMov,
+      monto: monto,
+      fecha: fechaHoy(),
+      creado: serverTimestamp()
+    };
+
+    if(tipoMov === "gasto"){
+      datos.concepto = movConcepto.value.trim();
+    } else {
+      datos.quien = quienAdelanto === "R" ? "recepcion" : parseInt(quienAdelanto, 10);
+      datos.concepto = movConcepto.value.trim() || "Adelanto";
+    }
+
+    try{
+      await addDoc(collection(db, "movimientos"), datos);
+      modalMov.classList.remove("abierto");
+    } catch(err){
+      movMsg.style.color = "#e05c5c";
+      movMsg.textContent = "Error al guardar: " + err.message;
+    }
+
+    guardandoMov = false;
+    movGuardar.disabled = false;
+  });
+
+  // ----- Lista de movimientos de hoy (tiempo real) -----
+  const listaMovimientos = document.getElementById("listaMovimientos");
+  const totalMovimientos = document.getElementById("totalMovimientos");
+
+  const consultaMovHoy = query(
+    collection(db, "movimientos"),
+    where("fecha", "==", fechaHoy())
+  );
+
+  onSnapshot(consultaMovHoy, function(snap){
+    const movs = [];
+    snap.forEach(function(d){
+      movs.push({ id: d.id, ...d.data() });
+    });
+
+    movs.sort(function(a, b){
+      const ta = a.creado ? a.creado.toMillis() : Date.now();
+      const tb = b.creado ? b.creado.toMillis() : Date.now();
+      return tb - ta;
+    });
+
+    let total = 0;
+    movs.forEach(function(m){ total += m.monto; });
+    totalMovimientos.textContent = "−" + formatoDinero(total);
+
+    if(movs.length === 0){
+      listaMovimientos.innerHTML = '<div class="vacio">Sin gastos ni adelantos hoy.</div>';
+      return;
+    }
+
+    listaMovimientos.innerHTML = "";
+    movs.forEach(function(m){
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjetaMov";
+
+      const info = document.createElement("div");
+      info.className = "info";
+
+      const concepto = document.createElement("div");
+      concepto.className = "concepto";
+      concepto.textContent = m.concepto;
+
+      const quien = document.createElement("div");
+      quien.className = "quien";
+      if(m.tipo === "adelanto"){
+        quien.textContent = m.quien === "recepcion" ? "Recepción" : "Barbero " + m.quien;
+      } else {
+        quien.textContent = "Gasto operativo";
+      }
+
+      const hora = document.createElement("div");
+      hora.className = "hora";
+      hora.textContent = formatoHora(m.creado);
+
+      const etiqueta = document.createElement("span");
+      etiqueta.className = "etiqueta " + m.tipo;
+      etiqueta.textContent = m.tipo === "gasto" ? "Gasto" : "Adelanto";
+
+      info.appendChild(concepto);
+      info.appendChild(quien);
+      info.appendChild(hora);
+      info.appendChild(etiqueta);
+
+      const monto = document.createElement("div");
+      monto.className = "monto";
+      monto.textContent = "−" + formatoDinero(m.monto);
+
+      tarjeta.appendChild(info);
+      tarjeta.appendChild(monto);
+      listaMovimientos.appendChild(tarjeta);
+    });
+  }, function(err){
+    mostrarError(err);
+  });
+
+  // ============================================================
   // BOTÓN TEMPORAL: CREAR TICKET DE PRUEBA
-  // (simula lo que hará bg18.html — se quita en esa capa)
   // ============================================================
   const btnPrueba = document.getElementById("btnTicketPrueba");
   const ejemplos = [
@@ -676,7 +961,6 @@
   const listaPendientes    = document.getElementById("listaPendientes");
   const contadorPendientes = document.getElementById("contadorPendientes");
 
-  // Modal de pendiente
   const modalPendiente = document.getElementById("modalPendiente");
   const pendBarbero    = document.getElementById("pendBarbero");
   const pendServicios  = document.getElementById("pendServicios");
@@ -687,8 +971,8 @@
   const pendCancelar   = document.getElementById("pendCancelar");
   const pendMsg        = document.getElementById("pendMsg");
 
-  let pendienteAbierto = null;   // datos del ticket que se está cobrando
-  let procesando = false;        // flag para evitar duplicados
+  let pendienteAbierto = null;
+  let procesando = false;
   let confirmandoDescarte = false;
 
   function abrirModalPendiente(p){
@@ -712,7 +996,6 @@
 
   pendCancelar.addEventListener("click", cerrarModalPendiente);
 
-  // ----- Cobrar pendiente: batch atómico (guardar ticket + borrar pendiente) -----
   async function cobrarPendiente(metodo){
     if(procesando || !pendienteAbierto) return;
 
@@ -732,7 +1015,6 @@
     try{
       const batch = writeBatch(db);
 
-      // 1) Crear el ticket cobrado
       const nuevoTicket = doc(collection(db, "tickets"));
       batch.set(nuevoTicket, {
         barbero: pendienteAbierto.barbero,
@@ -746,10 +1028,8 @@
         creado: serverTimestamp()
       });
 
-      // 2) Borrar el pendiente
       batch.delete(doc(db, "pendientes", pendienteAbierto.id));
 
-      // Todo o nada
       await batch.commit();
       cerrarModalPendiente();
     } catch(err){
@@ -764,7 +1044,6 @@
   pendEfectivo.addEventListener("click", function(){ cobrarPendiente("efectivo"); });
   pendTarjeta.addEventListener("click", function(){ cobrarPendiente("tarjeta"); });
 
-  // ----- Descartar pendiente (doble toque para confirmar) -----
   pendDescartar.addEventListener("click", async function(){
     if(procesando || !pendienteAbierto) return;
 
@@ -787,21 +1066,18 @@
     }
   });
 
-  // ----- Escuchar pendientes en tiempo real -----
   onSnapshot(collection(db, "pendientes"), function(snap){
     const pendientes = [];
     snap.forEach(function(d){
       pendientes.push({ id: d.id, ...d.data() });
     });
 
-    // Más antiguos primero (orden de llegada)
     pendientes.sort(function(a, b){
       const ta = a.creado ? a.creado.toMillis() : Date.now();
       const tb = b.creado ? b.creado.toMillis() : Date.now();
       return ta - tb;
     });
 
-    // Contador
     if(pendientes.length > 0){
       contadorPendientes.style.display = "inline-block";
       contadorPendientes.textContent = pendientes.length;
@@ -867,7 +1143,7 @@
   });
 
   // ============================================================
-  // COBROS DE HOY (en tiempo real, igual que la capa anterior)
+  // COBROS DE HOY (en tiempo real)
   // ============================================================
   const listaCobros = document.getElementById("listaCobros");
   const totalDia    = document.getElementById("totalDia");
