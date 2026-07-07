@@ -198,6 +198,278 @@
     margin-top:16px;
   }
 
+  /* ===== TICKET ACTUAL ===== */
+  .tituloSeccion{
+    font-size:12px;
+    color:var(--texto-suave);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin:24px 0 10px;
+  }
+  .cardTicket{
+    background:linear-gradient(135deg, #241d10 0%, var(--panel) 60%);
+    border:1px solid #4a3a1c;
+    border-radius:16px;
+    padding:18px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.35);
+  }
+  .filaTotal{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .filaTotal .textoTotal{
+    color:var(--texto-suave);
+    font-size:14px;
+  }
+  #totalTicket{
+    font-size:38px;
+    font-weight:900;
+    color:var(--ambar-claro);
+    text-shadow:0 0 18px rgba(232,163,61,0.35);
+  }
+  #itemsTicket{
+    margin-top:6px;
+    display:flex;
+    flex-direction:column;
+  }
+  .itemTicket{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    padding:10px 0;
+    border-top:1px solid rgba(255,255,255,0.07);
+    font-size:14px;
+  }
+  .itemTicket .nomItem{
+    flex:1;
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .itemTicket .precioItem{ font-weight:700; white-space:nowrap; }
+  .btnQuitarItem{
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    border:1px solid #5c3030;
+    background:none;
+    color:var(--rojo);
+    font-size:14px;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+
+  /* ===== CATÁLOGO ===== */
+  .gridServicios{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .btnServicio{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:13px;
+    padding:14px;
+    text-align:left;
+    color:var(--texto);
+    cursor:pointer;
+    transition:border-color 0.1s, transform 0.05s;
+  }
+  .btnServicio:active{
+    border-color:var(--ambar);
+    transform:scale(0.98);
+  }
+  .btnServicio .nomServ{
+    font-size:14px;
+    font-weight:600;
+  }
+  .btnServicio .precioServ{
+    color:var(--ambar);
+    font-size:14px;
+    font-weight:700;
+    margin-top:4px;
+  }
+
+  /* ===== MONTO ESPECIAL ===== */
+  .chipsConcepto{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .chip{
+    padding:11px 4px;
+    font-size:13px;
+    font-weight:600;
+    border-radius:10px;
+    border:1px solid var(--borde);
+    background:var(--panel);
+    color:var(--texto);
+    cursor:pointer;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .chip.activo{
+    background:var(--ambar);
+    color:#121212;
+    border-color:var(--ambar);
+  }
+  #especialConcepto{
+    display:none;
+    width:100%;
+    padding:13px;
+    font-size:15px;
+    border-radius:11px;
+    border:1px solid var(--borde);
+    background:var(--panel);
+    color:var(--texto);
+    margin-bottom:10px;
+  }
+  #especialConcepto:focus{ outline:none; border-color:var(--ambar); }
+  .filaEspecial{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:10px;
+  }
+  #especialMonto{
+    width:100%;
+    padding:13px;
+    font-size:15px;
+    border-radius:11px;
+    border:1px solid var(--borde);
+    background:var(--panel);
+    color:var(--texto);
+  }
+  #especialMonto:focus{ outline:none; border-color:var(--ambar); }
+  #especialAgregar{
+    padding:13px 18px;
+    font-size:14px;
+    font-weight:700;
+    border:none;
+    border-radius:11px;
+    background:var(--panel2);
+    border:1px solid var(--borde);
+    color:var(--texto);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  #especialMsg{
+    color:var(--rojo);
+    font-size:13px;
+    margin-top:8px;
+    min-height:16px;
+  }
+
+  /* ===== BOTÓN ENVIAR ===== */
+  #btnEnviar{
+    width:100%;
+    margin-top:24px;
+    padding:17px;
+    font-size:17px;
+    font-weight:800;
+    border:none;
+    border-radius:14px;
+    background:linear-gradient(135deg, var(--ambar-claro), var(--ambar));
+    color:#121212;
+    cursor:pointer;
+    box-shadow:0 4px 18px rgba(232,163,61,0.25);
+  }
+  #btnEnviar:disabled{
+    background:var(--panel);
+    color:var(--texto-suave);
+    box-shadow:none;
+    border:1px solid var(--borde);
+    cursor:default;
+  }
+  #notaEnviar{
+    color:var(--texto-suave);
+    font-size:12px;
+    text-align:center;
+    margin-top:8px;
+    min-height:16px;
+  }
+
+  /* ===== MODAL DE MONTO (servicios "desde") ===== */
+  .fondoModal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.75);
+    z-index:100;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .fondoModal.abierto{ display:flex; }
+  .modal{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:18px 18px 0 0;
+    padding:22px 18px 28px;
+    width:100%;
+    max-width:600px;
+  }
+  @media(min-width:640px){
+    .fondoModal{ align-items:center; }
+    .modal{ border-radius:18px; }
+  }
+  .modal h3{ font-size:18px; margin-bottom:6px; }
+  .modal .subModal{
+    color:var(--texto-suave);
+    font-size:13px;
+    margin-bottom:14px;
+  }
+  .modal label{
+    display:block;
+    font-size:13px;
+    color:var(--texto-suave);
+    margin:14px 0 6px;
+  }
+  .modal input{
+    width:100%;
+    padding:14px;
+    font-size:18px;
+    border-radius:11px;
+    border:1px solid var(--borde);
+    background:var(--fondo);
+    color:var(--texto);
+    text-align:center;
+  }
+  .modal input:focus{ outline:none; border-color:var(--ambar); }
+  .btnModalPrincipal{
+    width:100%;
+    margin-top:16px;
+    padding:15px;
+    font-size:16px;
+    font-weight:700;
+    border:none;
+    border-radius:12px;
+    background:var(--ambar);
+    color:#121212;
+    cursor:pointer;
+  }
+  .btnModalCancelar{
+    width:100%;
+    margin-top:10px;
+    padding:12px;
+    font-size:14px;
+    background:none;
+    border:1px solid var(--borde);
+    color:var(--texto-suave);
+    border-radius:10px;
+    cursor:pointer;
+  }
+  .msgModal{
+    color:var(--rojo);
+    font-size:13px;
+    margin-top:8px;
+    min-height:16px;
+    text-align:center;
+  }
+
   #detalleError{
     display:none;
     margin-top:16px;
@@ -265,12 +537,53 @@
       <div id="numClientes">0</div>
     </div>
 
-    <div class="avance">
-      Aquí irá tu ticket con el catálogo de servicios (próxima capa).
+    <div class="tituloSeccion">Ticket actual</div>
+    <div class="cardTicket">
+      <div class="filaTotal">
+        <span class="textoTotal">Total a cobrar</span>
+        <span id="totalTicket">$0</span>
+      </div>
+      <div id="itemsTicket"></div>
     </div>
+
+    <div class="tituloSeccion">Servicios</div>
+    <div class="gridServicios" id="gridServicios"></div>
+
+    <div class="tituloSeccion">Paquetes</div>
+    <div class="gridServicios" id="gridPaquetes"></div>
+
+    <div class="tituloSeccion">Monto especial</div>
+    <div class="chipsConcepto" id="chipsConcepto">
+      <button class="chip" data-con="Pigmento">Pigmento</button>
+      <button class="chip" data-con="Grecas">Grecas</button>
+      <button class="chip" data-con="Ondulado">Ondulado</button>
+      <button class="chip" data-con="Otro">Otro</button>
+    </div>
+    <input type="text" id="especialConcepto" placeholder="¿Qué servicio es?" autocomplete="off">
+    <div class="filaEspecial">
+      <input type="number" id="especialMonto" placeholder="$ Ingresa monto" inputmode="numeric" min="0">
+      <button id="especialAgregar">+ Agregar</button>
+    </div>
+    <div id="especialMsg"></div>
+
+    <button id="btnEnviar" disabled>Enviar ticket</button>
+    <div id="notaEnviar">El envío se activa en la siguiente capa.</div>
 
     <div id="detalleError"></div>
   </main>
+</div>
+
+<!-- MODAL DE MONTO PARA SERVICIOS "DESDE" -->
+<div class="fondoModal" id="modalMonto">
+  <div class="modal">
+    <h3 id="montoTitulo">Servicio</h3>
+    <div class="subModal" id="montoSub">Ajusta el monto</div>
+    <label>Monto ($)</label>
+    <input type="number" id="montoInput" inputmode="numeric" min="0">
+    <button class="btnModalPrincipal" id="montoAgregar">Agregar al ticket</button>
+    <div class="msgModal" id="montoMsg"></div>
+    <button class="btnModalCancelar" id="montoCancelar">Cancelar</button>
+  </div>
 </div>
 
 <script type="module">
@@ -368,9 +681,248 @@
     pantallaPin.style.display = "none";
     pantallaBarbero.style.display = "block";
 
+    renderCatalogo();
+    limpiarTicket();
     escucharClientesHoy();
     return true;
   }
+
+  // ============================================================
+  // CATÁLOGOS (regular y VIP)
+  // ============================================================
+  const CATALOGO_REGULAR = {
+    servicios: [
+      { n: "Corte de cabello",  p: 150 },
+      { n: "Arreglo de barba",  p: 150 },
+      { n: "Retoque contorno",  p: 90 },
+      { n: "Facial exfoliante", p: 70 },
+      { n: "Carbón activado",   p: 60 },
+      { n: "Limpieza profunda", p: 120 },
+      { n: "Limpieza de cejas", p: 50 },
+      { n: "Limpieza oídos",    p: 100 },
+      { n: "Pigmentado barba",  p: 90,  desde: true },
+      { n: "Diseño grecas",     p: 30,  desde: true }
+    ],
+    paquetes: [
+      { n: "Paq. Barbón",     p: 250 },
+      { n: "Paq. Plus+",      p: 250 },
+      { n: "Paq. Papi Chulo", p: 330 },
+      { n: "Paq. VIP",        p: 300 },
+      { n: "Paq. Patrón",     p: 370 },
+      { n: "Paq. Rey",        p: 570 }
+    ]
+  };
+
+  const CATALOGO_VIP = {
+    servicios: [
+      { n: "Corte de cabello",  p: 200 },
+      { n: "Arreglo de barba",  p: 200 },
+      { n: "Facial exfoliante", p: 80 },
+      { n: "Carbón activado",   p: 70 },
+      { n: "Limpieza profunda", p: 150 },
+      { n: "Limpieza de cejas", p: 60 },
+      { n: "Limpieza oídos",    p: 130 },
+      { n: "Pigmentado barba",  p: 150, desde: true },
+      { n: "Diseño grecas",     p: 150, desde: true }
+    ],
+    paquetes: [
+      { n: "Paq. Barbón",     p: 330 },
+      { n: "Paq. Plus+",      p: 330 },
+      { n: "Paq. Papi Chulo", p: 410 },
+      { n: "Paq. VIP",        p: 370 },
+      { n: "Paq. Patrón",     p: 470 },
+      { n: "Paq. Rey",        p: 700 }
+    ]
+  };
+
+  const gridServicios = document.getElementById("gridServicios");
+  const gridPaquetes  = document.getElementById("gridPaquetes");
+
+  function renderCatalogo(){
+    const cat = barberoActual.vip ? CATALOGO_VIP : CATALOGO_REGULAR;
+
+    function pintar(lista, contenedor){
+      contenedor.innerHTML = "";
+      lista.forEach(function(s){
+        const btn = document.createElement("button");
+        btn.className = "btnServicio";
+
+        const nom = document.createElement("div");
+        nom.className = "nomServ";
+        nom.textContent = s.n;
+
+        const precio = document.createElement("div");
+        precio.className = "precioServ";
+        precio.textContent = (s.desde ? "desde " : "") + formatoDinero(s.p);
+
+        btn.appendChild(nom);
+        btn.appendChild(precio);
+
+        btn.addEventListener("click", function(){
+          if(s.desde){
+            abrirModalMonto(s.n, s.p);
+          } else {
+            agregarItem(s.n, s.p);
+          }
+        });
+
+        contenedor.appendChild(btn);
+      });
+    }
+
+    pintar(cat.servicios, gridServicios);
+    pintar(cat.paquetes, gridPaquetes);
+  }
+
+  // ============================================================
+  // TICKET ACTUAL
+  // ============================================================
+  const totalTicket = document.getElementById("totalTicket");
+  const itemsTicket = document.getElementById("itemsTicket");
+  const btnEnviar   = document.getElementById("btnEnviar");
+
+  let itemsActuales = []; // [{concepto, monto}]
+
+  function limpiarTicket(){
+    itemsActuales = [];
+    renderTicket();
+  }
+
+  function agregarItem(concepto, monto){
+    itemsActuales.push({ concepto: concepto, monto: monto });
+    renderTicket();
+  }
+
+  function renderTicket(){
+    let total = 0;
+    itemsActuales.forEach(function(i){ total += i.monto; });
+    totalTicket.textContent = formatoDinero(total);
+
+    itemsTicket.innerHTML = "";
+    itemsActuales.forEach(function(i, idx){
+      const fila = document.createElement("div");
+      fila.className = "itemTicket";
+
+      const nom = document.createElement("span");
+      nom.className = "nomItem";
+      nom.textContent = i.concepto;
+
+      const precio = document.createElement("span");
+      precio.className = "precioItem";
+      precio.textContent = formatoDinero(i.monto);
+
+      const quitar = document.createElement("button");
+      quitar.className = "btnQuitarItem";
+      quitar.textContent = "✕";
+      quitar.addEventListener("click", function(){
+        itemsActuales.splice(idx, 1);
+        renderTicket();
+      });
+
+      fila.appendChild(nom);
+      fila.appendChild(precio);
+      fila.appendChild(quitar);
+      itemsTicket.appendChild(fila);
+    });
+
+    // El envío se habilita en la siguiente capa
+    btnEnviar.disabled = true;
+  }
+
+  // ============================================================
+  // MODAL DE MONTO (servicios "desde")
+  // ============================================================
+  const modalMonto    = document.getElementById("modalMonto");
+  const montoTitulo   = document.getElementById("montoTitulo");
+  const montoSub      = document.getElementById("montoSub");
+  const montoInput    = document.getElementById("montoInput");
+  const montoAgregar  = document.getElementById("montoAgregar");
+  const montoCancelar = document.getElementById("montoCancelar");
+  const montoMsg      = document.getElementById("montoMsg");
+
+  let servicioDesde = null;
+
+  function abrirModalMonto(nombre, base){
+    servicioDesde = nombre;
+    montoTitulo.textContent = nombre;
+    montoSub.textContent = "Precio desde " + formatoDinero(base) + " — ajusta el monto";
+    montoInput.value = base;
+    montoMsg.textContent = "";
+    modalMonto.classList.add("abierto");
+  }
+
+  montoCancelar.addEventListener("click", function(){
+    modalMonto.classList.remove("abierto");
+    servicioDesde = null;
+  });
+
+  montoAgregar.addEventListener("click", function(){
+    const monto = parseFloat(montoInput.value);
+    if(isNaN(monto) || monto <= 0){
+      montoMsg.textContent = "Escribe un monto válido";
+      return;
+    }
+    agregarItem(servicioDesde, monto);
+    modalMonto.classList.remove("abierto");
+    servicioDesde = null;
+  });
+
+  // ============================================================
+  // MONTO ESPECIAL (Pigmento / Grecas / Ondulado / Otro)
+  // ============================================================
+  const chipsConcepto    = document.getElementById("chipsConcepto");
+  const especialConcepto = document.getElementById("especialConcepto");
+  const especialMonto    = document.getElementById("especialMonto");
+  const especialAgregar  = document.getElementById("especialAgregar");
+  const especialMsg      = document.getElementById("especialMsg");
+
+  let conceptoEspecial = null;
+
+  chipsConcepto.addEventListener("click", function(e){
+    const chip = e.target.closest(".chip");
+    if(!chip) return;
+    chipsConcepto.querySelectorAll(".chip").forEach(function(c){
+      c.classList.remove("activo");
+    });
+    chip.classList.add("activo");
+    conceptoEspecial = chip.dataset.con;
+    especialMsg.textContent = "";
+    // Si es "Otro", pedir el nombre del servicio
+    especialConcepto.style.display = conceptoEspecial === "Otro" ? "block" : "none";
+  });
+
+  especialAgregar.addEventListener("click", function(){
+    const monto = parseFloat(especialMonto.value);
+
+    if(conceptoEspecial === null){
+      especialMsg.textContent = "Elige el concepto (Pigmento, Grecas, Ondulado u Otro)";
+      return;
+    }
+    let concepto = conceptoEspecial;
+    if(conceptoEspecial === "Otro"){
+      concepto = especialConcepto.value.trim();
+      if(concepto === ""){
+        especialMsg.textContent = "Escribe qué servicio es";
+        return;
+      }
+    }
+    if(isNaN(monto) || monto <= 0){
+      especialMsg.textContent = "Escribe un monto válido";
+      return;
+    }
+
+    agregarItem(concepto, monto);
+
+    // Limpiar el formulario especial
+    especialMsg.textContent = "";
+    especialMonto.value = "";
+    especialConcepto.value = "";
+    especialConcepto.style.display = "none";
+    conceptoEspecial = null;
+    chipsConcepto.querySelectorAll(".chip").forEach(function(c){
+      c.classList.remove("activo");
+    });
+  });
 
   // ----- Clientes de hoy (tickets ya cobrados en caja) -----
   const numClientes = document.getElementById("numClientes");
