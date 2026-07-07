@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caja — Barbería Garage</title>
+<style>
+  :root{
+    --fondo:#121212;
+    --panel:#1c1c1c;
+    --borde:#2c2c2c;
+    --texto:#eaeaea;
+    --texto-suave:#9a9a9a;
+    --ambar:#e8a33d;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background:var(--fondo);
+    color:var(--texto);
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height:100vh;
+  }
+
+  /* ===== PANTALLA DE LOGIN ===== */
+  #pantallaLogin{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .cajaLogin{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:14px;
+    padding:32px 24px;
+    width:100%;
+    max-width:360px;
+    text-align:center;
+  }
+  .cajaLogin h1{
+    font-size:22px;
+    margin-bottom:4px;
+  }
+  .cajaLogin h1 span{ color:var(--ambar); }
+  .cajaLogin p{
+    color:var(--texto-suave);
+    font-size:14px;
+    margin-bottom:24px;
+  }
+  .cajaLogin input{
+    width:100%;
+    padding:14px;
+    font-size:16px;
+    border-radius:10px;
+    border:1px solid var(--borde);
+    background:var(--fondo);
+    color:var(--texto);
+    text-align:center;
+    margin-bottom:12px;
+  }
+  .cajaLogin input:focus{
+    outline:none;
+    border-color:var(--ambar);
+  }
+  .cajaLogin button{
+    width:100%;
+    padding:14px;
+    font-size:16px;
+    font-weight:600;
+    border:none;
+    border-radius:10px;
+    background:var(--ambar);
+    color:#121212;
+    cursor:pointer;
+  }
+  #msgLogin{
+    color:#e05c5c;
+    font-size:14px;
+    margin-top:10px;
+    min-height:18px;
+  }
+
+  /* ===== PANTALLA PRINCIPAL ===== */
+  #pantallaCaja{ display:none; }
+  header{
+    background:var(--panel);
+    border-bottom:1px solid var(--borde);
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  header h2{ font-size:18px; }
+  header h2 span{ color:var(--ambar); }
+  #btnSalir{
+    background:none;
+    border:1px solid var(--borde);
+    color:var(--texto-suave);
+    padding:8px 14px;
+    border-radius:8px;
+    font-size:14px;
+    cursor:pointer;
+  }
+  main{
+    padding:20px 16px;
+    max-width:600px;
+    margin:0 auto;
+  }
+  .aviso{
+    background:var(--panel);
+    border:1px dashed var(--borde);
+    border-radius:12px;
+    padding:24px;
+    text-align:center;
+    color:var(--texto-suave);
+    font-size:15px;
+  }
+</style>
+</head>
+<body>
+
+<!-- PANTALLA DE LOGIN -->
+<div id="pantallaLogin">
+  <div class="cajaLogin">
+    <h1>Barbería <span>Garage</span></h1>
+    <p>Panel de caja</p>
+    <input type="password" id="inputPass" placeholder="Contraseña" autocomplete="off">
+    <button id="btnEntrar">Entrar</button>
+    <div id="msgLogin"></div>
+  </div>
+</div>
+
+<!-- PANTALLA PRINCIPAL (por ahora vacía) -->
+<div id="pantallaCaja">
+  <header>
+    <h2>Caja — <span>Garage</span></h2>
+    <button id="btnSalir">Salir</button>
+  </header>
+  <main>
+    <div class="aviso">
+      Sesión iniciada correctamente.<br>
+      Aquí irán los tickets, cobros y el resumen del día (próximas capas).
+    </div>
+  </main>
+</div>
+
+<script>
+  // ===== CONFIGURACIÓN DE SESIÓN =====
+  const PASS_CAJA = "peluqueriacochera1720";
+  const CLAVE_SESION = "garageSesion";
+  const DURACION_SESION = 5 * 60 * 60 * 1000; // 5 horas en milisegundos
+
+  const pantallaLogin = document.getElementById("pantallaLogin");
+  const pantallaCaja  = document.getElementById("pantallaCaja");
+  const inputPass     = document.getElementById("inputPass");
+  const btnEntrar     = document.getElementById("btnEntrar");
+  const btnSalir      = document.getElementById("btnSalir");
+  const msgLogin      = document.getElementById("msgLogin");
+
+  // ¿Hay una sesión válida guardada?
+  function sesionValida(){
+    const guardado = localStorage.getItem(CLAVE_SESION);
+    if(!guardado) return false;
+    const inicio = parseInt(guardado, 10);
+    if(isNaN(inicio)) return false;
+    return (Date.now() - inicio) < DURACION_SESION;
+  }
+
+  function mostrarCaja(){
+    pantallaLogin.style.display = "none";
+    pantallaCaja.style.display  = "block";
+  }
+
+  function mostrarLogin(){
+    pantallaCaja.style.display  = "none";
+    pantallaLogin.style.display = "flex";
+    inputPass.value = "";
+    msgLogin.textContent = "";
+  }
+
+  function intentarEntrar(){
+    if(inputPass.value === PASS_CAJA){
+      localStorage.setItem(CLAVE_SESION, Date.now().toString());
+      mostrarCaja();
+    } else {
+      msgLogin.textContent = "Contraseña incorrecta";
+      inputPass.value = "";
+    }
+  }
+
+  btnEntrar.addEventListener("click", intentarEntrar);
+  inputPass.addEventListener("keydown", function(e){
+    if(e.key === "Enter") intentarEntrar();
+  });
+
+  btnSalir.addEventListener("click", function(){
+    localStorage.removeItem(CLAVE_SESION);
+    mostrarLogin();
+  });
+
+  // Al abrir la página: si la sesión sigue viva, entra directo
+  if(sesionValida()){
+    mostrarCaja();
+  }
+</script>
+
+</body>
+</html>
