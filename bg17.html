@@ -526,7 +526,10 @@
     grid-template-columns:repeat(6, 1fr);
   }
   .btnBarbero{
-    padding:12px 0;
+    padding:12px 2px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
     font-size:15px;
     font-weight:600;
     border-radius:10px;
@@ -754,6 +757,9 @@
   <div class="modal">
     <h3 id="editTitulo">Editar Barbero</h3>
 
+    <label>Nombre</label>
+    <input type="text" id="editNombre" placeholder="Ej. Ale" autocomplete="off">
+
     <label>Porcentaje de destajo (%)</label>
     <input type="number" id="editPorcentaje" placeholder="40" inputmode="numeric" min="0" max="100">
 
@@ -763,7 +769,7 @@
     <label>Opciones</label>
     <div class="filaToggles">
       <button class="btnToggle" id="editVip">VIP</button>
-      <button class="btnToggle" id="editTransferencia">Solo transferencia</button>
+      <button class="btnToggle" id="editConfirmar">Agendar con confirmación</button>
     </div>
 
     <label>Días de descanso</label>
@@ -868,7 +874,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
-    getFirestore, collection, getDocs, addDoc, doc, updateDoc,
+    getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteField,
     query, where, onSnapshot, serverTimestamp, writeBatch
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -928,6 +934,36 @@
     const ampm = h >= 12 ? "p.m." : "a.m.";
     h = h % 12; if(h === 0) h = 12;
     return h + ":" + m + " " + ampm;
+  }
+
+  // ----- Nombres de barberos -----
+  // Devuelve el nombre del barbero (o "Barbero N" si aún no tiene nombre)
+  function nombreBarbero(num){
+    const b = barberosCache.find(function(x){ return x.num === num; });
+    return (b && b.nombre) ? b.nombre : "Barbero " + num;
+  }
+
+  // Nombre corto para botones (primera palabra)
+  function nombreCorto(num){
+    const b = barberosCache.find(function(x){ return x.num === num; });
+    if(b && b.nombre) return b.nombre.split(" ")[0];
+    return String(num);
+  }
+
+  // Compatibilidad: lee la marca de confirmación (o el campo viejo "transferencia")
+  function tieneConfirmacion(b){
+    return b.confirmarCita !== undefined ? !!b.confirmarCita : !!b.transferencia;
+  }
+
+  // Actualiza los botones de selección de barbero con sus nombres
+  function actualizarNombresBotones(){
+    document.querySelectorAll("#filaBarberos .btnBarbero").forEach(function(btn){
+      btn.textContent = nombreCorto(parseInt(btn.dataset.num, 10));
+    });
+    document.querySelectorAll("#movFilaQuien .btnBarbero").forEach(function(btn){
+      if(btn.dataset.quien === "R") return;
+      btn.textContent = nombreCorto(parseInt(btn.dataset.quien, 10));
+    });
   }
 
   // ============================================================
@@ -994,11 +1030,11 @@
 
   // ----- Barberos: valores iniciales -----
   const BARBEROS_INICIALES = [
-    { num: 1, porcentaje: 60,  pin: "1111", vip: true,  transferencia: false, descanso: ["miércoles"] },
-    { num: 2, porcentaje: 40,  pin: "2222", vip: false, transferencia: false, descanso: ["domingo"] },
-    { num: 3, porcentaje: 40,  pin: "3333", vip: false, transferencia: false, descanso: ["lunes", "martes"] },
-    { num: 4, porcentaje: 40,  pin: "4444", vip: false, transferencia: false, descanso: ["miércoles"] },
-    { num: 5, porcentaje: 100, pin: "5555", vip: false, transferencia: true,  descanso: [] }
+    { num: 1, nombre: "", porcentaje: 60,  pin: "1111", vip: true,  confirmarCita: false, descanso: ["miércoles"] },
+    { num: 2, nombre: "", porcentaje: 40,  pin: "2222", vip: false, confirmarCita: false, descanso: ["domingo"] },
+    { num: 3, nombre: "", porcentaje: 40,  pin: "3333", vip: false, confirmarCita: false, descanso: ["lunes", "martes"] },
+    { num: 4, nombre: "", porcentaje: 40,  pin: "4444", vip: false, confirmarCita: false, descanso: ["miércoles"] },
+    { num: 5, nombre: "", porcentaje: 100, pin: "5555", vip: false, confirmarCita: true,  descanso: [] }
   ];
 
   const listaBarberos = document.getElementById("listaBarberos");
@@ -1021,10 +1057,11 @@
         const ref = doc(db, "barberos", String(b.num));
         batch.set(ref, {
           num: b.num,
+          nombre: b.nombre,
           porcentaje: b.porcentaje,
           pin: b.pin,
           vip: b.vip,
-          transferencia: b.transferencia,
+          confirmarCita: b.confirmarCita,
           descanso: b.descanso,
           creado: serverTimestamp()
         });
@@ -1046,6 +1083,7 @@
 
     barberos.sort(function(a, b){ return a.num - b.num; });
     barberosCache = barberos;
+    actualizarNombresBotones();
 
     if(barberos.length === 0){
       // No hay barberos: mostrar botón para crearlos
@@ -1075,7 +1113,7 @@
 
       const nombre = document.createElement("div");
       nombre.className = "nombre";
-      nombre.textContent = "Barbero " + b.num;
+      nombre.textContent = b.nombre ? (b.nombre + " · Barbero " + b.num) : ("Barbero " + b.num);
 
       const porcentaje = document.createElement("div");
       porcentaje.className = "porcentaje";
@@ -1102,10 +1140,10 @@
         et.style.marginRight = "6px";
         tarjeta.appendChild(et);
       }
-      if(b.transferencia){
+      if(tieneConfirmacion(b)){
         const et = document.createElement("span");
         et.className = "etiqueta transferencia";
-        et.textContent = "Solo transferencia";
+        et.textContent = "Agendar con confirmación";
         tarjeta.appendChild(et);
       }
 
@@ -1126,10 +1164,11 @@
   // ----- Editar barbero (Capa 2B) -----
   const modalEditar       = document.getElementById("modalEditarBarbero");
   const editTitulo        = document.getElementById("editTitulo");
+  const editNombre        = document.getElementById("editNombre");
   const editPorcentaje    = document.getElementById("editPorcentaje");
   const editPin           = document.getElementById("editPin");
   const editVip           = document.getElementById("editVip");
-  const editTransferencia = document.getElementById("editTransferencia");
+  const editConfirmar     = document.getElementById("editConfirmar");
   const editDias          = document.getElementById("editDias");
   const editGuardar       = document.getElementById("editGuardar");
   const editCancelar      = document.getElementById("editCancelar");
@@ -1141,10 +1180,11 @@
   function abrirEditarBarbero(b){
     barberoEditando = b;
     editTitulo.textContent = "Editar Barbero " + b.num;
+    editNombre.value = b.nombre || "";
     editPorcentaje.value = b.porcentaje;
     editPin.value = b.pin;
     editVip.classList.toggle("activo", !!b.vip);
-    editTransferencia.classList.toggle("activo", !!b.transferencia);
+    editConfirmar.classList.toggle("activo", tieneConfirmacion(b));
     editDias.querySelectorAll(".btnDia").forEach(function(btn){
       const activo = (b.descanso || []).includes(btn.dataset.dia);
       btn.classList.toggle("activo", activo);
@@ -1162,8 +1202,8 @@
     editVip.classList.toggle("activo");
   });
 
-  editTransferencia.addEventListener("click", function(){
-    editTransferencia.classList.toggle("activo");
+  editConfirmar.addEventListener("click", function(){
+    editConfirmar.classList.toggle("activo");
   });
 
   editDias.addEventListener("click", function(e){
@@ -1210,11 +1250,13 @@
 
     try{
       await updateDoc(doc(db, "barberos", barberoEditando.id), {
+        nombre: editNombre.value.trim(),
         porcentaje: porcentaje,
         pin: pin,
         vip: editVip.classList.contains("activo"),
-        transferencia: editTransferencia.classList.contains("activo"),
-        descanso: descanso
+        confirmarCita: editConfirmar.classList.contains("activo"),
+        descanso: descanso,
+        transferencia: deleteField() // limpia el campo viejo si existía
       });
       modalEditar.classList.remove("abierto");
       barberoEditando = null;
@@ -1505,7 +1547,7 @@
       const quien = document.createElement("div");
       quien.className = "quien";
       if(m.tipo === "adelanto"){
-        quien.textContent = m.quien === "recepcion" ? "Recepción" : "Barbero " + m.quien;
+        quien.textContent = m.quien === "recepcion" ? "Recepción" : nombreBarbero(m.quien);
       } else {
         quien.textContent = "Gasto operativo";
       }
@@ -1588,7 +1630,7 @@
     pendienteAbierto = p;
     procesando = false;
     confirmandoDescarte = false;
-    pendBarbero.textContent = "Barbero " + p.barbero;
+    pendBarbero.textContent = nombreBarbero(p.barbero);
     pendServicios.textContent = Array.isArray(p.servicios) ? p.servicios.join(" + ") : String(p.servicios || "");
     pendMonto.value = p.monto;
     pendMsg.textContent = "";
@@ -1709,7 +1751,7 @@
 
       const nombre = document.createElement("div");
       nombre.className = "barbero";
-      nombre.textContent = "Barbero " + p.barbero;
+      nombre.textContent = nombreBarbero(p.barbero);
 
       const servicios = document.createElement("div");
       servicios.className = "servicios";
@@ -1798,7 +1840,7 @@
 
       const nombre = document.createElement("div");
       nombre.className = "barbero";
-      nombre.textContent = "Barbero " + c.barbero;
+      nombre.textContent = nombreBarbero(c.barbero);
 
       const concepto = document.createElement("div");
       concepto.className = "concepto";
