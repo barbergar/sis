@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barbería Garage — Barbero</title>
+<style>
+  :root{
+    --fondo:#0d0d0d;
+    --panel:#181818;
+    --panel2:#1f1f1f;
+    --borde:#2c2c2c;
+    --texto:#f2f2f2;
+    --texto-suave:#9a9a9a;
+    --ambar:#e8a33d;
+    --ambar-claro:#f5c26b;
+    --verde:#4caf50;
+    --rojo:#e05c5c;
+    --azul:#8ab8e8;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background:var(--fondo);
+    color:var(--texto);
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height:100vh;
+  }
+  button{ font-family:inherit; }
+
+  /* ===== PANTALLA DE PIN ===== */
+  #pantallaPin{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    background:
+      radial-gradient(ellipse at top, rgba(232,163,61,0.08), transparent 55%),
+      var(--fondo);
+  }
+  .cajaPin{
+    width:100%;
+    max-width:340px;
+    text-align:center;
+  }
+  .logoPin{
+    font-size:26px;
+    font-weight:800;
+    letter-spacing:0.5px;
+  }
+  .logoPin span{ color:var(--ambar); }
+  .subPin{
+    color:var(--texto-suave);
+    font-size:14px;
+    margin-top:4px;
+    margin-bottom:28px;
+  }
+
+  .puntosPin{
+    display:flex;
+    justify-content:center;
+    gap:16px;
+    margin-bottom:28px;
+  }
+  .puntoPin{
+    width:16px;
+    height:16px;
+    border-radius:50%;
+    border:2px solid var(--borde);
+    transition:all 0.15s;
+  }
+  .puntoPin.lleno{
+    background:var(--ambar);
+    border-color:var(--ambar);
+    box-shadow:0 0 12px rgba(232,163,61,0.5);
+  }
+  .puntosPin.error .puntoPin{
+    border-color:var(--rojo);
+    background:transparent;
+    box-shadow:none;
+  }
+
+  .tecladoPin{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:14px;
+    max-width:280px;
+    margin:0 auto;
+  }
+  .tecla{
+    aspect-ratio:1;
+    border-radius:50%;
+    border:1px solid var(--borde);
+    background:var(--panel);
+    color:var(--texto);
+    font-size:24px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background 0.1s, transform 0.05s;
+  }
+  .tecla:active{
+    background:var(--ambar);
+    color:#121212;
+    transform:scale(0.95);
+  }
+  .tecla.accion{
+    border:none;
+    background:none;
+    font-size:15px;
+    color:var(--texto-suave);
+  }
+  #msgPin{
+    color:var(--rojo);
+    font-size:14px;
+    margin-top:20px;
+    min-height:18px;
+  }
+
+  /* ===== PANTALLA PRINCIPAL DEL BARBERO ===== */
+  #pantallaBarbero{ display:none; }
+  header{
+    background:linear-gradient(180deg, var(--panel) 0%, var(--fondo) 100%);
+    border-bottom:1px solid var(--borde);
+    padding:18px 16px;
+  }
+  .headerContenido{
+    max-width:600px;
+    margin:0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  #nombreBarbero{
+    font-size:24px;
+    font-weight:800;
+  }
+  #fechaHeader{
+    color:var(--texto-suave);
+    font-size:13px;
+    margin-top:2px;
+  }
+  #btnCerrarSesion{
+    background:none;
+    border:1px solid var(--borde);
+    color:var(--texto-suave);
+    padding:9px 15px;
+    border-radius:9px;
+    font-size:14px;
+    cursor:pointer;
+  }
+  main{
+    padding:16px 16px 60px;
+    max-width:600px;
+    margin:0 auto;
+  }
+
+  /* ===== TARJETA CLIENTES HOY ===== */
+  .cardClientes{
+    background:linear-gradient(135deg, var(--panel2) 0%, var(--panel) 100%);
+    border:1px solid var(--borde);
+    border-radius:16px;
+    padding:18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    box-shadow:0 4px 20px rgba(0,0,0,0.3);
+  }
+  .cardClientes .textos .titulo{
+    font-size:12px;
+    color:var(--texto-suave);
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .cardClientes .textos .sub{
+    font-size:13px;
+    color:var(--texto-suave);
+    margin-top:4px;
+  }
+  #numClientes{
+    font-size:44px;
+    font-weight:900;
+    color:var(--texto);
+  }
+  #prodHoy{
+    color:var(--ambar);
+    font-weight:700;
+  }
+
+  .avance{
+    background:var(--panel);
+    border:1px dashed var(--borde);
+    border-radius:14px;
+    padding:24px;
+    text-align:center;
+    color:var(--texto-suave);
+    font-size:14px;
+    margin-top:16px;
+  }
+
+  #detalleError{
+    display:none;
+    margin-top:16px;
+    background:#2a1a1a;
+    border:1px solid #5c3030;
+    border-radius:10px;
+    padding:14px;
+    font-size:13px;
+    color:#e0a0a0;
+    word-break:break-word;
+  }
+</style>
+</head>
+<body>
+
+<!-- PANTALLA DE PIN -->
+<div id="pantallaPin">
+  <div class="cajaPin">
+    <div class="logoPin">Barbería <span>Garage</span></div>
+    <div class="subPin">Ingresa tu PIN de barbero</div>
+
+    <div class="puntosPin" id="puntosPin">
+      <div class="puntoPin"></div>
+      <div class="puntoPin"></div>
+      <div class="puntoPin"></div>
+      <div class="puntoPin"></div>
+    </div>
+
+    <div class="tecladoPin" id="tecladoPin">
+      <button class="tecla" data-num="1">1</button>
+      <button class="tecla" data-num="2">2</button>
+      <button class="tecla" data-num="3">3</button>
+      <button class="tecla" data-num="4">4</button>
+      <button class="tecla" data-num="5">5</button>
+      <button class="tecla" data-num="6">6</button>
+      <button class="tecla" data-num="7">7</button>
+      <button class="tecla" data-num="8">8</button>
+      <button class="tecla" data-num="9">9</button>
+      <button class="tecla accion" data-accion="limpiar">Borrar</button>
+      <button class="tecla" data-num="0">0</button>
+      <button class="tecla accion" data-accion="quitar">⌫</button>
+    </div>
+
+    <div id="msgPin"></div>
+  </div>
+</div>
+
+<!-- PANTALLA PRINCIPAL DEL BARBERO -->
+<div id="pantallaBarbero">
+  <header>
+    <div class="headerContenido">
+      <div>
+        <div id="nombreBarbero">Barbero</div>
+        <div id="fechaHeader"></div>
+      </div>
+      <button id="btnCerrarSesion">Cerrar sesión</button>
+    </div>
+  </header>
+  <main>
+    <div class="cardClientes">
+      <div class="textos">
+        <div class="titulo">Clientes hoy</div>
+        <div class="sub" id="subClientes">Aún sin clientes</div>
+      </div>
+      <div id="numClientes">0</div>
+    </div>
+
+    <div class="avance">
+      Aquí irá tu ticket con el catálogo de servicios (próxima capa).
+    </div>
+
+    <div id="detalleError"></div>
+  </main>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore, collection, getDocs, doc, getDoc,
+    query, where, onSnapshot
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // ----- Configuración del proyecto "agend" -----
+  const firebaseConfig = {
+    apiKey: "AIzaSyCPJ_Sp727Gsq0qholS8466L2xoF6ju6Qs",
+    authDomain: "agend-1d0e5.firebaseapp.com",
+    projectId: "agend-1d0e5",
+    appId: "1:536059431228:web:f7a186659845111e09b639"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  // ----- Fechas -----
+  function fechaHoy(){
+    const d = new Date();
+    const a = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dia = String(d.getDate()).padStart(2, "0");
+    return a + "-" + m + "-" + dia;
+  }
+  function fechaLegible(){
+    const t = new Date().toLocaleDateString("es-MX", { weekday:"long", day:"numeric", month:"long" });
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+  document.getElementById("fechaHeader").textContent = fechaLegible();
+
+  function formatoDinero(n){
+    const r = Math.round(n * 100) / 100;
+    return "$" + r.toLocaleString("es-MX");
+  }
+
+  // ============================================================
+  // SESIÓN DEL BARBERO (5 horas por dispositivo)
+  // ============================================================
+  const CLAVE_SESION = "garageBarberoSesion";
+  const DURACION_SESION = 5 * 60 * 60 * 1000; // 5 horas
+
+  const pantallaPin     = document.getElementById("pantallaPin");
+  const pantallaBarbero = document.getElementById("pantallaBarbero");
+  const nombreBarberoEl = document.getElementById("nombreBarbero");
+  const btnCerrarSesion = document.getElementById("btnCerrarSesion");
+  const detalle         = document.getElementById("detalleError");
+
+  let barberoActual = null;   // { num, nombre, vip, porcentaje, ... }
+  let pararClientes = null;   // para detener el listener al cerrar sesión
+
+  function mostrarError(err){
+    detalle.style.display = "block";
+    detalle.textContent = "Detalle del error: " + err.message;
+  }
+
+  function leerSesion(){
+    try{
+      const s = JSON.parse(localStorage.getItem(CLAVE_SESION));
+      if(!s || !s.num || !s.inicio) return null;
+      if(Date.now() - s.inicio >= DURACION_SESION) return null;
+      return s;
+    } catch(e){ return null; }
+  }
+
+  function guardarSesion(num){
+    localStorage.setItem(CLAVE_SESION, JSON.stringify({ num: num, inicio: Date.now() }));
+  }
+
+  function cerrarSesion(){
+    localStorage.removeItem(CLAVE_SESION);
+    if(pararClientes){ pararClientes(); pararClientes = null; }
+    barberoActual = null;
+    pantallaBarbero.style.display = "none";
+    pantallaPin.style.display = "flex";
+    limpiarPin();
+  }
+
+  btnCerrarSesion.addEventListener("click", cerrarSesion);
+
+  // ============================================================
+  // ENTRAR: cargar datos del barbero y arrancar su pantalla
+  // ============================================================
+  async function entrarComoBarbero(num){
+    const s = await getDoc(doc(db, "barberos", String(num)));
+    if(!s.exists() || s.data().activo === false){
+      return false;
+    }
+    barberoActual = { id: s.id, ...s.data() };
+
+    nombreBarberoEl.textContent = barberoActual.nombre || ("Barbero " + barberoActual.num);
+    pantallaPin.style.display = "none";
+    pantallaBarbero.style.display = "block";
+
+    escucharClientesHoy();
+    return true;
+  }
+
+  // ----- Clientes de hoy (tickets ya cobrados en caja) -----
+  const numClientes = document.getElementById("numClientes");
+  const subClientes = document.getElementById("subClientes");
+
+  function escucharClientesHoy(){
+    const consulta = query(
+      collection(db, "tickets"),
+      where("fecha", "==", fechaHoy()),
+      where("barbero", "==", barberoActual.num)
+    );
+    pararClientes = onSnapshot(consulta, function(snap){
+      let total = 0;
+      snap.forEach(function(d){ total += d.data().monto; });
+      numClientes.textContent = snap.size;
+      if(snap.size === 0){
+        subClientes.textContent = "Aún sin clientes";
+      } else {
+        subClientes.innerHTML = 'Producción: <span id="prodHoy">' + formatoDinero(total) + '</span>';
+      }
+    }, function(err){ mostrarError(err); });
+  }
+
+  // ============================================================
+  // TECLADO DE PIN
+  // ============================================================
+  const puntosPin  = document.getElementById("puntosPin");
+  const tecladoPin = document.getElementById("tecladoPin");
+  const msgPin     = document.getElementById("msgPin");
+
+  let pinActual = "";
+  let validandoPin = false;
+
+  function pintarPuntos(){
+    const puntos = puntosPin.querySelectorAll(".puntoPin");
+    puntos.forEach(function(p, i){
+      p.classList.toggle("lleno", i < pinActual.length);
+    });
+  }
+
+  function limpiarPin(){
+    pinActual = "";
+    puntosPin.classList.remove("error");
+    msgPin.textContent = "";
+    pintarPuntos();
+  }
+
+  async function validarPin(){
+    if(validandoPin) return;
+    validandoPin = true;
+    msgPin.style.color = "#9a9a9a";
+    msgPin.textContent = "Verificando...";
+
+    try{
+      // Buscar barbero activo con ese PIN
+      const consulta = query(collection(db, "barberos"), where("pin", "==", pinActual));
+      const res = await getDocs(consulta);
+
+      let encontrado = null;
+      res.forEach(function(d){
+        const b = d.data();
+        if(b.activo !== false && encontrado === null) encontrado = b;
+      });
+
+      if(encontrado){
+        guardarSesion(encontrado.num);
+        await entrarComoBarbero(encontrado.num);
+        limpiarPin();
+      } else {
+        puntosPin.classList.add("error");
+        msgPin.style.color = "#e05c5c";
+        msgPin.textContent = "PIN incorrecto";
+        setTimeout(limpiarPin, 900);
+      }
+    } catch(err){
+      msgPin.style.color = "#e05c5c";
+      msgPin.textContent = "Error de conexión: " + err.message;
+      setTimeout(limpiarPin, 1500);
+    }
+
+    validandoPin = false;
+  }
+
+  tecladoPin.addEventListener("click", function(e){
+    const btn = e.target.closest(".tecla");
+    if(!btn || validandoPin) return;
+
+    if(btn.dataset.accion === "limpiar"){
+      limpiarPin();
+      return;
+    }
+    if(btn.dataset.accion === "quitar"){
+      pinActual = pinActual.slice(0, -1);
+      puntosPin.classList.remove("error");
+      msgPin.textContent = "";
+      pintarPuntos();
+      return;
+    }
+    if(pinActual.length >= 4) return;
+
+    pinActual += btn.dataset.num;
+    pintarPuntos();
+
+    if(pinActual.length === 4){
+      validarPin();
+    }
+  });
+
+  // ============================================================
+  // ARRANQUE: si hay sesión viva, entrar directo
+  // ============================================================
+  const sesion = leerSesion();
+  if(sesion){
+    entrarComoBarbero(sesion.num).then(function(ok){
+      if(!ok) cerrarSesion(); // barbero dado de baja o inexistente
+    }).catch(function(err){
+      mostrarError(err);
+    });
+  }
+</script>
+
+</body>
+</html>
