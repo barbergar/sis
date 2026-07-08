@@ -244,17 +244,6 @@
     color:var(--texto);
     cursor:pointer;
   }
-  #btnTicketPrueba{
-    width:100%;
-    padding:10px;
-    font-size:13px;
-    border:1px dashed var(--borde);
-    border-radius:10px;
-    background:none;
-    color:var(--texto-suave);
-    cursor:pointer;
-    margin-bottom:10px;
-  }
 
   /* ===== SECCIONES ===== */
   .tituloSeccion{
@@ -956,7 +945,6 @@
         <button class="btnSecundario" id="btnGasto">− Gasto</button>
         <button class="btnSecundario" id="btnAdelanto">− Adelanto</button>
       </div>
-      <button id="btnTicketPrueba">🧪 Ticket de prueba (temporal, se quita cuando exista bg18)</button>
 
       <div class="tituloSeccion">
         <span>Tickets pendientes</span>
@@ -2038,35 +2026,6 @@
       listaMovimientos.appendChild(tarjeta);
     });
   }, function(err){ mostrarError(err); });
-
-  // ============================================================
-  // BOTÓN TEMPORAL: TICKET DE PRUEBA
-  // ============================================================
-  const btnPrueba = document.getElementById("btnTicketPrueba");
-  const ejemplos = [
-    { barbero: 1, servicios: ["Corte VIP", "Arreglo barba VIP"], monto: 400 },
-    { barbero: 2, servicios: ["Corte"], monto: 150 },
-    { barbero: 3, servicios: ["Paquete Papi Chulo"], monto: 330 },
-    { barbero: 4, servicios: ["Corte", "Limpieza cejas"], monto: 200 },
-    { barbero: 5, servicios: ["Paquete Rey"], monto: 570 }
-  ];
-
-  btnPrueba.addEventListener("click", async function(){
-    btnPrueba.disabled = true;
-    const ej = ejemplos[Math.floor(Math.random() * ejemplos.length)];
-    try{
-      await addDoc(collection(db, "pendientes"), {
-        barbero: ej.barbero,
-        servicios: ej.servicios,
-        monto: ej.monto,
-        fecha: fechaHoy(),
-        creado: serverTimestamp()
-      });
-    } catch(err){
-      mostrarError(err);
-    }
-    btnPrueba.disabled = false;
-  });
 
   // ============================================================
   // TICKETS PENDIENTES (en tiempo real)
