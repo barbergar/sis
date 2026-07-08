@@ -1,0 +1,3042 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caja — Barbería Garage</title>
+<style>
+  :root{
+    --fondo:#121212;
+    --panel:#1c1c1c;
+    --borde:#2c2c2c;
+    --texto:#eaeaea;
+    --texto-suave:#9a9a9a;
+    --ambar:#e8a33d;
+    --verde:#4caf50;
+    --rojo:#e05c5c;
+    --azul:#8ab8e8;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background:var(--fondo);
+    color:var(--texto);
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height:100vh;
+  }
+  button{ font-family:inherit; }
+
+  /* ===== PANTALLA DE LOGIN ===== */
+  #pantallaLogin{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .cajaLogin{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:14px;
+    padding:32px 24px;
+    width:100%;
+    max-width:360px;
+    text-align:center;
+  }
+  .cajaLogin h1{ font-size:22px; margin-bottom:4px; }
+  .cajaLogin h1 span{ color:var(--ambar); }
+  .cajaLogin p{
+    color:var(--texto-suave);
+    font-size:14px;
+    margin-bottom:24px;
+  }
+  .cajaLogin input{
+    width:100%;
+    padding:14px;
+    font-size:16px;
+    border-radius:10px;
+    border:1px solid var(--borde);
+    background:var(--fondo);
+    color:var(--texto);
+    text-align:center;
+    margin-bottom:12px;
+  }
+  .cajaLogin input:focus{ outline:none; border-color:var(--ambar); }
+  .cajaLogin button{
+    width:100%;
+    padding:14px;
+    font-size:16px;
+    font-weight:600;
+    border:none;
+    border-radius:10px;
+    background:var(--ambar);
+    color:#121212;
+    cursor:pointer;
+  }
+  #msgLogin{
+    color:var(--rojo);
+    font-size:14px;
+    margin-top:10px;
+    min-height:18px;
+  }
+
+  /* ===== PANTALLA PRINCIPAL ===== */
+  #pantallaCaja{ display:none; }
+  header{
+    background:var(--panel);
+    border-bottom:1px solid var(--borde);
+    padding:14px 16px 0;
+    position:sticky;
+    top:0;
+    z-index:10;
+  }
+  .headerContenido{
+    max-width:1100px;
+    margin:0 auto;
+  }
+  .filaHeader{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .tituloHeader h2{ font-size:19px; }
+  .tituloHeader h2 span{ color:var(--ambar); }
+  #fechaHeader{
+    color:var(--texto-suave);
+    font-size:13px;
+    margin-top:2px;
+  }
+  .ladoDerecho{ display:flex; align-items:center; gap:10px; }
+  #btnSalir, #btnAdmin{
+    background:none;
+    border:1px solid var(--borde);
+    color:var(--texto-suave);
+    padding:8px 14px;
+    border-radius:8px;
+    font-size:14px;
+    cursor:pointer;
+  }
+  #btnAdmin.activo{
+    border-color:var(--ambar);
+    color:var(--ambar);
+  }
+  #estadoFirebase{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:13px;
+    color:var(--texto-suave);
+  }
+  #puntoFirebase{
+    width:10px; height:10px;
+    border-radius:50%;
+    background:#777;
+  }
+  #puntoFirebase.ok{ background:var(--verde); }
+  #puntoFirebase.error{ background:var(--rojo); }
+
+  /* ===== PESTAÑAS ===== */
+  .pestanas{
+    display:flex;
+    margin-top:12px;
+  }
+  .pestana{
+    flex:1;
+    text-align:center;
+    padding:12px 0;
+    font-size:15px;
+    color:var(--texto-suave);
+    background:none;
+    border:none;
+    border-bottom:2px solid transparent;
+    cursor:pointer;
+  }
+  .pestana.activa{
+    color:var(--texto);
+    font-weight:700;
+    border-bottom-color:var(--texto);
+  }
+
+  main{
+    padding:20px 16px 60px;
+    max-width:1100px;
+    margin:0 auto;
+  }
+  .contenedorAngosto{
+    max-width:760px;
+    margin:0 auto;
+  }
+
+  #detalleError{
+    display:none;
+    margin-top:16px;
+    background:#2a1a1a;
+    border:1px solid #5c3030;
+    border-radius:10px;
+    padding:14px;
+    font-size:13px;
+    color:#e0a0a0;
+    word-break:break-word;
+  }
+
+  /* ===== TARJETAS DE RESUMEN (HOY) ===== */
+  .cuadriculaCards{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:10px;
+  }
+  @media(max-width:480px){
+    .cuadriculaCards{ grid-template-columns:repeat(2, 1fr); }
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:12px;
+    padding:14px;
+  }
+  .card .tituloCard{
+    font-size:11px;
+    color:var(--texto-suave);
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  .card .valorCard{
+    font-size:22px;
+    font-weight:800;
+    margin-top:4px;
+  }
+  .valorCard.verde{ color:var(--verde); }
+  .valorCard.azul{ color:var(--azul); }
+  .valorCard.rojo{ color:var(--rojo); }
+  #cardComision{
+    color:var(--texto-suave);
+    font-size:12px;
+    margin-top:8px;
+  }
+
+  /* ===== BOTONES DE ACCIÓN ===== */
+  .filaAcciones{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+    margin:20px 0 10px;
+  }
+  @media(min-width:640px){
+    .filaAcciones{ grid-template-columns:2fr 1fr 1fr; }
+  }
+  #btnCobroManual{
+    padding:15px;
+    font-size:16px;
+    font-weight:700;
+    border:none;
+    border-radius:12px;
+    background:var(--ambar);
+    color:#121212;
+    cursor:pointer;
+  }
+  .btnSecundario{
+    padding:13px;
+    font-size:15px;
+    font-weight:600;
+    border:1px solid var(--borde);
+    border-radius:12px;
+    background:var(--panel);
+    color:var(--texto);
+    cursor:pointer;
+  }
+  #btnTicketPrueba{
+    width:100%;
+    padding:10px;
+    font-size:13px;
+    border:1px dashed var(--borde);
+    border-radius:10px;
+    background:none;
+    color:var(--texto-suave);
+    cursor:pointer;
+    margin-bottom:10px;
+  }
+
+  /* ===== SECCIONES ===== */
+  .tituloSeccion{
+    font-size:13px;
+    color:var(--texto-suave);
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    margin:24px 0 10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+  }
+  #totalMovimientos{ color:var(--rojo); font-weight:700; font-size:15px; }
+  #contadorPendientes{
+    background:var(--ambar);
+    color:#121212;
+    font-weight:700;
+    font-size:13px;
+    padding:2px 10px;
+    border-radius:20px;
+    display:none;
+  }
+
+  #listaPendientes, #listaMovimientos, #listaTicketsAdmin{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  /* ===== COLUMNAS POR BARBERO ===== */
+  #columnasBarberos{
+    display:flex;
+    gap:10px;
+    overflow-x:auto;
+    padding-bottom:8px;
+  }
+  .colBarbero{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:12px;
+    min-width:175px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+  }
+  .colCabeza{
+    padding:12px 12px 8px;
+    border-bottom:1px solid var(--borde);
+  }
+  .colCabeza .nombreCol{ font-weight:700; font-size:15px; }
+  .colCabeza .clientesCol{
+    color:var(--texto-suave);
+    font-size:12px;
+    margin-top:2px;
+  }
+  .colItems{
+    padding:8px 12px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .colItem .filaItem{
+    display:flex;
+    justify-content:space-between;
+    gap:6px;
+    font-size:13px;
+  }
+  .colItem .conceptoItem{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .colItem .montoItem{ font-weight:700; white-space:nowrap; }
+  .colItem .subItem{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    color:var(--texto-suave);
+    font-size:11px;
+    margin-top:1px;
+  }
+  .puntoMetodo{
+    width:7px; height:7px;
+    border-radius:50%;
+    flex-shrink:0;
+  }
+  .puntoMetodo.efectivo{ background:var(--verde); }
+  .puntoMetodo.tarjeta{ background:var(--azul); }
+  .colVacia{
+    color:var(--texto-suave);
+    text-align:center;
+    font-size:13px;
+    padding:10px 0;
+  }
+  .colTotal{
+    border-top:1px solid var(--borde);
+    padding:10px 12px;
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+  }
+  .colTotal .montoTotal{ font-weight:800; font-size:15px; }
+  .leyenda{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    color:var(--texto-suave);
+    font-size:12px;
+    margin-top:6px;
+  }
+  .leyenda .puntoMetodo{ width:8px; height:8px; }
+
+  /* ===== NOTAS DEL DÍA ===== */
+  #notaTexto{
+    width:100%;
+    min-height:90px;
+    padding:13px;
+    font-size:15px;
+    font-family:inherit;
+    border-radius:12px;
+    border:1px solid var(--borde);
+    background:var(--panel);
+    color:var(--texto);
+    resize:vertical;
+  }
+  #notaTexto:focus{ outline:none; border-color:var(--ambar); }
+  #notaGuardar{
+    width:100%;
+    margin-top:10px;
+    padding:13px;
+    font-size:15px;
+    font-weight:700;
+    border:none;
+    border-radius:12px;
+    background:var(--panel);
+    border:1px solid var(--borde);
+    color:var(--texto);
+    cursor:pointer;
+  }
+  #notaMsg{
+    color:var(--texto-suave);
+    font-size:13px;
+    margin-top:8px;
+    min-height:16px;
+    text-align:center;
+  }
+
+  /* ===== TARJETAS DE LISTAS ===== */
+  .tarjetaPendiente{
+    background:#241d10;
+    border:1px solid #4a3a1c;
+    border-radius:12px;
+    padding:12px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+  .tarjetaPendiente .info{ flex:1; min-width:0; }
+  .tarjetaPendiente .barbero{ font-weight:600; font-size:15px; }
+  .tarjetaPendiente .servicios{ color:#c9b48a; font-size:13px; margin-top:2px; }
+  .tarjetaPendiente .hora{ color:var(--texto-suave); font-size:12px; margin-top:2px; }
+  .tarjetaPendiente .monto{
+    font-weight:700;
+    font-size:16px;
+    white-space:nowrap;
+    color:var(--ambar);
+  }
+  .btnCobrarPend{
+    padding:10px 16px;
+    font-size:14px;
+    font-weight:700;
+    border:none;
+    border-radius:10px;
+    background:var(--ambar);
+    color:#121212;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+
+  .tarjetaCobro, .tarjetaMov{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:12px;
+    padding:12px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+  .tarjetaCobro .info, .tarjetaMov .info{ flex:1; min-width:0; }
+  .tarjetaCobro .barbero, .tarjetaMov .concepto{ font-weight:600; font-size:15px; }
+  .tarjetaCobro .concepto, .tarjetaMov .quien{
+    color:var(--texto-suave);
+    font-size:13px;
+    margin-top:2px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .tarjetaCobro .hora, .tarjetaMov .hora{ color:var(--texto-suave); font-size:12px; margin-top:2px; }
+  .tarjetaCobro .monto{ font-weight:700; font-size:16px; white-space:nowrap; }
+  .tarjetaMov .monto{ font-weight:700; font-size:16px; white-space:nowrap; color:var(--rojo); }
+  .etiqueta{
+    display:inline-block;
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:20px;
+    margin-top:4px;
+  }
+  .etiqueta.efectivo{ background:#1e3320; color:#8fd694; }
+  .etiqueta.tarjeta{ background:#1d2a3a; color:#8ab8e8; }
+  .etiqueta.gasto{ background:#3a2020; color:#e8a0a0; }
+  .etiqueta.adelanto{ background:#33261d; color:#e0b890; }
+  .etiqueta.vip{ background:#3a2f14; color:#e8c060; }
+  .etiqueta.transferencia{ background:#1d3330; color:#7fd8c8; }
+  .vacio{
+    background:var(--panel);
+    border:1px dashed var(--borde);
+    border-radius:12px;
+    padding:20px;
+    text-align:center;
+    color:var(--texto-suave);
+    font-size:14px;
+  }
+
+  /* ===== ADMIN: TABLA SEMANAL ===== */
+  .tablaScroll{
+    overflow-x:auto;
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:12px;
+  }
+  table.semanal{
+    width:100%;
+    border-collapse:collapse;
+    min-width:640px;
+    font-size:13px;
+  }
+  table.semanal th{
+    text-align:right;
+    color:var(--texto-suave);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    padding:10px 12px;
+    border-bottom:1px solid var(--borde);
+    white-space:nowrap;
+  }
+  table.semanal th:first-child{ text-align:left; }
+  table.semanal td{
+    text-align:right;
+    padding:9px 12px;
+    white-space:nowrap;
+  }
+  table.semanal td:first-child{
+    text-align:left;
+    font-weight:600;
+  }
+  table.semanal tr.hoyFila td{ color:var(--ambar); }
+  table.semanal tr.filaTotal td{
+    border-top:1px solid var(--borde);
+    font-weight:800;
+  }
+
+  /* ===== ADMIN: PANELES DE FILAS ===== */
+  .panelFilas{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:12px;
+    padding:6px 14px;
+  }
+  .filaPanel{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:11px 0;
+    font-size:14px;
+    border-bottom:1px solid var(--borde);
+    gap:10px;
+  }
+  .filaPanel:last-child{ border-bottom:none; }
+  .filaPanel .etiquetaF{ color:var(--texto-suave); }
+  .filaPanel .valorF{ font-weight:700; white-space:nowrap; }
+  .valorF.rojo{ color:var(--rojo); }
+  .valorF.verde{ color:var(--verde); }
+  .valorF.azul{ color:var(--azul); }
+  .filaPanel.destacada .etiquetaF{ color:var(--texto); font-weight:700; }
+  .filaPanel.destacada .valorF{ font-size:16px; }
+
+  .dosCards{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:10px;
+  }
+  .cardResultado{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:12px;
+    padding:16px;
+    text-align:center;
+  }
+  .cardResultado .tituloCard{
+    font-size:11px;
+    color:var(--texto-suave);
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  .cardResultado .valorCard{ font-size:24px; font-weight:800; margin-top:6px; }
+  .cardT1{
+    background:#f2f2f2;
+    color:#121212;
+    border-radius:14px;
+    padding:18px 20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:10px;
+  }
+  .cardT1 .tituloT1{ font-size:14px; color:#555; font-weight:600; }
+  .cardT1 .valorT1{ font-size:30px; font-weight:900; }
+
+  /* ===== ADMIN: GESTIÓN DE BARBEROS ===== */
+  .filaGestion{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    padding:12px 0;
+    border-bottom:1px solid var(--borde);
+  }
+  .filaGestion:last-child{ border-bottom:none; }
+  .filaGestion .datos{ flex:1; min-width:0; }
+  .filaGestion .nombreG{ font-weight:700; font-size:15px; }
+  .filaGestion .subG{
+    color:var(--texto-suave);
+    font-size:12px;
+    margin-top:2px;
+  }
+  .filaGestion .botonesG{ display:flex; gap:8px; flex-shrink:0; }
+  .btnMini{
+    padding:8px 14px;
+    font-size:13px;
+    font-weight:600;
+    border-radius:8px;
+    border:1px solid var(--borde);
+    background:var(--fondo);
+    color:var(--texto);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .btnMini.rojo{
+    background:#3a1515;
+    border-color:#5c2525;
+    color:#e88;
+  }
+
+  .formAgregar{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:12px;
+    padding:14px;
+    margin-top:10px;
+  }
+  .formAgregar h4{ font-size:15px; margin-bottom:10px; }
+  .formAgregar input{
+    width:100%;
+    padding:12px;
+    font-size:15px;
+    border-radius:10px;
+    border:1px solid var(--borde);
+    background:var(--fondo);
+    color:var(--texto);
+    margin-bottom:10px;
+  }
+  .formAgregar input:focus{ outline:none; border-color:var(--ambar); }
+  .filaAgregar{
+    display:grid;
+    grid-template-columns:1fr 1fr auto;
+    gap:10px;
+  }
+  .filaAgregar input{ margin-bottom:0; }
+  #agregarBtn{
+    padding:12px 16px;
+    font-size:14px;
+    font-weight:700;
+    border:none;
+    border-radius:10px;
+    background:var(--ambar);
+    color:#121212;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  #agregarMsg{
+    color:var(--texto-suave);
+    font-size:13px;
+    margin-top:8px;
+    min-height:16px;
+  }
+
+  #btnCerrarAdmin{
+    width:100%;
+    margin-top:24px;
+    padding:14px;
+    font-size:15px;
+    background:none;
+    border:1px solid var(--borde);
+    color:var(--texto-suave);
+    border-radius:12px;
+    cursor:pointer;
+  }
+  #msgAdmin{
+    color:var(--texto-suave);
+    font-size:13px;
+    margin-top:10px;
+    min-height:16px;
+    text-align:center;
+  }
+  #btnCrearBarberos{
+    width:100%;
+    padding:15px;
+    font-size:16px;
+    font-weight:700;
+    border:none;
+    border-radius:12px;
+    background:var(--ambar);
+    color:#121212;
+    cursor:pointer;
+    margin-top:10px;
+  }
+
+  /* ===== VISTAS ===== */
+  #vistaSemana, #vistaNomina, #vistaAdmin{ display:none; }
+
+  /* ===== MODALES ===== */
+  .fondoModal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.7);
+    z-index:100;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .fondoModal.abierto{ display:flex; }
+  .modal{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:18px 18px 0 0;
+    padding:22px 18px 28px;
+    width:100%;
+    max-width:600px;
+    max-height:90vh;
+    overflow-y:auto;
+  }
+  @media(min-width:640px){
+    .fondoModal{ align-items:center; }
+    .modal{ border-radius:18px; }
+  }
+  .modal h3{ font-size:18px; margin-bottom:16px; }
+  .modal label{
+    display:block;
+    font-size:13px;
+    color:var(--texto-suave);
+    margin:14px 0 6px;
+  }
+  .filaBarberos{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(70px, 1fr));
+    gap:8px;
+  }
+  .btnBarbero{
+    padding:12px 2px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:14px;
+    font-weight:600;
+    border-radius:10px;
+    border:1px solid var(--borde);
+    background:var(--fondo);
+    color:var(--texto);
+    cursor:pointer;
+  }
+  .btnBarbero.activo{
+    background:var(--ambar);
+    color:#121212;
+    border-color:var(--ambar);
+  }
+  .modal input{
+    width:100%;
+    padding:13px;
+    font-size:16px;
+    border-radius:10px;
+    border:1px solid var(--borde);
+    background:var(--fondo);
+    color:var(--texto);
+  }
+  .modal input:focus{ outline:none; border-color:var(--ambar); }
+  .filaMetodo{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:18px;
+  }
+  .btnMetodo{
+    padding:15px 0;
+    font-size:16px;
+    font-weight:700;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+  }
+  .btnMetodo:disabled{ opacity:0.5; cursor:default; }
+  .btnMetodo.efectivo{ background:#2e5c33; color:#d9f2db; }
+  .btnMetodo.tarjeta{ background:#2b4a6b; color:#dbeafd; }
+  .btnGuardarModal{
+    width:100%;
+    margin-top:18px;
+    padding:15px;
+    font-size:16px;
+    font-weight:700;
+    border:none;
+    border-radius:12px;
+    background:var(--ambar);
+    color:#121212;
+    cursor:pointer;
+  }
+  .btnGuardarModal:disabled{ opacity:0.5; cursor:default; }
+  .btnCancelarModal{
+    width:100%;
+    margin-top:12px;
+    padding:12px;
+    font-size:14px;
+    background:none;
+    border:1px solid var(--borde);
+    color:var(--texto-suave);
+    border-radius:10px;
+    cursor:pointer;
+  }
+  .btnDescartar{
+    width:100%;
+    margin-top:10px;
+    padding:12px;
+    font-size:14px;
+    background:none;
+    border:1px solid #5c3030;
+    color:var(--rojo);
+    border-radius:10px;
+    cursor:pointer;
+  }
+  .msgModal{
+    color:var(--rojo);
+    font-size:13px;
+    margin-top:10px;
+    min-height:16px;
+    text-align:center;
+  }
+  .datosPendiente{
+    background:var(--fondo);
+    border:1px solid var(--borde);
+    border-radius:12px;
+    padding:14px;
+  }
+  .datosPendiente .barbero{ font-weight:700; font-size:16px; }
+  .datosPendiente .servicios{
+    color:var(--texto-suave);
+    font-size:14px;
+    margin-top:4px;
+  }
+  .filaToggles{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .btnToggle{
+    padding:12px 0;
+    font-size:14px;
+    font-weight:600;
+    border-radius:10px;
+    border:1px solid var(--borde);
+    background:var(--fondo);
+    color:var(--texto-suave);
+    cursor:pointer;
+  }
+  .btnToggle.activo{
+    background:var(--ambar);
+    color:#121212;
+    border-color:var(--ambar);
+  }
+  .filaDias{
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    gap:6px;
+  }
+  .btnDia{
+    padding:12px 0;
+    font-size:13px;
+    font-weight:600;
+    border-radius:10px;
+    border:1px solid var(--borde);
+    background:var(--fondo);
+    color:var(--texto);
+    cursor:pointer;
+  }
+  .btnDia.activo{
+    background:var(--ambar);
+    color:#121212;
+    border-color:var(--ambar);
+  }
+  .btnEditarBarbero{
+    margin-top:10px;
+    padding:9px 16px;
+    font-size:13px;
+    font-weight:600;
+    border:1px solid var(--borde);
+    border-radius:8px;
+    background:none;
+    color:var(--texto);
+    cursor:pointer;
+    display:block;
+  }
+</style>
+</head>
+<body>
+
+<!-- PANTALLA DE LOGIN -->
+<div id="pantallaLogin">
+  <div class="cajaLogin">
+    <h1>Barbería <span>Garage</span></h1>
+    <p>Panel de caja</p>
+    <input type="password" id="inputPass" placeholder="Contraseña" autocomplete="off">
+    <button id="btnEntrar">Entrar</button>
+    <div id="msgLogin"></div>
+  </div>
+</div>
+
+<!-- PANTALLA PRINCIPAL -->
+<div id="pantallaCaja">
+  <header>
+    <div class="headerContenido">
+      <div class="filaHeader">
+        <div class="tituloHeader">
+          <h2>Barbería <span>Garage</span></h2>
+          <div id="fechaHeader"></div>
+        </div>
+        <div class="ladoDerecho">
+          <div id="estadoFirebase">
+            <div id="puntoFirebase"></div>
+            <span id="textoFirebase">Conectando...</span>
+          </div>
+          <button id="btnAdmin">Admin</button>
+          <button id="btnSalir">Salir</button>
+        </div>
+      </div>
+      <div class="pestanas">
+        <button class="pestana activa" data-vista="hoy">Hoy</button>
+        <button class="pestana" data-vista="semana">Semana</button>
+        <button class="pestana" data-vista="nomina">Nómina</button>
+      </div>
+    </div>
+  </header>
+  <main>
+
+    <!-- ================= VISTA HOY ================= -->
+    <div id="vistaHoy">
+
+      <div class="cuadriculaCards">
+        <div class="card">
+          <div class="tituloCard">Producción</div>
+          <div class="valorCard" id="cardProduccion">$0</div>
+        </div>
+        <div class="card">
+          <div class="tituloCard">Efectivo</div>
+          <div class="valorCard verde" id="cardEfectivo">$0</div>
+        </div>
+        <div class="card">
+          <div class="tituloCard">Tarjeta</div>
+          <div class="valorCard azul" id="cardTarjeta">$0</div>
+        </div>
+        <div class="card">
+          <div class="tituloCard">Gastos</div>
+          <div class="valorCard rojo" id="cardGastos">$0</div>
+        </div>
+        <div class="card">
+          <div class="tituloCard">Adelantos</div>
+          <div class="valorCard rojo" id="cardAdelantos">$0</div>
+        </div>
+        <div class="card">
+          <div class="tituloCard">Clientes</div>
+          <div class="valorCard" id="cardClientes">0</div>
+        </div>
+      </div>
+      <div id="cardComision">Comisión tarjeta 4% (informativa): $0</div>
+
+      <div class="filaAcciones">
+        <button id="btnCobroManual">+ Cobro manual</button>
+        <button class="btnSecundario" id="btnGasto">− Gasto</button>
+        <button class="btnSecundario" id="btnAdelanto">− Adelanto</button>
+      </div>
+      <button id="btnTicketPrueba">🧪 Ticket de prueba (temporal, se quita cuando exista bg18)</button>
+
+      <div class="tituloSeccion">
+        <span>Tickets pendientes</span>
+        <span id="contadorPendientes">0</span>
+      </div>
+      <div id="listaPendientes">
+        <div class="vacio">No hay tickets pendientes.</div>
+      </div>
+
+      <div class="tituloSeccion">
+        <span>Producción por barbero</span>
+      </div>
+      <div id="columnasBarberos">
+        <div class="vacio" style="flex:1;">Cargando barberos...</div>
+      </div>
+      <div class="leyenda">
+        <span style="display:flex;align-items:center;gap:5px;"><span class="puntoMetodo efectivo"></span>Efectivo</span>
+        <span style="display:flex;align-items:center;gap:5px;"><span class="puntoMetodo tarjeta"></span>Tarjeta</span>
+      </div>
+
+      <div class="tituloSeccion">
+        <span>Gastos y adelantos de hoy</span>
+        <span id="totalMovimientos">−$0</span>
+      </div>
+      <div id="listaMovimientos">
+        <div class="vacio">Sin gastos ni adelantos hoy.</div>
+      </div>
+
+      <div class="tituloSeccion">
+        <span>Notas del día</span>
+      </div>
+      <textarea id="notaTexto" placeholder="Anotaciones del día..."></textarea>
+      <button id="notaGuardar">Guardar nota</button>
+      <div id="notaMsg"></div>
+
+    </div>
+
+    <!-- ================= VISTA SEMANA (placeholder) ================= -->
+    <div id="vistaSemana">
+      <div class="vacio">La sección <b>Semana</b> está en construcción.<br>Aquí verás el detalle de los días de la semana.</div>
+    </div>
+
+    <!-- ================= VISTA NÓMINA (placeholder) ================= -->
+    <div id="vistaNomina">
+      <div class="vacio">La sección <b>Nómina</b> está en construcción.<br>Aquí se calculará la nómina semanal por barbero (con bonos, multas y el EXTRA del VIP).</div>
+    </div>
+
+    <!-- ================= VISTA ADMIN ================= -->
+    <div id="vistaAdmin">
+      <div class="contenedorAngosto">
+
+        <div class="tituloSeccion"><span>Resumen semanal</span></div>
+        <div class="tablaScroll">
+          <table class="semanal">
+            <thead>
+              <tr>
+                <th>Día</th>
+                <th>Producción</th>
+                <th>Servicios</th>
+                <th>TC VTA</th>
+                <th>Comisión 4%</th>
+                <th>Gastos</th>
+                <th>Adelantos</th>
+                <th>Efectivo</th>
+              </tr>
+            </thead>
+            <tbody id="cuerpoSemanal"></tbody>
+          </table>
+        </div>
+
+        <div class="tituloSeccion"><span>Efectivo vs Nómina</span></div>
+        <div class="panelFilas">
+          <div class="filaPanel">
+            <span class="etiquetaF">Efectivo total semana</span>
+            <span class="valorF" id="semEfectivoTotal">$0</span>
+          </div>
+          <div class="filaPanel">
+            <span class="etiquetaF">Nómina total</span>
+            <span class="valorF rojo" id="semNominaTotal">−$0</span>
+          </div>
+        </div>
+
+        <div class="tituloSeccion"><span>Desglose nómina</span></div>
+        <div class="panelFilas" id="desgloseNomina">
+          <div class="filaPanel"><span class="etiquetaF">Cargando...</span></div>
+        </div>
+
+        <div class="tituloSeccion"><span>Barber (Extra)</span></div>
+        <div class="panelFilas">
+          <div class="filaPanel">
+            <span class="etiquetaF">Monto BARBER</span>
+            <span class="valorF" id="montoBarber">$0</span>
+          </div>
+          <div class="filaPanel">
+            <span class="etiquetaF" style="font-size:12px;">Se calculará en la hoja de nómina del barbero VIP (próxima fase)</span>
+            <span></span>
+          </div>
+        </div>
+
+        <div class="tituloSeccion"><span>Resultado final</span></div>
+        <div class="panelFilas">
+          <div class="filaPanel">
+            <span class="etiquetaF">Efectivo disponible</span>
+            <span class="valorF" id="rfEfectivoDisp">$0</span>
+          </div>
+          <div class="filaPanel">
+            <span class="etiquetaF">− Nómina</span>
+            <span class="valorF rojo" id="rfNomina">−$0</span>
+          </div>
+          <div class="filaPanel">
+            <span class="etiquetaF">Efectivo restante</span>
+            <span class="valorF" id="rfEfectivoRest">$0</span>
+          </div>
+          <div class="filaPanel">
+            <span class="etiquetaF">+ Tarjeta neta (−4% comisión)</span>
+            <span class="valorF azul" id="rfTarjetaNeta">+ $0</span>
+          </div>
+          <div class="filaPanel">
+            <span class="etiquetaF">+ BARBER</span>
+            <span class="valorF" id="rfBarber">+ $0</span>
+          </div>
+        </div>
+
+        <div class="dosCards">
+          <div class="cardResultado">
+            <div class="tituloCard">Efectivo restante</div>
+            <div class="valorCard" id="cardEfectivoRest">$0</div>
+          </div>
+          <div class="cardResultado">
+            <div class="tituloCard">Tarjeta neta</div>
+            <div class="valorCard" id="cardTarjetaNeta">$0</div>
+          </div>
+        </div>
+
+        <div class="cardT1">
+          <span class="tituloT1">T1</span>
+          <span class="valorT1" id="valorT1">$0</span>
+        </div>
+
+        <div class="tituloSeccion"><span>Gestión de barberos</span></div>
+        <div class="panelFilas" id="listaGestion">
+          <div class="filaPanel"><span class="etiquetaF">Cargando barberos...</span></div>
+        </div>
+        <div id="msgAdmin"></div>
+
+        <div class="formAgregar">
+          <h4>Agregar barbero</h4>
+          <input type="text" id="agregarNombre" placeholder="Nombre" autocomplete="off">
+          <div class="filaAgregar">
+            <input type="number" id="agregarPorcentaje" placeholder="%" value="40" inputmode="numeric" min="0" max="100">
+            <input type="text" id="agregarPin" placeholder="PIN 4 dígitos" maxlength="4" inputmode="numeric" autocomplete="off">
+            <button id="agregarBtn">+ Agregar</button>
+          </div>
+          <div id="agregarMsg"></div>
+        </div>
+
+        <div class="tituloSeccion"><span>Tickets de hoy (editar / eliminar)</span></div>
+        <div id="listaTicketsAdmin">
+          <div class="vacio">Sin tickets hoy.</div>
+        </div>
+
+        <div class="tituloSeccion"><span>Configuración</span></div>
+        <div class="panelFilas">
+          <div class="filaPanel">
+            <span class="etiquetaF">Contraseña Admin</span>
+            <button class="btnMini" id="btnCambiarAdmin">Cambiar</button>
+          </div>
+          <div class="filaPanel">
+            <span class="etiquetaF">Contraseña Caja</span>
+            <button class="btnMini" id="btnCambiarCaja">Cambiar</button>
+          </div>
+        </div>
+
+        <button id="btnCerrarAdmin">Cerrar sesión Admin</button>
+
+      </div>
+    </div>
+
+    <div id="detalleError"></div>
+  </main>
+</div>
+
+<!-- MODAL CONTRASEÑA ADMIN -->
+<div class="fondoModal" id="modalAdmin">
+  <div class="modal">
+    <h3>Acceso Admin</h3>
+    <label>Contraseña de administrador</label>
+    <input type="password" id="inputPassAdmin" placeholder="****" autocomplete="off" inputmode="numeric">
+    <button class="btnGuardarModal" id="btnEntrarAdmin">Entrar</button>
+    <div class="msgModal" id="msgPassAdmin"></div>
+    <button class="btnCancelarModal" id="btnCancelarAdmin">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL CAMBIAR CONTRASEÑA -->
+<div class="fondoModal" id="modalPass">
+  <div class="modal">
+    <h3 id="passTitulo">Cambiar contraseña</h3>
+    <label>Nueva contraseña</label>
+    <input type="password" id="passNueva" autocomplete="off">
+    <label>Confirmar nueva contraseña</label>
+    <input type="password" id="passConfirma" autocomplete="off">
+    <button class="btnGuardarModal" id="passGuardar">Guardar</button>
+    <div class="msgModal" id="passMsg"></div>
+    <button class="btnCancelarModal" id="passCancelar">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL DE COBRO MANUAL -->
+<div class="fondoModal" id="modalCobro">
+  <div class="modal">
+    <h3>Cobro manual</h3>
+
+    <label>Barbero</label>
+    <div class="filaBarberos" id="filaBarberos"></div>
+
+    <label>Concepto (servicio)</label>
+    <input type="text" id="inputConcepto" placeholder="Ej. Corte" autocomplete="off">
+
+    <label>Monto ($)</label>
+    <input type="number" id="inputMonto" placeholder="0" inputmode="numeric" min="0">
+
+    <div class="filaMetodo">
+      <button class="btnMetodo efectivo" id="btnEfectivo">Efectivo</button>
+      <button class="btnMetodo tarjeta" id="btnTarjeta">Tarjeta</button>
+    </div>
+    <div class="msgModal" id="msgModal"></div>
+    <button class="btnCancelarModal" id="btnCancelarCobro">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL DE COBRO DE TICKET PENDIENTE -->
+<div class="fondoModal" id="modalPendiente">
+  <div class="modal">
+    <h3>Cobrar ticket</h3>
+
+    <div class="datosPendiente">
+      <div class="barbero" id="pendBarbero">Barbero</div>
+      <div class="servicios" id="pendServicios">Servicios</div>
+    </div>
+
+    <label>Monto ($) — puedes ajustarlo</label>
+    <input type="number" id="pendMonto" placeholder="0" inputmode="numeric" min="0">
+
+    <div class="filaMetodo">
+      <button class="btnMetodo efectivo" id="pendEfectivo">Efectivo</button>
+      <button class="btnMetodo tarjeta" id="pendTarjeta">Tarjeta</button>
+    </div>
+    <div class="msgModal" id="pendMsg"></div>
+    <button class="btnDescartar" id="pendDescartar">Descartar ticket</button>
+    <button class="btnCancelarModal" id="pendCancelar">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL DE GASTO / ADELANTO -->
+<div class="fondoModal" id="modalMov">
+  <div class="modal">
+    <h3 id="movTitulo">Gasto</h3>
+
+    <div id="movBloqueQuien" style="display:none;">
+      <label>¿Para quién es el adelanto?</label>
+      <div class="filaBarberos" id="movFilaQuien"></div>
+    </div>
+
+    <label id="movLabelConcepto">Concepto</label>
+    <input type="text" id="movConcepto" placeholder="Ej. Agua, luz, insumos" autocomplete="off">
+
+    <label>Monto ($)</label>
+    <input type="number" id="movMonto" placeholder="0" inputmode="numeric" min="0">
+
+    <button class="btnGuardarModal" id="movGuardar">Guardar</button>
+    <div class="msgModal" id="movMsg"></div>
+    <button class="btnCancelarModal" id="movCancelar">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL EDITAR TICKET (solo Admin) -->
+<div class="fondoModal" id="modalEditarTicket">
+  <div class="modal">
+    <h3>Editar ticket</h3>
+
+    <label>Barbero</label>
+    <div class="filaBarberos" id="tickFilaBarberos"></div>
+
+    <label>Concepto</label>
+    <input type="text" id="tickConcepto" autocomplete="off">
+
+    <label>Monto ($)</label>
+    <input type="number" id="tickMonto" inputmode="numeric" min="0">
+
+    <label>Método de pago</label>
+    <div class="filaToggles">
+      <button class="btnToggle" id="tickEfectivo">Efectivo</button>
+      <button class="btnToggle" id="tickTarjeta">Tarjeta</button>
+    </div>
+
+    <button class="btnGuardarModal" id="tickGuardar">Guardar cambios</button>
+    <div class="msgModal" id="tickMsg"></div>
+    <button class="btnDescartar" id="tickEliminar">Eliminar ticket</button>
+    <button class="btnCancelarModal" id="tickCancelar">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL EDITAR BARBERO -->
+<div class="fondoModal" id="modalEditarBarbero">
+  <div class="modal">
+    <h3 id="editTitulo">Editar Barbero</h3>
+
+    <label>Nombre</label>
+    <input type="text" id="editNombre" placeholder="Ej. Ale" autocomplete="off">
+
+    <label>Porcentaje de destajo (%)</label>
+    <input type="number" id="editPorcentaje" placeholder="40" inputmode="numeric" min="0" max="100">
+
+    <label>PIN (4 dígitos)</label>
+    <input type="text" id="editPin" placeholder="0000" maxlength="4" inputmode="numeric" autocomplete="off">
+
+    <label>Opciones</label>
+    <div class="filaToggles">
+      <button class="btnToggle" id="editVip">VIP</button>
+      <button class="btnToggle" id="editConfirmar">Agendar con confirmación</button>
+    </div>
+
+    <label>Días de descanso</label>
+    <div class="filaDias" id="editDias">
+      <button class="btnDia" data-dia="lunes">L</button>
+      <button class="btnDia" data-dia="martes">M</button>
+      <button class="btnDia" data-dia="miércoles">X</button>
+      <button class="btnDia" data-dia="jueves">J</button>
+      <button class="btnDia" data-dia="viernes">V</button>
+      <button class="btnDia" data-dia="sábado">S</button>
+      <button class="btnDia" data-dia="domingo">D</button>
+    </div>
+
+    <button class="btnGuardarModal" id="editGuardar">Guardar cambios</button>
+    <div class="msgModal" id="editMsg"></div>
+    <button class="btnCancelarModal" id="editCancelar">Cancelar</button>
+  </div>
+</div>
+
+<!-- ===== FIREBASE + TODA LA LÓGICA ===== -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore, collection, getDocs, getDoc, addDoc, setDoc, doc, updateDoc, deleteField, deleteDoc,
+    query, where, onSnapshot, serverTimestamp, writeBatch
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // ----- Configuración del proyecto "agend" -----
+  const firebaseConfig = {
+    apiKey: "AIzaSyCPJ_Sp727Gsq0qholS8466L2xoF6ju6Qs",
+    authDomain: "agend-1d0e5.firebaseapp.com",
+    projectId: "agend-1d0e5",
+    appId: "1:536059431228:web:f7a186659845111e09b639"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+  window.db = db;
+
+  // ============================================================
+  // CONTRASEÑAS (con valores por defecto; se pueden cambiar
+  // desde Admin y quedan guardadas en ajustes/config)
+  // ============================================================
+  let PASS_CAJA  = "peluqueriacochera1720";
+  let PASS_ADMIN = "4764";
+
+  async function cargarConfig(){
+    try{
+      const s = await getDoc(doc(db, "ajustes", "config"));
+      if(s.exists()){
+        const c = s.data();
+        if(c.passCaja)  PASS_CAJA  = c.passCaja;
+        if(c.passAdmin) PASS_ADMIN = c.passAdmin;
+      }
+    } catch(err){ /* si falla, se usan los valores por defecto */ }
+  }
+  const configLista = cargarConfig();
+
+  // ============================================================
+  // FECHAS
+  // ============================================================
+  function fechaISO(d){
+    const a = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dia = String(d.getDate()).padStart(2, "0");
+    return a + "-" + m + "-" + dia;
+  }
+  function fechaHoy(){ return fechaISO(new Date()); }
+
+  function fechaLegible(){
+    const t = new Date().toLocaleDateString("es-MX", { weekday:"long", day:"numeric", month:"long" });
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+
+  // Fechas de la semana en curso (lunes a domingo)
+  function fechasSemana(){
+    const hoy = new Date();
+    const dia = (hoy.getDay() + 6) % 7; // 0 = lunes
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() - dia);
+    const fechas = [];
+    for(let i = 0; i < 7; i++){
+      const d = new Date(lunes);
+      d.setDate(lunes.getDate() + i);
+      fechas.push(fechaISO(d));
+    }
+    return fechas;
+  }
+  const SEMANA = fechasSemana();
+  const NOMBRES_DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+  document.getElementById("fechaHeader").textContent = fechaLegible();
+
+  // ============================================================
+  // INDICADOR DE CONEXIÓN
+  // ============================================================
+  const punto   = document.getElementById("puntoFirebase");
+  const texto   = document.getElementById("textoFirebase");
+  const detalle = document.getElementById("detalleError");
+
+  function mostrarError(err){
+    punto.classList.remove("ok");
+    punto.classList.add("error");
+    texto.textContent = "Error de conexión";
+    detalle.style.display = "block";
+    detalle.textContent = "Detalle del error: " + err.message;
+  }
+
+  try{
+    await getDocs(collection(db, "ajustes"));
+    punto.classList.add("ok");
+    texto.textContent = "Firebase conectado";
+  } catch(err){
+    mostrarError(err);
+  }
+
+  // ============================================================
+  // UTILIDADES
+  // ============================================================
+  function formatoDinero(n){
+    const redondeado = Math.round(n * 100) / 100;
+    return "$" + redondeado.toLocaleString("es-MX");
+  }
+
+  function formatoHora(ts){
+    if(!ts) return "";
+    const d = ts.toDate();
+    let h = d.getHours();
+    const m = String(d.getMinutes()).padStart(2, "0");
+    const ampm = h >= 12 ? "p.m." : "a.m.";
+    h = h % 12; if(h === 0) h = 12;
+    return h + ":" + m + " " + ampm;
+  }
+
+  // ----- Barberos: caché y ayudas -----
+  let barberosCache = [];   // todos (activos e inactivos), para nombres e historial
+  let cobrosHoyCache = [];  // tickets de hoy
+
+  function barberosActivos(){
+    return barberosCache.filter(function(b){ return b.activo !== false; });
+  }
+
+  function nombreBarbero(num){
+    const b = barberosCache.find(function(x){ return x.num === num; });
+    return (b && b.nombre) ? b.nombre : "Barbero " + num;
+  }
+
+  function nombreCorto(num){
+    const b = barberosCache.find(function(x){ return x.num === num; });
+    if(b && b.nombre) return b.nombre.split(" ")[0];
+    return String(num);
+  }
+
+  function tieneConfirmacion(b){
+    return b.confirmarCita !== undefined ? !!b.confirmarCita : !!b.transferencia;
+  }
+
+  // Regenera los botones de selección de barbero en los modales
+  function renderBotonesBarberos(){
+    const activos = barberosActivos();
+    const filaBarberos    = document.getElementById("filaBarberos");
+    const tickFila        = document.getElementById("tickFilaBarberos");
+    const movFila         = document.getElementById("movFilaQuien");
+
+    function botones(){
+      return activos.map(function(b){
+        return '<button class="btnBarbero" data-num="' + b.num + '">' + nombreCorto(b.num) + '</button>';
+      }).join("");
+    }
+
+    filaBarberos.innerHTML = botones();
+    tickFila.innerHTML = botones();
+    movFila.innerHTML = botones() + '<button class="btnBarbero" data-num="R">R</button>';
+  }
+
+  // ============================================================
+  // PESTAÑAS Y VISTAS
+  // ============================================================
+  const vistas = {
+    hoy:    document.getElementById("vistaHoy"),
+    semana: document.getElementById("vistaSemana"),
+    nomina: document.getElementById("vistaNomina"),
+    admin:  document.getElementById("vistaAdmin")
+  };
+  const pestanas = document.querySelectorAll(".pestana");
+  const btnAdmin = document.getElementById("btnAdmin");
+
+  function mostrarVista(nombre){
+    Object.keys(vistas).forEach(function(k){
+      vistas[k].style.display = (k === nombre) ? "block" : "none";
+    });
+    pestanas.forEach(function(p){
+      p.classList.toggle("activa", p.dataset.vista === nombre);
+    });
+    btnAdmin.classList.toggle("activo", nombre === "admin");
+  }
+
+  pestanas.forEach(function(p){
+    p.addEventListener("click", function(){
+      // Salir del modo Admin al cambiar de pestaña (se vuelve a pedir contraseña)
+      if(vistas.admin.style.display === "block") modoAdmin = false;
+      mostrarVista(p.dataset.vista);
+    });
+  });
+
+  mostrarVista("hoy");
+
+  // ============================================================
+  // MODO ADMIN
+  // ============================================================
+  const modalAdmin       = document.getElementById("modalAdmin");
+  const inputPassAdmin   = document.getElementById("inputPassAdmin");
+  const btnEntrarAdmin   = document.getElementById("btnEntrarAdmin");
+  const btnCancelarAdmin = document.getElementById("btnCancelarAdmin");
+  const msgPassAdmin     = document.getElementById("msgPassAdmin");
+  const btnCerrarAdmin   = document.getElementById("btnCerrarAdmin");
+
+  let modoAdmin = false;
+
+  btnAdmin.addEventListener("click", function(){
+    if(vistas.admin.style.display === "block"){
+      // Ya está en Admin: regresar a Hoy y bloquear
+      modoAdmin = false;
+      mostrarVista("hoy");
+      return;
+    }
+    if(modoAdmin){
+      mostrarVista("admin");
+      return;
+    }
+    inputPassAdmin.value = "";
+    msgPassAdmin.textContent = "";
+    modalAdmin.classList.add("abierto");
+  });
+
+  async function validarPassAdmin(){
+    await configLista;
+    if(inputPassAdmin.value === PASS_ADMIN){
+      modoAdmin = true;
+      modalAdmin.classList.remove("abierto");
+      mostrarVista("admin");
+    } else {
+      msgPassAdmin.textContent = "Contraseña incorrecta";
+      inputPassAdmin.value = "";
+    }
+  }
+
+  btnEntrarAdmin.addEventListener("click", validarPassAdmin);
+  inputPassAdmin.addEventListener("keydown", function(e){
+    if(e.key === "Enter") validarPassAdmin();
+  });
+  btnCancelarAdmin.addEventListener("click", function(){
+    modalAdmin.classList.remove("abierto");
+  });
+
+  btnCerrarAdmin.addEventListener("click", function(){
+    modoAdmin = false;
+    mostrarVista("hoy");
+  });
+
+  // ============================================================
+  // CAMBIAR CONTRASEÑAS (ajustes/config)
+  // ============================================================
+  const modalPass    = document.getElementById("modalPass");
+  const passTitulo   = document.getElementById("passTitulo");
+  const passNueva    = document.getElementById("passNueva");
+  const passConfirma = document.getElementById("passConfirma");
+  const passGuardar  = document.getElementById("passGuardar");
+  const passCancelar = document.getElementById("passCancelar");
+  const passMsg      = document.getElementById("passMsg");
+
+  let cualPass = "admin"; // "admin" o "caja"
+  let guardandoPass = false;
+
+  function abrirCambioPass(cual){
+    cualPass = cual;
+    passTitulo.textContent = cual === "admin" ? "Cambiar contraseña Admin" : "Cambiar contraseña de Caja";
+    passNueva.value = "";
+    passConfirma.value = "";
+    passMsg.textContent = "";
+    modalPass.classList.add("abierto");
+  }
+
+  document.getElementById("btnCambiarAdmin").addEventListener("click", function(){ abrirCambioPass("admin"); });
+  document.getElementById("btnCambiarCaja").addEventListener("click", function(){ abrirCambioPass("caja"); });
+  passCancelar.addEventListener("click", function(){ modalPass.classList.remove("abierto"); });
+
+  passGuardar.addEventListener("click", async function(){
+    if(guardandoPass) return;
+    const nueva = passNueva.value.trim();
+
+    if(nueva.length < 4){
+      passMsg.style.color = "#e05c5c";
+      passMsg.textContent = "La contraseña debe tener al menos 4 caracteres";
+      return;
+    }
+    if(nueva !== passConfirma.value.trim()){
+      passMsg.style.color = "#e05c5c";
+      passMsg.textContent = "Las contraseñas no coinciden";
+      return;
+    }
+
+    guardandoPass = true;
+    passGuardar.disabled = true;
+    passMsg.style.color = "#9a9a9a";
+    passMsg.textContent = "Guardando...";
+
+    try{
+      const datos = {};
+      if(cualPass === "admin"){ datos.passAdmin = nueva; PASS_ADMIN = nueva; }
+      else { datos.passCaja = nueva; PASS_CAJA = nueva; }
+      await setDoc(doc(db, "ajustes", "config"), datos, { merge:true });
+      modalPass.classList.remove("abierto");
+    } catch(err){
+      passMsg.style.color = "#e05c5c";
+      passMsg.textContent = "Error: " + err.message;
+    }
+
+    guardandoPass = false;
+    passGuardar.disabled = false;
+  });
+
+  // ============================================================
+  // TARJETAS DE RESUMEN (HOY)
+  // Fórmula: Efectivo = Producción − TC VTA − Gastos − Adelantos
+  // ============================================================
+  const cardProduccion = document.getElementById("cardProduccion");
+  const cardEfectivo   = document.getElementById("cardEfectivo");
+  const cardTarjeta    = document.getElementById("cardTarjeta");
+  const cardGastos     = document.getElementById("cardGastos");
+  const cardAdelantos  = document.getElementById("cardAdelantos");
+  const cardClientes   = document.getElementById("cardClientes");
+  const cardComision   = document.getElementById("cardComision");
+
+  let totProduccion = 0;
+  let totTarjeta    = 0;
+  let totGastos     = 0;
+  let totAdelantos  = 0;
+  let totClientes   = 0;
+
+  function actualizarCards(){
+    const comision = totTarjeta * 0.04;
+    const efectivo = totProduccion - totTarjeta - totGastos - totAdelantos;
+
+    cardProduccion.textContent = formatoDinero(totProduccion);
+    cardEfectivo.textContent   = formatoDinero(efectivo);
+    cardTarjeta.textContent    = formatoDinero(totTarjeta);
+    cardGastos.textContent     = formatoDinero(totGastos);
+    cardAdelantos.textContent  = formatoDinero(totAdelantos);
+    cardClientes.textContent   = totClientes;
+    cardComision.textContent   = "Comisión tarjeta 4% (informativa): " + formatoDinero(comision);
+
+    cardEfectivo.classList.toggle("rojo", efectivo < 0);
+    cardEfectivo.classList.toggle("verde", efectivo >= 0);
+  }
+
+  // ============================================================
+  // COLUMNAS DE PRODUCCIÓN POR BARBERO (HOY)
+  // ============================================================
+  const columnasBarberos = document.getElementById("columnasBarberos");
+
+  function renderColumnas(){
+    const activos = barberosActivos();
+
+    if(activos.length === 0){
+      columnasBarberos.innerHTML = '<div class="vacio" style="flex:1;">Aún no hay barberos configurados (se crean desde Admin).</div>';
+      return;
+    }
+
+    // Cobros ordenados del más antiguo al más reciente (orden del día)
+    const cobros = cobrosHoyCache.slice().sort(function(a, b){
+      const ta = a.creado ? a.creado.toMillis() : Date.now();
+      const tb = b.creado ? b.creado.toMillis() : Date.now();
+      return ta - tb;
+    });
+
+    columnasBarberos.innerHTML = "";
+    activos.forEach(function(b){
+      const items = cobros.filter(function(c){ return c.barbero === b.num; });
+      let total = 0;
+      items.forEach(function(c){ total += c.monto; });
+
+      const col = document.createElement("div");
+      col.className = "colBarbero";
+
+      const cabeza = document.createElement("div");
+      cabeza.className = "colCabeza";
+      const nom = document.createElement("div");
+      nom.className = "nombreCol";
+      nom.textContent = b.nombre || ("Barbero " + b.num);
+      const cli = document.createElement("div");
+      cli.className = "clientesCol";
+      cli.textContent = items.length + (items.length === 1 ? " cliente" : " clientes");
+      cabeza.appendChild(nom);
+      cabeza.appendChild(cli);
+
+      const cont = document.createElement("div");
+      cont.className = "colItems";
+
+      if(items.length === 0){
+        const v = document.createElement("div");
+        v.className = "colVacia";
+        v.textContent = "—";
+        cont.appendChild(v);
+      } else {
+        items.forEach(function(c){
+          const item = document.createElement("div");
+          item.className = "colItem";
+
+          const fila = document.createElement("div");
+          fila.className = "filaItem";
+          const con = document.createElement("span");
+          con.className = "conceptoItem";
+          con.textContent = c.concepto;
+          const mon = document.createElement("span");
+          mon.className = "montoItem";
+          mon.textContent = formatoDinero(c.monto);
+          fila.appendChild(con);
+          fila.appendChild(mon);
+
+          const sub = document.createElement("div");
+          sub.className = "subItem";
+          const puntoM = document.createElement("span");
+          puntoM.className = "puntoMetodo " + c.metodo;
+          const horaT = document.createElement("span");
+          horaT.textContent = formatoHora(c.creado);
+          sub.appendChild(puntoM);
+          sub.appendChild(horaT);
+
+          item.appendChild(fila);
+          item.appendChild(sub);
+          cont.appendChild(item);
+        });
+      }
+
+      const pie = document.createElement("div");
+      pie.className = "colTotal";
+      const tEt = document.createElement("span");
+      tEt.textContent = "Total";
+      tEt.style.color = "var(--texto-suave)";
+      const tVal = document.createElement("span");
+      tVal.className = "montoTotal";
+      tVal.textContent = formatoDinero(total);
+      pie.appendChild(tEt);
+      pie.appendChild(tVal);
+
+      col.appendChild(cabeza);
+      col.appendChild(cont);
+      col.appendChild(pie);
+      columnasBarberos.appendChild(col);
+    });
+  }
+
+  // ============================================================
+  // NOTAS DEL DÍA (colección "notas", un documento por fecha)
+  // ============================================================
+  const notaTexto   = document.getElementById("notaTexto");
+  const notaGuardar = document.getElementById("notaGuardar");
+  const notaMsg     = document.getElementById("notaMsg");
+  let guardandoNota = false;
+
+  // Cargar la nota de hoy si existe
+  (async function(){
+    try{
+      const s = await getDoc(doc(db, "notas", fechaHoy()));
+      if(s.exists()) notaTexto.value = s.data().texto || "";
+    } catch(err){ /* sin nota previa */ }
+  })();
+
+  notaGuardar.addEventListener("click", async function(){
+    if(guardandoNota) return;
+    guardandoNota = true;
+    notaGuardar.disabled = true;
+    notaMsg.textContent = "Guardando...";
+
+    try{
+      await setDoc(doc(db, "notas", fechaHoy()), {
+        texto: notaTexto.value,
+        fecha: fechaHoy(),
+        actualizado: serverTimestamp()
+      });
+      notaMsg.textContent = "Nota guardada ✓";
+    } catch(err){
+      notaMsg.textContent = "Error al guardar: " + err.message;
+    }
+
+    guardandoNota = false;
+    notaGuardar.disabled = false;
+    setTimeout(function(){ notaMsg.textContent = ""; }, 3000);
+  });
+
+  // ============================================================
+  // COBRO MANUAL
+  // ============================================================
+  const modalCobro    = document.getElementById("modalCobro");
+  const btnCobro      = document.getElementById("btnCobroManual");
+  const btnCancelar   = document.getElementById("btnCancelarCobro");
+  const filaBarberos  = document.getElementById("filaBarberos");
+  const inputConcepto = document.getElementById("inputConcepto");
+  const inputMonto    = document.getElementById("inputMonto");
+  const btnEfectivo   = document.getElementById("btnEfectivo");
+  const btnTarjeta    = document.getElementById("btnTarjeta");
+  const msgModal      = document.getElementById("msgModal");
+
+  let barberoElegido = null;
+  let guardando = false;
+
+  btnCobro.addEventListener("click", function(){
+    barberoElegido = null;
+    inputConcepto.value = "";
+    inputMonto.value = "";
+    msgModal.textContent = "";
+    filaBarberos.querySelectorAll(".btnBarbero").forEach(function(b){
+      b.classList.remove("activo");
+    });
+    modalCobro.classList.add("abierto");
+  });
+
+  btnCancelar.addEventListener("click", function(){
+    modalCobro.classList.remove("abierto");
+  });
+
+  filaBarberos.addEventListener("click", function(e){
+    const btn = e.target.closest(".btnBarbero");
+    if(!btn) return;
+    filaBarberos.querySelectorAll(".btnBarbero").forEach(function(b){
+      b.classList.remove("activo");
+    });
+    btn.classList.add("activo");
+    barberoElegido = parseInt(btn.dataset.num, 10);
+  });
+
+  async function guardarCobroManual(metodo){
+    if(guardando) return;
+    const monto = parseFloat(inputMonto.value);
+
+    if(barberoElegido === null){
+      msgModal.style.color = "#e05c5c";
+      msgModal.textContent = "Elige un barbero";
+      return;
+    }
+    if(isNaN(monto) || monto <= 0){
+      msgModal.style.color = "#e05c5c";
+      msgModal.textContent = "Escribe un monto válido";
+      return;
+    }
+
+    guardando = true;
+    btnEfectivo.disabled = true;
+    btnTarjeta.disabled = true;
+    msgModal.style.color = "#9a9a9a";
+    msgModal.textContent = "Guardando...";
+
+    try{
+      await addDoc(collection(db, "tickets"), {
+        barbero: barberoElegido,
+        concepto: inputConcepto.value.trim() || "Cobro manual",
+        monto: monto,
+        metodo: metodo,
+        fecha: fechaHoy(),
+        origen: "manual",
+        creado: serverTimestamp()
+      });
+      modalCobro.classList.remove("abierto");
+    } catch(err){
+      msgModal.style.color = "#e05c5c";
+      msgModal.textContent = "Error al guardar: " + err.message;
+    }
+
+    guardando = false;
+    btnEfectivo.disabled = false;
+    btnTarjeta.disabled = false;
+  }
+
+  btnEfectivo.addEventListener("click", function(){ guardarCobroManual("efectivo"); });
+  btnTarjeta.addEventListener("click", function(){ guardarCobroManual("tarjeta"); });
+
+  // ============================================================
+  // GASTOS Y ADELANTOS
+  // ============================================================
+  const modalMov       = document.getElementById("modalMov");
+  const btnGasto       = document.getElementById("btnGasto");
+  const btnAdelanto    = document.getElementById("btnAdelanto");
+  const movTitulo      = document.getElementById("movTitulo");
+  const movBloqueQuien = document.getElementById("movBloqueQuien");
+  const movFilaQuien   = document.getElementById("movFilaQuien");
+  const movLabelConcepto = document.getElementById("movLabelConcepto");
+  const movConcepto    = document.getElementById("movConcepto");
+  const movMonto       = document.getElementById("movMonto");
+  const movGuardar     = document.getElementById("movGuardar");
+  const movCancelar    = document.getElementById("movCancelar");
+  const movMsg         = document.getElementById("movMsg");
+
+  let tipoMov = "gasto";
+  let quienAdelanto = null;
+  let guardandoMov = false;
+
+  function abrirModalMov(tipo){
+    tipoMov = tipo;
+    quienAdelanto = null;
+    movConcepto.value = "";
+    movMonto.value = "";
+    movMsg.textContent = "";
+    movFilaQuien.querySelectorAll(".btnBarbero").forEach(function(b){
+      b.classList.remove("activo");
+    });
+
+    if(tipo === "gasto"){
+      movTitulo.textContent = "Registrar gasto";
+      movBloqueQuien.style.display = "none";
+      movLabelConcepto.textContent = "Concepto";
+      movConcepto.placeholder = "Ej. Agua, luz, insumos";
+    } else {
+      movTitulo.textContent = "Registrar adelanto";
+      movBloqueQuien.style.display = "block";
+      movLabelConcepto.textContent = "Nota (opcional)";
+      movConcepto.placeholder = "Ej. Adelanto de sueldo";
+    }
+    modalMov.classList.add("abierto");
+  }
+
+  btnGasto.addEventListener("click", function(){ abrirModalMov("gasto"); });
+  btnAdelanto.addEventListener("click", function(){ abrirModalMov("adelanto"); });
+  movCancelar.addEventListener("click", function(){
+    modalMov.classList.remove("abierto");
+  });
+
+  movFilaQuien.addEventListener("click", function(e){
+    const btn = e.target.closest(".btnBarbero");
+    if(!btn) return;
+    movFilaQuien.querySelectorAll(".btnBarbero").forEach(function(b){
+      b.classList.remove("activo");
+    });
+    btn.classList.add("activo");
+    quienAdelanto = btn.dataset.num; // "1".."N" o "R"
+  });
+
+  movGuardar.addEventListener("click", async function(){
+    if(guardandoMov) return;
+    const monto = parseFloat(movMonto.value);
+
+    if(tipoMov === "adelanto" && quienAdelanto === null){
+      movMsg.style.color = "#e05c5c";
+      movMsg.textContent = "Elige para quién es el adelanto";
+      return;
+    }
+    if(tipoMov === "gasto" && movConcepto.value.trim() === ""){
+      movMsg.style.color = "#e05c5c";
+      movMsg.textContent = "Escribe el concepto del gasto";
+      return;
+    }
+    if(isNaN(monto) || monto <= 0){
+      movMsg.style.color = "#e05c5c";
+      movMsg.textContent = "Escribe un monto válido";
+      return;
+    }
+
+    guardandoMov = true;
+    movGuardar.disabled = true;
+    movMsg.style.color = "#9a9a9a";
+    movMsg.textContent = "Guardando...";
+
+    const datos = {
+      tipo: tipoMov,
+      monto: monto,
+      fecha: fechaHoy(),
+      creado: serverTimestamp()
+    };
+
+    if(tipoMov === "gasto"){
+      datos.concepto = movConcepto.value.trim();
+    } else {
+      datos.quien = quienAdelanto === "R" ? "recepcion" : parseInt(quienAdelanto, 10);
+      datos.concepto = movConcepto.value.trim() || "Adelanto";
+    }
+
+    try{
+      await addDoc(collection(db, "movimientos"), datos);
+      modalMov.classList.remove("abierto");
+    } catch(err){
+      movMsg.style.color = "#e05c5c";
+      movMsg.textContent = "Error al guardar: " + err.message;
+    }
+
+    guardandoMov = false;
+    movGuardar.disabled = false;
+  });
+
+  // ----- Lista de movimientos de hoy (tiempo real) -----
+  const listaMovimientos = document.getElementById("listaMovimientos");
+  const totalMovimientos = document.getElementById("totalMovimientos");
+
+  onSnapshot(query(collection(db, "movimientos"), where("fecha", "==", fechaHoy())), function(snap){
+    const movs = [];
+    snap.forEach(function(d){ movs.push({ id: d.id, ...d.data() }); });
+
+    movs.sort(function(a, b){
+      const ta = a.creado ? a.creado.toMillis() : Date.now();
+      const tb = b.creado ? b.creado.toMillis() : Date.now();
+      return tb - ta;
+    });
+
+    totGastos = 0;
+    totAdelantos = 0;
+    let total = 0;
+    movs.forEach(function(m){
+      total += m.monto;
+      if(m.tipo === "gasto") totGastos += m.monto;
+      else totAdelantos += m.monto;
+    });
+    totalMovimientos.textContent = "−" + formatoDinero(total);
+    actualizarCards();
+
+    if(movs.length === 0){
+      listaMovimientos.innerHTML = '<div class="vacio">Sin gastos ni adelantos hoy.</div>';
+      return;
+    }
+
+    listaMovimientos.innerHTML = "";
+    movs.forEach(function(m){
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjetaMov";
+
+      const info = document.createElement("div");
+      info.className = "info";
+
+      const concepto = document.createElement("div");
+      concepto.className = "concepto";
+      concepto.textContent = m.concepto;
+
+      const quien = document.createElement("div");
+      quien.className = "quien";
+      if(m.tipo === "adelanto"){
+        quien.textContent = m.quien === "recepcion" ? "Recepción" : nombreBarbero(m.quien);
+      } else {
+        quien.textContent = "Gasto operativo";
+      }
+
+      const hora = document.createElement("div");
+      hora.className = "hora";
+      hora.textContent = formatoHora(m.creado);
+
+      const etiqueta = document.createElement("span");
+      etiqueta.className = "etiqueta " + m.tipo;
+      etiqueta.textContent = m.tipo === "gasto" ? "Gasto" : "Adelanto";
+
+      info.appendChild(concepto);
+      info.appendChild(quien);
+      info.appendChild(hora);
+      info.appendChild(etiqueta);
+
+      const monto = document.createElement("div");
+      monto.className = "monto";
+      monto.textContent = "−" + formatoDinero(m.monto);
+
+      tarjeta.appendChild(info);
+      tarjeta.appendChild(monto);
+      listaMovimientos.appendChild(tarjeta);
+    });
+  }, function(err){ mostrarError(err); });
+
+  // ============================================================
+  // BOTÓN TEMPORAL: TICKET DE PRUEBA
+  // ============================================================
+  const btnPrueba = document.getElementById("btnTicketPrueba");
+  const ejemplos = [
+    { barbero: 1, servicios: ["Corte VIP", "Arreglo barba VIP"], monto: 400 },
+    { barbero: 2, servicios: ["Corte"], monto: 150 },
+    { barbero: 3, servicios: ["Paquete Papi Chulo"], monto: 330 },
+    { barbero: 4, servicios: ["Corte", "Limpieza cejas"], monto: 200 },
+    { barbero: 5, servicios: ["Paquete Rey"], monto: 570 }
+  ];
+
+  btnPrueba.addEventListener("click", async function(){
+    btnPrueba.disabled = true;
+    const ej = ejemplos[Math.floor(Math.random() * ejemplos.length)];
+    try{
+      await addDoc(collection(db, "pendientes"), {
+        barbero: ej.barbero,
+        servicios: ej.servicios,
+        monto: ej.monto,
+        fecha: fechaHoy(),
+        creado: serverTimestamp()
+      });
+    } catch(err){
+      mostrarError(err);
+    }
+    btnPrueba.disabled = false;
+  });
+
+  // ============================================================
+  // TICKETS PENDIENTES (en tiempo real)
+  // ============================================================
+  const listaPendientes    = document.getElementById("listaPendientes");
+  const contadorPendientes = document.getElementById("contadorPendientes");
+
+  const modalPendiente = document.getElementById("modalPendiente");
+  const pendBarbero    = document.getElementById("pendBarbero");
+  const pendServicios  = document.getElementById("pendServicios");
+  const pendMonto      = document.getElementById("pendMonto");
+  const pendEfectivo   = document.getElementById("pendEfectivo");
+  const pendTarjeta    = document.getElementById("pendTarjeta");
+  const pendDescartar  = document.getElementById("pendDescartar");
+  const pendCancelar   = document.getElementById("pendCancelar");
+  const pendMsg        = document.getElementById("pendMsg");
+
+  let pendienteAbierto = null;
+  let procesando = false;
+  let confirmandoDescarte = false;
+
+  function abrirModalPendiente(p){
+    pendienteAbierto = p;
+    procesando = false;
+    confirmandoDescarte = false;
+    pendBarbero.textContent = nombreBarbero(p.barbero);
+    pendServicios.textContent = Array.isArray(p.servicios) ? p.servicios.join(" + ") : String(p.servicios || "");
+    pendMonto.value = p.monto;
+    pendMsg.textContent = "";
+    pendDescartar.textContent = "Descartar ticket";
+    pendEfectivo.disabled = false;
+    pendTarjeta.disabled = false;
+    modalPendiente.classList.add("abierto");
+  }
+
+  function cerrarModalPendiente(){
+    modalPendiente.classList.remove("abierto");
+    pendienteAbierto = null;
+  }
+
+  pendCancelar.addEventListener("click", cerrarModalPendiente);
+
+  async function cobrarPendiente(metodo){
+    if(procesando || !pendienteAbierto) return;
+
+    const monto = parseFloat(pendMonto.value);
+    if(isNaN(monto) || monto <= 0){
+      pendMsg.style.color = "#e05c5c";
+      pendMsg.textContent = "Escribe un monto válido";
+      return;
+    }
+
+    procesando = true;
+    pendEfectivo.disabled = true;
+    pendTarjeta.disabled = true;
+    pendMsg.style.color = "#9a9a9a";
+    pendMsg.textContent = "Procesando...";
+
+    try{
+      const batch = writeBatch(db);
+
+      const nuevoTicket = doc(collection(db, "tickets"));
+      batch.set(nuevoTicket, {
+        barbero: pendienteAbierto.barbero,
+        concepto: Array.isArray(pendienteAbierto.servicios)
+                    ? pendienteAbierto.servicios.join(" + ")
+                    : String(pendienteAbierto.servicios || "Ticket"),
+        monto: monto,
+        metodo: metodo,
+        fecha: fechaHoy(),
+        origen: "ticket",
+        creado: serverTimestamp()
+      });
+
+      batch.delete(doc(db, "pendientes", pendienteAbierto.id));
+
+      await batch.commit();
+      cerrarModalPendiente();
+    } catch(err){
+      pendMsg.style.color = "#e05c5c";
+      pendMsg.textContent = "Error: " + err.message;
+      procesando = false;
+      pendEfectivo.disabled = false;
+      pendTarjeta.disabled = false;
+    }
+  }
+
+  pendEfectivo.addEventListener("click", function(){ cobrarPendiente("efectivo"); });
+  pendTarjeta.addEventListener("click", function(){ cobrarPendiente("tarjeta"); });
+
+  pendDescartar.addEventListener("click", async function(){
+    if(procesando || !pendienteAbierto) return;
+
+    if(!confirmandoDescarte){
+      confirmandoDescarte = true;
+      pendDescartar.textContent = "¿Seguro? Toca de nuevo para descartar";
+      return;
+    }
+
+    procesando = true;
+    try{
+      const batch = writeBatch(db);
+      batch.delete(doc(db, "pendientes", pendienteAbierto.id));
+      await batch.commit();
+      cerrarModalPendiente();
+    } catch(err){
+      pendMsg.style.color = "#e05c5c";
+      pendMsg.textContent = "Error: " + err.message;
+      procesando = false;
+    }
+  });
+
+  onSnapshot(collection(db, "pendientes"), function(snap){
+    const pendientes = [];
+    snap.forEach(function(d){ pendientes.push({ id: d.id, ...d.data() }); });
+
+    pendientes.sort(function(a, b){
+      const ta = a.creado ? a.creado.toMillis() : Date.now();
+      const tb = b.creado ? b.creado.toMillis() : Date.now();
+      return ta - tb;
+    });
+
+    if(pendientes.length > 0){
+      contadorPendientes.style.display = "inline-block";
+      contadorPendientes.textContent = pendientes.length;
+    } else {
+      contadorPendientes.style.display = "none";
+    }
+
+    if(pendientes.length === 0){
+      listaPendientes.innerHTML = '<div class="vacio">No hay tickets pendientes.</div>';
+      return;
+    }
+
+    listaPendientes.innerHTML = "";
+    pendientes.forEach(function(p){
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjetaPendiente";
+
+      const info = document.createElement("div");
+      info.className = "info";
+
+      const nombre = document.createElement("div");
+      nombre.className = "barbero";
+      nombre.textContent = nombreBarbero(p.barbero);
+
+      const servicios = document.createElement("div");
+      servicios.className = "servicios";
+      servicios.textContent = Array.isArray(p.servicios) ? p.servicios.join(" + ") : String(p.servicios || "");
+
+      const hora = document.createElement("div");
+      hora.className = "hora";
+      hora.textContent = formatoHora(p.creado);
+
+      info.appendChild(nombre);
+      info.appendChild(servicios);
+      info.appendChild(hora);
+
+      const derecha = document.createElement("div");
+      derecha.style.display = "flex";
+      derecha.style.flexDirection = "column";
+      derecha.style.alignItems = "flex-end";
+      derecha.style.gap = "8px";
+
+      const monto = document.createElement("div");
+      monto.className = "monto";
+      monto.textContent = formatoDinero(p.monto);
+
+      const btnCobrar = document.createElement("button");
+      btnCobrar.className = "btnCobrarPend";
+      btnCobrar.textContent = "Cobrar";
+      btnCobrar.addEventListener("click", function(){
+        abrirModalPendiente(p);
+      });
+
+      derecha.appendChild(monto);
+      derecha.appendChild(btnCobrar);
+
+      tarjeta.appendChild(info);
+      tarjeta.appendChild(derecha);
+      listaPendientes.appendChild(tarjeta);
+    });
+  }, function(err){ mostrarError(err); });
+
+  // ============================================================
+  // COBROS DE HOY (tiempo real) → tarjetas, columnas y admin
+  // ============================================================
+  onSnapshot(query(collection(db, "tickets"), where("fecha", "==", fechaHoy())), function(snap){
+    const cobros = [];
+    snap.forEach(function(d){ cobros.push({ id: d.id, ...d.data() }); });
+
+    cobrosHoyCache = cobros;
+
+    totProduccion = 0;
+    totTarjeta = 0;
+    totClientes = cobros.length;
+    cobros.forEach(function(c){
+      totProduccion += c.monto;
+      if(c.metodo === "tarjeta") totTarjeta += c.monto;
+    });
+    actualizarCards();
+    renderColumnas();
+    renderTicketsAdmin();
+  }, function(err){ mostrarError(err); });
+
+  // ============================================================
+  // ADMIN: EDITAR / ELIMINAR TICKETS DE HOY
+  // ============================================================
+  const listaTicketsAdmin = document.getElementById("listaTicketsAdmin");
+  const modalTicket    = document.getElementById("modalEditarTicket");
+  const tickFilaBarberos = document.getElementById("tickFilaBarberos");
+  const tickConcepto   = document.getElementById("tickConcepto");
+  const tickMonto      = document.getElementById("tickMonto");
+  const tickEfectivo   = document.getElementById("tickEfectivo");
+  const tickTarjeta    = document.getElementById("tickTarjeta");
+  const tickGuardar    = document.getElementById("tickGuardar");
+  const tickEliminar   = document.getElementById("tickEliminar");
+  const tickCancelar   = document.getElementById("tickCancelar");
+  const tickMsg        = document.getElementById("tickMsg");
+
+  let ticketEditando = null;
+  let tickBarbero = null;
+  let tickMetodo = null;
+  let guardandoTicket = false;
+  let confirmandoEliminar = false;
+
+  function renderTicketsAdmin(){
+    const cobros = cobrosHoyCache.slice().sort(function(a, b){
+      const ta = a.creado ? a.creado.toMillis() : Date.now();
+      const tb = b.creado ? b.creado.toMillis() : Date.now();
+      return tb - ta;
+    });
+
+    if(cobros.length === 0){
+      listaTicketsAdmin.innerHTML = '<div class="vacio">Sin tickets hoy.</div>';
+      return;
+    }
+
+    listaTicketsAdmin.innerHTML = "";
+    cobros.forEach(function(c){
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjetaCobro";
+
+      const info = document.createElement("div");
+      info.className = "info";
+
+      const nombre = document.createElement("div");
+      nombre.className = "barbero";
+      nombre.textContent = nombreBarbero(c.barbero);
+
+      const concepto = document.createElement("div");
+      concepto.className = "concepto";
+      concepto.textContent = c.concepto;
+
+      const hora = document.createElement("div");
+      hora.className = "hora";
+      hora.textContent = formatoHora(c.creado);
+
+      const etiqueta = document.createElement("span");
+      etiqueta.className = "etiqueta " + c.metodo;
+      etiqueta.textContent = c.metodo === "tarjeta" ? "Tarjeta" : "Efectivo";
+
+      info.appendChild(nombre);
+      info.appendChild(concepto);
+      info.appendChild(hora);
+      info.appendChild(etiqueta);
+
+      const derecha = document.createElement("div");
+      derecha.style.display = "flex";
+      derecha.style.flexDirection = "column";
+      derecha.style.alignItems = "flex-end";
+      derecha.style.gap = "8px";
+
+      const monto = document.createElement("div");
+      monto.className = "monto";
+      monto.textContent = formatoDinero(c.monto);
+
+      const btnEditar = document.createElement("button");
+      btnEditar.className = "btnMini";
+      btnEditar.textContent = "Editar";
+      btnEditar.addEventListener("click", function(){
+        abrirEditarTicket(c);
+      });
+
+      derecha.appendChild(monto);
+      derecha.appendChild(btnEditar);
+
+      tarjeta.appendChild(info);
+      tarjeta.appendChild(derecha);
+      listaTicketsAdmin.appendChild(tarjeta);
+    });
+  }
+
+  function pintarBarberoTicket(){
+    tickFilaBarberos.querySelectorAll(".btnBarbero").forEach(function(b){
+      b.classList.toggle("activo", parseInt(b.dataset.num, 10) === tickBarbero);
+    });
+  }
+
+  function pintarMetodoTicket(){
+    tickEfectivo.classList.toggle("activo", tickMetodo === "efectivo");
+    tickTarjeta.classList.toggle("activo", tickMetodo === "tarjeta");
+  }
+
+  function abrirEditarTicket(c){
+    ticketEditando = c;
+    tickBarbero = c.barbero;
+    tickMetodo = c.metodo;
+    tickConcepto.value = c.concepto || "";
+    tickMonto.value = c.monto;
+    tickMsg.textContent = "";
+    tickEliminar.textContent = "Eliminar ticket";
+    confirmandoEliminar = false;
+    guardandoTicket = false;
+    tickGuardar.disabled = false;
+    pintarBarberoTicket();
+    pintarMetodoTicket();
+    modalTicket.classList.add("abierto");
+  }
+
+  tickCancelar.addEventListener("click", function(){
+    modalTicket.classList.remove("abierto");
+    ticketEditando = null;
+  });
+
+  tickFilaBarberos.addEventListener("click", function(e){
+    const btn = e.target.closest(".btnBarbero");
+    if(!btn) return;
+    tickBarbero = parseInt(btn.dataset.num, 10);
+    pintarBarberoTicket();
+  });
+
+  tickEfectivo.addEventListener("click", function(){
+    tickMetodo = "efectivo";
+    pintarMetodoTicket();
+  });
+
+  tickTarjeta.addEventListener("click", function(){
+    tickMetodo = "tarjeta";
+    pintarMetodoTicket();
+  });
+
+  tickGuardar.addEventListener("click", async function(){
+    if(guardandoTicket || !ticketEditando) return;
+
+    const monto = parseFloat(tickMonto.value);
+    if(isNaN(monto) || monto <= 0){
+      tickMsg.style.color = "#e05c5c";
+      tickMsg.textContent = "Escribe un monto válido";
+      return;
+    }
+
+    guardandoTicket = true;
+    tickGuardar.disabled = true;
+    tickMsg.style.color = "#9a9a9a";
+    tickMsg.textContent = "Guardando...";
+
+    try{
+      await updateDoc(doc(db, "tickets", ticketEditando.id), {
+        barbero: tickBarbero,
+        concepto: tickConcepto.value.trim() || "Cobro",
+        monto: monto,
+        metodo: tickMetodo,
+        editado: serverTimestamp()
+      });
+      modalTicket.classList.remove("abierto");
+      ticketEditando = null;
+    } catch(err){
+      tickMsg.style.color = "#e05c5c";
+      tickMsg.textContent = "Error al guardar: " + err.message;
+    }
+
+    guardandoTicket = false;
+    tickGuardar.disabled = false;
+  });
+
+  tickEliminar.addEventListener("click", async function(){
+    if(guardandoTicket || !ticketEditando) return;
+
+    if(!confirmandoEliminar){
+      confirmandoEliminar = true;
+      tickEliminar.textContent = "¿Seguro? Toca de nuevo para eliminar";
+      return;
+    }
+
+    guardandoTicket = true;
+    try{
+      await deleteDoc(doc(db, "tickets", ticketEditando.id));
+      modalTicket.classList.remove("abierto");
+      ticketEditando = null;
+    } catch(err){
+      tickMsg.style.color = "#e05c5c";
+      tickMsg.textContent = "Error al eliminar: " + err.message;
+    }
+    guardandoTicket = false;
+  });
+
+  // ============================================================
+  // ADMIN: RESUMEN SEMANAL Y NÓMINA
+  // ============================================================
+  const TARIFA_RECEPCION = 320;
+  const cuerpoSemanal    = document.getElementById("cuerpoSemanal");
+  const semEfectivoTotal = document.getElementById("semEfectivoTotal");
+  const semNominaTotal   = document.getElementById("semNominaTotal");
+  const desgloseNomina   = document.getElementById("desgloseNomina");
+  const montoBarber      = document.getElementById("montoBarber");
+  const rfEfectivoDisp   = document.getElementById("rfEfectivoDisp");
+  const rfNomina         = document.getElementById("rfNomina");
+  const rfEfectivoRest   = document.getElementById("rfEfectivoRest");
+  const rfTarjetaNeta    = document.getElementById("rfTarjetaNeta");
+  const rfBarber         = document.getElementById("rfBarber");
+  const cardEfectivoRest = document.getElementById("cardEfectivoRest");
+  const cardTarjetaNeta  = document.getElementById("cardTarjetaNeta");
+  const valorT1          = document.getElementById("valorT1");
+
+  let ticketsSemana = [];
+  let movsSemana = [];
+
+  onSnapshot(
+    query(collection(db, "tickets"), where("fecha", ">=", SEMANA[0]), where("fecha", "<=", SEMANA[6])),
+    function(snap){
+      ticketsSemana = [];
+      snap.forEach(function(d){ ticketsSemana.push({ id: d.id, ...d.data() }); });
+      recalcularSemana();
+    },
+    function(err){ mostrarError(err); }
+  );
+
+  onSnapshot(
+    query(collection(db, "movimientos"), where("fecha", ">=", SEMANA[0]), where("fecha", "<=", SEMANA[6])),
+    function(snap){
+      movsSemana = [];
+      snap.forEach(function(d){ movsSemana.push({ id: d.id, ...d.data() }); });
+      recalcularSemana();
+    },
+    function(err){ mostrarError(err); }
+  );
+
+  function recalcularSemana(){
+    // ----- Tabla por día -----
+    const hoy = fechaHoy();
+    const porDia = SEMANA.map(function(f){
+      return { fecha: f, produccion: 0, servicios: 0, tcvta: 0, gastos: 0, adelantos: 0 };
+    });
+
+    ticketsSemana.forEach(function(t){
+      const i = SEMANA.indexOf(t.fecha);
+      if(i === -1) return;
+      porDia[i].produccion += t.monto;
+      porDia[i].servicios += 1;
+      if(t.metodo === "tarjeta") porDia[i].tcvta += t.monto;
+    });
+
+    movsSemana.forEach(function(m){
+      const i = SEMANA.indexOf(m.fecha);
+      if(i === -1) return;
+      if(m.tipo === "gasto") porDia[i].gastos += m.monto;
+      else porDia[i].adelantos += m.monto;
+    });
+
+    const tot = { produccion:0, servicios:0, tcvta:0, comision:0, gastos:0, adelantos:0, efectivo:0 };
+
+    cuerpoSemanal.innerHTML = "";
+    porDia.forEach(function(d, i){
+      const comision = d.tcvta * 0.04;
+      const efectivo = d.produccion - d.tcvta - d.gastos - d.adelantos;
+
+      tot.produccion += d.produccion;
+      tot.servicios  += d.servicios;
+      tot.tcvta      += d.tcvta;
+      tot.comision   += comision;
+      tot.gastos     += d.gastos;
+      tot.adelantos  += d.adelantos;
+      tot.efectivo   += efectivo;
+
+      const tr = document.createElement("tr");
+      if(d.fecha === hoy) tr.className = "hoyFila";
+      tr.innerHTML =
+        "<td>" + NOMBRES_DIAS[i] + "</td>" +
+        "<td>" + formatoDinero(d.produccion) + "</td>" +
+        "<td>" + d.servicios + "</td>" +
+        "<td>" + formatoDinero(d.tcvta) + "</td>" +
+        "<td>" + formatoDinero(comision) + "</td>" +
+        "<td>" + formatoDinero(d.gastos) + "</td>" +
+        "<td>" + formatoDinero(d.adelantos) + "</td>" +
+        "<td>" + formatoDinero(efectivo) + "</td>";
+      cuerpoSemanal.appendChild(tr);
+    });
+
+    const trTotal = document.createElement("tr");
+    trTotal.className = "filaTotal";
+    trTotal.innerHTML =
+      "<td>Total</td>" +
+      "<td>" + formatoDinero(tot.produccion) + "</td>" +
+      "<td>" + tot.servicios + "</td>" +
+      "<td>" + formatoDinero(tot.tcvta) + "</td>" +
+      "<td>" + formatoDinero(tot.comision) + "</td>" +
+      "<td>" + formatoDinero(tot.gastos) + "</td>" +
+      "<td>" + formatoDinero(tot.adelantos) + "</td>" +
+      "<td>" + formatoDinero(tot.efectivo) + "</td>";
+    cuerpoSemanal.appendChild(trTotal);
+
+    // ----- Nómina por barbero -----
+    const activos = barberosActivos();
+    const prodPorBarbero = {};
+    const adelPorQuien = {};
+
+    ticketsSemana.forEach(function(t){
+      prodPorBarbero[t.barbero] = (prodPorBarbero[t.barbero] || 0) + t.monto;
+    });
+    movsSemana.forEach(function(m){
+      if(m.tipo === "adelanto"){
+        adelPorQuien[m.quien] = (adelPorQuien[m.quien] || 0) + m.monto;
+      }
+    });
+
+    // Días de Recepción: días de la semana con producción registrada
+    // (supuesto inicial; se puede cambiar a captura manual si lo prefieres)
+    const diasRecepcion = porDia.filter(function(d){ return d.produccion > 0; }).length;
+
+    desgloseNomina.innerHTML = "";
+    let nominaTotal = 0;
+
+    activos.forEach(function(b){
+      const prod = prodPorBarbero[b.num] || 0;
+      const adel = adelPorQuien[b.num] || 0;
+      const nomina = prod * (b.porcentaje / 100) - adel;
+      nominaTotal += nomina;
+
+      const fila = document.createElement("div");
+      fila.className = "filaPanel";
+      const et = document.createElement("span");
+      et.className = "etiquetaF";
+      et.textContent = b.nombre || ("Barbero " + b.num);
+      const val = document.createElement("span");
+      val.className = "valorF";
+      val.textContent = formatoDinero(nomina);
+      fila.appendChild(et);
+      fila.appendChild(val);
+      desgloseNomina.appendChild(fila);
+    });
+
+    const adelRecep = adelPorQuien["recepcion"] || 0;
+    const nominaRecep = diasRecepcion * TARIFA_RECEPCION - adelRecep;
+    nominaTotal += nominaRecep;
+
+    const filaR = document.createElement("div");
+    filaR.className = "filaPanel";
+    filaR.innerHTML =
+      '<span class="etiquetaF">Recepción (' + diasRecepcion + (diasRecepcion === 1 ? ' día' : ' días') + ')</span>' +
+      '<span class="valorF">' + formatoDinero(nominaRecep) + '</span>';
+    desgloseNomina.appendChild(filaR);
+
+    const filaT = document.createElement("div");
+    filaT.className = "filaPanel destacada";
+    filaT.innerHTML =
+      '<span class="etiquetaF">Total nómina</span>' +
+      '<span class="valorF">' + formatoDinero(nominaTotal) + '</span>';
+    desgloseNomina.appendChild(filaT);
+
+    // ----- Efectivo vs Nómina -----
+    semEfectivoTotal.textContent = formatoDinero(tot.efectivo);
+    semNominaTotal.textContent = "− " + formatoDinero(nominaTotal);
+
+    // ----- Barber (Extra): pendiente de la hoja de nómina -----
+    const BARBER = 0;
+    montoBarber.textContent = formatoDinero(BARBER);
+
+    // ----- Resultado final -----
+    const efectivoRestante = tot.efectivo - nominaTotal;
+    const tarjetaNeta = tot.tcvta - tot.comision;
+    const t1 = efectivoRestante + tarjetaNeta + BARBER;
+
+    rfEfectivoDisp.textContent = formatoDinero(tot.efectivo);
+    rfNomina.textContent = "− " + formatoDinero(nominaTotal);
+    rfEfectivoRest.textContent = formatoDinero(efectivoRestante);
+    rfEfectivoRest.style.color = efectivoRestante < 0 ? "#e05c5c" : "";
+    rfTarjetaNeta.textContent = "+ " + formatoDinero(tarjetaNeta);
+    rfBarber.textContent = "+ " + formatoDinero(BARBER);
+
+    cardEfectivoRest.textContent = formatoDinero(efectivoRestante);
+    cardEfectivoRest.style.color = efectivoRestante < 0 ? "#e05c5c" : "";
+    cardTarjetaNeta.textContent = formatoDinero(tarjetaNeta);
+    valorT1.textContent = formatoDinero(t1);
+  }
+
+  // ============================================================
+  // ADMIN: GESTIÓN DE BARBEROS (lista, alta y baja)
+  // ============================================================
+  const listaGestion = document.getElementById("listaGestion");
+  const msgAdmin     = document.getElementById("msgAdmin");
+
+  const BARBEROS_INICIALES = [
+    { num: 1, nombre: "", porcentaje: 60,  pin: "1111", vip: true,  confirmarCita: false, descanso: ["miércoles"] },
+    { num: 2, nombre: "", porcentaje: 40,  pin: "2222", vip: false, confirmarCita: false, descanso: ["domingo"] },
+    { num: 3, nombre: "", porcentaje: 40,  pin: "3333", vip: false, confirmarCita: false, descanso: ["lunes", "martes"] },
+    { num: 4, nombre: "", porcentaje: 40,  pin: "4444", vip: false, confirmarCita: false, descanso: ["miércoles"] },
+    { num: 5, nombre: "", porcentaje: 100, pin: "5555", vip: false, confirmarCita: true,  descanso: [] }
+  ];
+
+  let creandoBarberos = false;
+  let bajaPendiente = null; // num del barbero en confirmación de baja
+
+  async function crearBarberosIniciales(){
+    if(creandoBarberos) return;
+    creandoBarberos = true;
+    msgAdmin.textContent = "Creando barberos...";
+
+    try{
+      const batch = writeBatch(db);
+      BARBEROS_INICIALES.forEach(function(b){
+        const ref = doc(db, "barberos", String(b.num));
+        batch.set(ref, {
+          num: b.num,
+          nombre: b.nombre,
+          porcentaje: b.porcentaje,
+          pin: b.pin,
+          vip: b.vip,
+          confirmarCita: b.confirmarCita,
+          descanso: b.descanso,
+          activo: true,
+          creado: serverTimestamp()
+        });
+      });
+      await batch.commit();
+      msgAdmin.textContent = "Barberos creados correctamente ✓";
+    } catch(err){
+      msgAdmin.textContent = "Error al crear barberos: " + err.message;
+    }
+    creandoBarberos = false;
+  }
+
+  function renderGestion(){
+    const activos = barberosActivos();
+
+    if(barberosCache.length === 0){
+      listaGestion.innerHTML = "";
+      const aviso = document.createElement("div");
+      aviso.className = "filaPanel";
+      aviso.innerHTML = '<span class="etiquetaF">Aún no hay barberos configurados.</span>';
+      listaGestion.appendChild(aviso);
+
+      const cont = document.createElement("div");
+      cont.style.padding = "0 0 10px";
+      const btnCrear = document.createElement("button");
+      btnCrear.id = "btnCrearBarberos";
+      btnCrear.textContent = "Crear los 5 barberos iniciales";
+      btnCrear.addEventListener("click", crearBarberosIniciales);
+      cont.appendChild(btnCrear);
+      listaGestion.appendChild(cont);
+      return;
+    }
+
+    listaGestion.innerHTML = "";
+    activos.forEach(function(b){
+      const fila = document.createElement("div");
+      fila.className = "filaGestion";
+
+      const datos = document.createElement("div");
+      datos.className = "datos";
+
+      const nom = document.createElement("div");
+      nom.className = "nombreG";
+      nom.textContent = b.nombre || ("Barbero " + b.num);
+
+      const sub = document.createElement("div");
+      sub.className = "subG";
+      const descansoTexto = (b.descanso && b.descanso.length > 0) ? b.descanso.join(", ") : "variable";
+      let extras = "";
+      if(b.vip) extras += " · VIP";
+      if(tieneConfirmacion(b)) extras += " · Confirmar cita";
+      sub.textContent = b.porcentaje + "% · PIN: " + b.pin + " · Descanso: " + descansoTexto + extras;
+
+      datos.appendChild(nom);
+      datos.appendChild(sub);
+
+      const botones = document.createElement("div");
+      botones.className = "botonesG";
+
+      const btnEditar = document.createElement("button");
+      btnEditar.className = "btnMini";
+      btnEditar.textContent = "Editar";
+      btnEditar.addEventListener("click", function(){
+        abrirEditarBarbero(b);
+      });
+
+      const btnBaja = document.createElement("button");
+      btnBaja.className = "btnMini rojo";
+      btnBaja.textContent = bajaPendiente === b.num ? "¿Seguro?" : "Baja";
+      btnBaja.addEventListener("click", async function(){
+        if(bajaPendiente !== b.num){
+          bajaPendiente = b.num;
+          renderGestion();
+          return;
+        }
+        // Confirmado: dar de baja (no se borra, solo se desactiva)
+        try{
+          await updateDoc(doc(db, "barberos", b.id), { activo: false });
+          msgAdmin.textContent = (b.nombre || ("Barbero " + b.num)) + " dado de baja (su historial se conserva)";
+        } catch(err){
+          msgAdmin.textContent = "Error: " + err.message;
+        }
+        bajaPendiente = null;
+      });
+
+      botones.appendChild(btnEditar);
+      botones.appendChild(btnBaja);
+
+      fila.appendChild(datos);
+      fila.appendChild(botones);
+      listaGestion.appendChild(fila);
+    });
+  }
+
+  // ----- Agregar barbero -----
+  const agregarNombre     = document.getElementById("agregarNombre");
+  const agregarPorcentaje = document.getElementById("agregarPorcentaje");
+  const agregarPin        = document.getElementById("agregarPin");
+  const agregarBtn        = document.getElementById("agregarBtn");
+  const agregarMsg        = document.getElementById("agregarMsg");
+  let agregando = false;
+
+  agregarBtn.addEventListener("click", async function(){
+    if(agregando) return;
+
+    const nombre = agregarNombre.value.trim();
+    const porcentaje = parseFloat(agregarPorcentaje.value);
+    const pin = agregarPin.value.trim();
+
+    if(nombre === ""){
+      agregarMsg.style.color = "#e05c5c";
+      agregarMsg.textContent = "Escribe el nombre";
+      return;
+    }
+    if(isNaN(porcentaje) || porcentaje < 0 || porcentaje > 100){
+      agregarMsg.style.color = "#e05c5c";
+      agregarMsg.textContent = "El porcentaje debe estar entre 0 y 100";
+      return;
+    }
+    if(!/^\d{4}$/.test(pin)){
+      agregarMsg.style.color = "#e05c5c";
+      agregarMsg.textContent = "El PIN debe ser de 4 dígitos";
+      return;
+    }
+    const pinRepetido = barberosCache.some(function(x){
+      return x.activo !== false && x.pin === pin;
+    });
+    if(pinRepetido){
+      agregarMsg.style.color = "#e05c5c";
+      agregarMsg.textContent = "Ese PIN ya lo usa otro barbero";
+      return;
+    }
+
+    agregando = true;
+    agregarBtn.disabled = true;
+    agregarMsg.style.color = "#9a9a9a";
+    agregarMsg.textContent = "Agregando...";
+
+    // Nuevo número: el mayor existente + 1
+    let maxNum = 0;
+    barberosCache.forEach(function(b){ if(b.num > maxNum) maxNum = b.num; });
+    const nuevoNum = maxNum + 1;
+
+    try{
+      await setDoc(doc(db, "barberos", String(nuevoNum)), {
+        num: nuevoNum,
+        nombre: nombre,
+        porcentaje: porcentaje,
+        pin: pin,
+        vip: false,
+        confirmarCita: false,
+        descanso: [],
+        activo: true,
+        creado: serverTimestamp()
+      });
+      agregarNombre.value = "";
+      agregarPorcentaje.value = "40";
+      agregarPin.value = "";
+      agregarMsg.style.color = "#4caf50";
+      agregarMsg.textContent = nombre + " agregado ✓";
+    } catch(err){
+      agregarMsg.style.color = "#e05c5c";
+      agregarMsg.textContent = "Error: " + err.message;
+    }
+
+    agregando = false;
+    agregarBtn.disabled = false;
+  });
+
+  // ----- Escuchar barberos en tiempo real -----
+  onSnapshot(collection(db, "barberos"), function(snap){
+    const barberos = [];
+    snap.forEach(function(d){ barberos.push({ id: d.id, ...d.data() }); });
+    barberos.sort(function(a, b){ return a.num - b.num; });
+    barberosCache = barberos;
+
+    renderBotonesBarberos();
+    renderGestion();
+    renderColumnas();
+    renderTicketsAdmin();
+    recalcularSemana();
+  }, function(err){ mostrarError(err); });
+
+  // ----- Editar barbero -----
+  const modalEditar       = document.getElementById("modalEditarBarbero");
+  const editTitulo        = document.getElementById("editTitulo");
+  const editNombre        = document.getElementById("editNombre");
+  const editPorcentaje    = document.getElementById("editPorcentaje");
+  const editPin           = document.getElementById("editPin");
+  const editVip           = document.getElementById("editVip");
+  const editConfirmar     = document.getElementById("editConfirmar");
+  const editDias          = document.getElementById("editDias");
+  const editGuardar       = document.getElementById("editGuardar");
+  const editCancelar      = document.getElementById("editCancelar");
+  const editMsg           = document.getElementById("editMsg");
+
+  let barberoEditando = null;
+  let guardandoEdicion = false;
+
+  function abrirEditarBarbero(b){
+    barberoEditando = b;
+    editTitulo.textContent = "Editar Barbero " + b.num;
+    editNombre.value = b.nombre || "";
+    editPorcentaje.value = b.porcentaje;
+    editPin.value = b.pin;
+    editVip.classList.toggle("activo", !!b.vip);
+    editConfirmar.classList.toggle("activo", tieneConfirmacion(b));
+    editDias.querySelectorAll(".btnDia").forEach(function(btn){
+      const activo = (b.descanso || []).includes(btn.dataset.dia);
+      btn.classList.toggle("activo", activo);
+    });
+    editMsg.textContent = "";
+    modalEditar.classList.add("abierto");
+  }
+
+  editCancelar.addEventListener("click", function(){
+    modalEditar.classList.remove("abierto");
+    barberoEditando = null;
+  });
+
+  editVip.addEventListener("click", function(){
+    editVip.classList.toggle("activo");
+  });
+
+  editConfirmar.addEventListener("click", function(){
+    editConfirmar.classList.toggle("activo");
+  });
+
+  editDias.addEventListener("click", function(e){
+    const btn = e.target.closest(".btnDia");
+    if(!btn) return;
+    btn.classList.toggle("activo");
+  });
+
+  editGuardar.addEventListener("click", async function(){
+    if(guardandoEdicion || !barberoEditando) return;
+
+    const porcentaje = parseFloat(editPorcentaje.value);
+    const pin = editPin.value.trim();
+
+    if(isNaN(porcentaje) || porcentaje < 0 || porcentaje > 100){
+      editMsg.style.color = "#e05c5c";
+      editMsg.textContent = "El porcentaje debe estar entre 0 y 100";
+      return;
+    }
+    if(!/^\d{4}$/.test(pin)){
+      editMsg.style.color = "#e05c5c";
+      editMsg.textContent = "El PIN debe ser de 4 dígitos";
+      return;
+    }
+    const pinRepetido = barberosCache.some(function(x){
+      return x.id !== barberoEditando.id && x.activo !== false && x.pin === pin;
+    });
+    if(pinRepetido){
+      editMsg.style.color = "#e05c5c";
+      editMsg.textContent = "Ese PIN ya lo usa otro barbero";
+      return;
+    }
+
+    const descanso = [];
+    editDias.querySelectorAll(".btnDia.activo").forEach(function(btn){
+      descanso.push(btn.dataset.dia);
+    });
+
+    guardandoEdicion = true;
+    editGuardar.disabled = true;
+    editMsg.style.color = "#9a9a9a";
+    editMsg.textContent = "Guardando...";
+
+    try{
+      await updateDoc(doc(db, "barberos", barberoEditando.id), {
+        nombre: editNombre.value.trim(),
+        porcentaje: porcentaje,
+        pin: pin,
+        vip: editVip.classList.contains("activo"),
+        confirmarCita: editConfirmar.classList.contains("activo"),
+        descanso: descanso,
+        transferencia: deleteField() // limpia el campo viejo si existía
+      });
+      modalEditar.classList.remove("abierto");
+      barberoEditando = null;
+    } catch(err){
+      editMsg.style.color = "#e05c5c";
+      editMsg.textContent = "Error al guardar: " + err.message;
+    }
+
+    guardandoEdicion = false;
+    editGuardar.disabled = false;
+  });
+
+  // ============================================================
+  // LOGIN Y SESIÓN
+  // ============================================================
+  const CLAVE_SESION = "garageSesion";
+  const DURACION_SESION = 5 * 60 * 60 * 1000; // 5 horas
+
+  const pantallaLogin = document.getElementById("pantallaLogin");
+  const pantallaCaja  = document.getElementById("pantallaCaja");
+  const inputPass     = document.getElementById("inputPass");
+  const btnEntrar     = document.getElementById("btnEntrar");
+  const btnSalir      = document.getElementById("btnSalir");
+  const msgLogin      = document.getElementById("msgLogin");
+
+  function sesionValida(){
+    const guardado = localStorage.getItem(CLAVE_SESION);
+    if(!guardado) return false;
+    const inicio = parseInt(guardado, 10);
+    if(isNaN(inicio)) return false;
+    return (Date.now() - inicio) < DURACION_SESION;
+  }
+
+  function mostrarCaja(){
+    pantallaLogin.style.display = "none";
+    pantallaCaja.style.display  = "block";
+  }
+
+  function mostrarLogin(){
+    pantallaCaja.style.display  = "none";
+    pantallaLogin.style.display = "flex";
+    inputPass.value = "";
+    msgLogin.textContent = "";
+  }
+
+  async function intentarEntrar(){
+    await configLista; // espera a que cargue la contraseña guardada
+    if(inputPass.value === PASS_CAJA){
+      localStorage.setItem(CLAVE_SESION, Date.now().toString());
+      mostrarCaja();
+    } else {
+      msgLogin.textContent = "Contraseña incorrecta";
+      inputPass.value = "";
+    }
+  }
+
+  btnEntrar.addEventListener("click", intentarEntrar);
+  inputPass.addEventListener("keydown", function(e){
+    if(e.key === "Enter") intentarEntrar();
+  });
+
+  btnSalir.addEventListener("click", function(){
+    localStorage.removeItem(CLAVE_SESION);
+    modoAdmin = false;
+    mostrarVista("hoy");
+    mostrarLogin();
+  });
+
+  if(sesionValida()){
+    mostrarCaja();
+  }
+</script>
+
+</body>
+</html>
