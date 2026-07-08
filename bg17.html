@@ -358,7 +358,7 @@
   .leyenda .puntoMetodo{ width:8px; height:8px; }
 
   /* ===== NOTAS DEL DÍA ===== */
-  #notaTexto{
+  #notaTexto, #diaNotaTexto{
     width:100%;
     min-height:90px;
     padding:13px;
@@ -370,8 +370,8 @@
     color:var(--texto);
     resize:vertical;
   }
-  #notaTexto:focus{ outline:none; border-color:var(--ambar); }
-  #notaGuardar{
+  #notaTexto:focus, #diaNotaTexto:focus{ outline:none; border-color:var(--ambar); }
+  #notaGuardar, #diaNotaGuardar{
     width:100%;
     margin-top:10px;
     padding:13px;
@@ -384,7 +384,7 @@
     color:var(--texto);
     cursor:pointer;
   }
-  #notaMsg{
+  #notaMsg, #diaNotaMsg{
     color:var(--texto-suave);
     font-size:13px;
     margin-top:8px;
@@ -394,8 +394,9 @@
 
   /* ===== TARJETAS DE LISTAS ===== */
   .tarjetaPendiente{
-    background:#241d10;
-    border:1px solid #4a3a1c;
+    background:linear-gradient(135deg, #0f2e1a 0%, var(--panel) 70%);
+    border:1px solid #2c5c3a;
+    box-shadow:0 2px 14px rgba(76,175,80,0.12);
     border-radius:12px;
     padding:12px 14px;
     display:flex;
@@ -405,13 +406,13 @@
   }
   .tarjetaPendiente .info{ flex:1; min-width:0; }
   .tarjetaPendiente .barbero{ font-weight:600; font-size:15px; }
-  .tarjetaPendiente .servicios{ color:#c9b48a; font-size:13px; margin-top:2px; }
+  .tarjetaPendiente .servicios{ color:#9fd4ae; font-size:13px; margin-top:2px; }
   .tarjetaPendiente .hora{ color:var(--texto-suave); font-size:12px; margin-top:2px; }
   .tarjetaPendiente .monto{
     font-weight:700;
     font-size:16px;
     white-space:nowrap;
-    color:var(--ambar);
+    color:#6fd98a;
   }
   .btnCobrarPend{
     padding:10px 16px;
@@ -468,6 +469,138 @@
     text-align:center;
     color:var(--texto-suave);
     font-size:14px;
+  }
+
+  /* ===== SUB-PESTAÑAS ADMIN ===== */
+  .subPestanas{
+    display:flex;
+    gap:6px;
+    margin-bottom:20px;
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:12px;
+    padding:5px;
+  }
+  .subPestana{
+    flex:1;
+    padding:10px;
+    font-size:14px;
+    font-weight:600;
+    border:none;
+    border-radius:9px;
+    background:none;
+    color:var(--texto-suave);
+    cursor:pointer;
+  }
+  .subPestana.activa{
+    background:var(--ambar);
+    color:#121212;
+  }
+
+  /* ===== NAVEGADOR DE SEMANA Y DÍAS ===== */
+  .navSemana{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:12px;
+    padding:8px;
+    margin-bottom:12px;
+  }
+  .navSemana button{
+    width:42px;
+    height:42px;
+    border-radius:9px;
+    border:1px solid var(--borde);
+    background:var(--fondo);
+    color:var(--texto);
+    font-size:18px;
+    cursor:pointer;
+  }
+  .navSemana button:disabled{ opacity:0.35; cursor:default; }
+  #rangoSemana{ font-weight:700; font-size:15px; text-align:center; }
+  .selectorDias{
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    gap:6px;
+    margin-bottom:16px;
+  }
+  .btnDiaSel{
+    padding:9px 2px;
+    border-radius:10px;
+    border:1px solid var(--borde);
+    background:var(--panel);
+    color:var(--texto);
+    cursor:pointer;
+    text-align:center;
+  }
+  .btnDiaSel .d1{ font-size:11px; color:var(--texto-suave); }
+  .btnDiaSel .d2{ font-size:16px; font-weight:800; margin-top:2px; }
+  .btnDiaSel.hoyDia{ border-color:var(--ambar); }
+  .btnDiaSel.activo{
+    background:var(--ambar);
+    color:#121212;
+    border-color:var(--ambar);
+  }
+  .btnDiaSel.activo .d1{ color:#121212; }
+  .filaAgregarDia{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .btnAgregarChico{
+    padding:11px;
+    font-size:13px;
+    font-weight:600;
+    border:1px dashed var(--borde);
+    border-radius:10px;
+    background:none;
+    color:var(--texto);
+    cursor:pointer;
+  }
+
+  /* ===== NOTAS EN LISTA ===== */
+  #listaNotasHoy, #listaNotasDia{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:10px;
+  }
+  .tarjetaNota{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:12px;
+    padding:12px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .tarjetaNota .txt{
+    flex:1;
+    min-width:0;
+    font-size:14px;
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
+  .tarjetaNota .hr{
+    color:var(--texto-suave);
+    font-size:12px;
+    margin-top:4px;
+  }
+  .btnBorrarNota{
+    border:1px solid #5c3030;
+    background:none;
+    color:var(--rojo);
+    border-radius:8px;
+    padding:6px 10px;
+    font-size:12px;
+    cursor:pointer;
+    white-space:nowrap;
+    flex-shrink:0;
   }
 
   /* ===== ADMIN: TABLA SEMANAL ===== */
@@ -902,7 +1035,6 @@
       </div>
       <div class="pestanas">
         <button class="pestana activa" data-vista="hoy">Hoy</button>
-        <button class="pestana" data-vista="semana">Semana</button>
         <button class="pestana" data-vista="nomina">Nómina</button>
       </div>
     </div>
@@ -976,15 +1108,11 @@
       <div class="tituloSeccion">
         <span>Notas del día</span>
       </div>
-      <textarea id="notaTexto" placeholder="Anotaciones del día..."></textarea>
+      <textarea id="notaTexto" placeholder="Escribe una nota..."></textarea>
       <button id="notaGuardar">Guardar nota</button>
       <div id="notaMsg"></div>
+      <div id="listaNotasHoy"></div>
 
-    </div>
-
-    <!-- ================= VISTA SEMANA (placeholder) ================= -->
-    <div id="vistaSemana">
-      <div class="vacio">La sección <b>Semana</b> está en construcción.<br>Aquí verás el detalle de los días de la semana.</div>
     </div>
 
     <!-- ================= VISTA NÓMINA (placeholder) ================= -->
@@ -995,6 +1123,13 @@
     <!-- ================= VISTA ADMIN ================= -->
     <div id="vistaAdmin">
       <div class="contenedorAngosto">
+
+        <div class="subPestanas">
+          <button class="subPestana activa" data-sub="resumen">Resumen</button>
+          <button class="subPestana" data-sub="semana">Semana</button>
+        </div>
+
+        <div id="subResumen">
 
         <div class="tituloSeccion"><span>Resumen semanal</span></div>
         <div class="tablaScroll">
@@ -1118,6 +1253,68 @@
           </div>
         </div>
 
+        </div><!-- fin subResumen -->
+
+        <!-- ===== SUB-VISTA SEMANA ===== -->
+        <div id="subSemana" style="display:none;">
+
+          <div class="navSemana">
+            <button id="semAnterior">‹</button>
+            <div id="rangoSemana">—</div>
+            <button id="semSiguiente" disabled>›</button>
+          </div>
+          <div class="selectorDias" id="selectorDias"></div>
+
+          <div class="cuadriculaCards">
+            <div class="card">
+              <div class="tituloCard">Producción</div>
+              <div class="valorCard" id="diaProduccion">$0</div>
+            </div>
+            <div class="card">
+              <div class="tituloCard">Efectivo</div>
+              <div class="valorCard verde" id="diaEfectivo">$0</div>
+            </div>
+            <div class="card">
+              <div class="tituloCard">Tarjeta</div>
+              <div class="valorCard azul" id="diaTarjeta">$0</div>
+            </div>
+            <div class="card">
+              <div class="tituloCard">Gastos</div>
+              <div class="valorCard rojo" id="diaGastos">$0</div>
+            </div>
+            <div class="card">
+              <div class="tituloCard">Adelantos</div>
+              <div class="valorCard rojo" id="diaAdelantos">$0</div>
+            </div>
+            <div class="card">
+              <div class="tituloCard">Clientes</div>
+              <div class="valorCard" id="diaClientes">0</div>
+            </div>
+          </div>
+
+          <div class="tituloSeccion"><span>Cobros del día</span></div>
+          <button class="btnAgregarChico" id="diaAgregarCobro" style="width:100%;margin-bottom:10px;">+ Agregar cobro a este día</button>
+          <div id="listaCobrosDia">
+            <div class="vacio">Sin cobros este día.</div>
+          </div>
+
+          <div class="tituloSeccion"><span>Gastos y adelantos del día</span></div>
+          <div class="filaAgregarDia">
+            <button class="btnAgregarChico" id="diaAgregarGasto">+ Gasto</button>
+            <button class="btnAgregarChico" id="diaAgregarAdelanto">+ Adelanto</button>
+          </div>
+          <div id="listaMovsDia">
+            <div class="vacio">Sin movimientos este día.</div>
+          </div>
+
+          <div class="tituloSeccion"><span>Notas del día</span></div>
+          <textarea id="diaNotaTexto" placeholder="Agregar nota a este día..."></textarea>
+          <button id="diaNotaGuardar">Guardar nota</button>
+          <div id="diaNotaMsg"></div>
+          <div id="listaNotasDia"></div>
+
+        </div><!-- fin subSemana -->
+
         <button id="btnCerrarAdmin">Cerrar sesión Admin</button>
 
       </div>
@@ -1218,6 +1415,29 @@
     <button class="btnGuardarModal" id="movGuardar">Guardar</button>
     <div class="msgModal" id="movMsg"></div>
     <button class="btnCancelarModal" id="movCancelar">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL EDITAR MOVIMIENTO (gasto/adelanto, solo Admin) -->
+<div class="fondoModal" id="modalEditarMov">
+  <div class="modal">
+    <h3 id="emTitulo">Editar movimiento</h3>
+
+    <div id="emBloqueQuien" style="display:none;">
+      <label>¿Para quién es el adelanto?</label>
+      <div class="filaBarberos" id="emFilaQuien"></div>
+    </div>
+
+    <label>Concepto</label>
+    <input type="text" id="emConcepto" autocomplete="off">
+
+    <label>Monto ($)</label>
+    <input type="number" id="emMonto" inputmode="numeric" min="0">
+
+    <button class="btnGuardarModal" id="emGuardar">Guardar cambios</button>
+    <div class="msgModal" id="emMsg"></div>
+    <button class="btnDescartar" id="emEliminar">Eliminar movimiento</button>
+    <button class="btnCancelarModal" id="emCancelar">Cancelar</button>
   </div>
 </div>
 
@@ -1439,6 +1659,7 @@
     filaBarberos.innerHTML = botones();
     tickFila.innerHTML = botones();
     movFila.innerHTML = botones() + '<button class="btnBarbero" data-num="R">R</button>';
+    document.getElementById("emFilaQuien").innerHTML = botones() + '<button class="btnBarbero" data-num="R">R</button>';
   }
 
   // ============================================================
@@ -1446,7 +1667,6 @@
   // ============================================================
   const vistas = {
     hoy:    document.getElementById("vistaHoy"),
-    semana: document.getElementById("vistaSemana"),
     nomina: document.getElementById("vistaNomina"),
     admin:  document.getElementById("vistaAdmin")
   };
@@ -1720,33 +1940,98 @@
   }
 
   // ============================================================
-  // NOTAS DEL DÍA (colección "notas", un documento por fecha)
+  // NOTAS DEL DÍA (colección "notas", lista acumulativa por fecha)
   // ============================================================
-  const notaTexto   = document.getElementById("notaTexto");
-  const notaGuardar = document.getElementById("notaGuardar");
-  const notaMsg     = document.getElementById("notaMsg");
+  const notaTexto     = document.getElementById("notaTexto");
+  const notaGuardar   = document.getElementById("notaGuardar");
+  const notaMsg       = document.getElementById("notaMsg");
+  const listaNotasHoy = document.getElementById("listaNotasHoy");
   let guardandoNota = false;
+  let notaBorrandoHoy = null;
+  let notasHoyCache = [];
 
-  // Cargar la nota de hoy si existe
-  (async function(){
-    try{
-      const s = await getDoc(doc(db, "notas", fechaHoy()));
-      if(s.exists()) notaTexto.value = s.data().texto || "";
-    } catch(err){ /* sin nota previa */ }
-  })();
+  // Las notas viejas (modelo anterior) tienen "actualizado" en vez de "creado"
+  function tsDeNota(n){
+    return n.creado || n.actualizado || null;
+  }
+
+  // Pinta una lista de notas en un contenedor, con borrado de doble toque
+  function pintarListaNotas(contenedor, notas, borrandoId, alBorrar){
+    if(notas.length === 0){
+      contenedor.innerHTML = '<div class="vacio">Sin notas este día.</div>';
+      return;
+    }
+    contenedor.innerHTML = "";
+    notas.forEach(function(n){
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjetaNota";
+
+      const izq = document.createElement("div");
+      izq.className = "txt";
+      izq.textContent = n.texto || "";
+
+      const hr = document.createElement("div");
+      hr.className = "hr";
+      hr.textContent = formatoHora(tsDeNota(n));
+      izq.appendChild(hr);
+
+      const btn = document.createElement("button");
+      btn.className = "btnBorrarNota";
+      btn.textContent = borrandoId === n.id ? "¿Seguro?" : "✕";
+      btn.addEventListener("click", function(){ alBorrar(n); });
+
+      tarjeta.appendChild(izq);
+      tarjeta.appendChild(btn);
+      contenedor.appendChild(tarjeta);
+    });
+  }
+
+  onSnapshot(query(collection(db, "notas"), where("fecha", "==", fechaHoy())), function(snap){
+    notasHoyCache = [];
+    snap.forEach(function(d){ notasHoyCache.push({ id: d.id, ...d.data() }); });
+    notasHoyCache.sort(function(a, b){
+      const ta = tsDeNota(a) ? tsDeNota(a).toMillis() : 0;
+      const tb = tsDeNota(b) ? tsDeNota(b).toMillis() : 0;
+      return tb - ta;
+    });
+    notaBorrandoHoy = null;
+    renderNotasHoy();
+  }, function(err){ mostrarError(err); });
+
+  function renderNotasHoy(){
+    pintarListaNotas(listaNotasHoy, notasHoyCache, notaBorrandoHoy, async function(n){
+      if(notaBorrandoHoy !== n.id){
+        notaBorrandoHoy = n.id;
+        renderNotasHoy();
+        return;
+      }
+      try{
+        await deleteDoc(doc(db, "notas", n.id));
+      } catch(err){ mostrarError(err); }
+      notaBorrandoHoy = null;
+    });
+  }
 
   notaGuardar.addEventListener("click", async function(){
     if(guardandoNota) return;
+    const texto = notaTexto.value.trim();
+    if(texto === ""){
+      notaMsg.textContent = "Escribe la nota primero";
+      setTimeout(function(){ notaMsg.textContent = ""; }, 2500);
+      return;
+    }
+
     guardandoNota = true;
     notaGuardar.disabled = true;
     notaMsg.textContent = "Guardando...";
 
     try{
-      await setDoc(doc(db, "notas", fechaHoy()), {
-        texto: notaTexto.value,
+      await addDoc(collection(db, "notas"), {
+        texto: texto,
         fecha: fechaHoy(),
-        actualizado: serverTimestamp()
+        creado: serverTimestamp()
       });
+      notaTexto.value = "";
       notaMsg.textContent = "Nota guardada ✓";
     } catch(err){
       notaMsg.textContent = "Error al guardar: " + err.message;
@@ -1772,8 +2057,10 @@
 
   let barberoElegido = null;
   let guardando = false;
+  let fechaDestinoCobro = null; // hoy, o el día elegido en Admin > Semana
 
-  btnCobro.addEventListener("click", function(){
+  function abrirModalCobro(fechaDestino){
+    fechaDestinoCobro = fechaDestino;
     barberoElegido = null;
     inputConcepto.value = "";
     inputMonto.value = "";
@@ -1782,6 +2069,10 @@
       b.classList.remove("activo");
     });
     modalCobro.classList.add("abierto");
+  }
+
+  btnCobro.addEventListener("click", function(){
+    abrirModalCobro(fechaHoy());
   });
 
   btnCancelar.addEventListener("click", function(){
@@ -1825,7 +2116,7 @@
         concepto: inputConcepto.value.trim() || "Cobro manual",
         monto: monto,
         metodo: metodo,
-        fecha: fechaHoy(),
+        fecha: fechaDestinoCobro || fechaHoy(),
         origen: "manual",
         creado: serverTimestamp()
       });
@@ -1862,9 +2153,11 @@
   let tipoMov = "gasto";
   let quienAdelanto = null;
   let guardandoMov = false;
+  let fechaDestinoMov = null; // hoy, o el día elegido en Admin > Semana
 
-  function abrirModalMov(tipo){
+  function abrirModalMov(tipo, fechaDestino){
     tipoMov = tipo;
+    fechaDestinoMov = fechaDestino;
     quienAdelanto = null;
     movConcepto.value = "";
     movMonto.value = "";
@@ -1887,8 +2180,8 @@
     modalMov.classList.add("abierto");
   }
 
-  btnGasto.addEventListener("click", function(){ abrirModalMov("gasto"); });
-  btnAdelanto.addEventListener("click", function(){ abrirModalMov("adelanto"); });
+  btnGasto.addEventListener("click", function(){ abrirModalMov("gasto", fechaHoy()); });
+  btnAdelanto.addEventListener("click", function(){ abrirModalMov("adelanto", fechaHoy()); });
   movCancelar.addEventListener("click", function(){
     modalMov.classList.remove("abierto");
   });
@@ -1931,7 +2224,7 @@
     const datos = {
       tipo: tipoMov,
       monto: monto,
-      fecha: fechaHoy(),
+      fecha: fechaDestinoMov || fechaHoy(),
       creado: serverTimestamp()
     };
 
@@ -2934,6 +3227,501 @@
 
     guardandoEdicion = false;
     editGuardar.disabled = false;
+  });
+
+  // ============================================================
+  // ADMIN: SUB-PESTAÑAS (Resumen / Semana)
+  // ============================================================
+  const subResumen = document.getElementById("subResumen");
+  const subSemana  = document.getElementById("subSemana");
+
+  document.querySelectorAll(".subPestana").forEach(function(p){
+    p.addEventListener("click", function(){
+      document.querySelectorAll(".subPestana").forEach(function(x){
+        x.classList.remove("activa");
+      });
+      p.classList.add("activa");
+      const cual = p.dataset.sub;
+      subResumen.style.display = cual === "resumen" ? "block" : "none";
+      subSemana.style.display  = cual === "semana" ? "block" : "none";
+      if(cual === "semana" && !semanaIniciada){
+        iniciarSemanaSel();
+      }
+    });
+  });
+
+  // ============================================================
+  // ADMIN > SEMANA: consulta y edición por día
+  // ============================================================
+  let semanaIniciada = false;
+  let offsetSemana = 0;      // 0 = semana actual, -1 = anterior, etc.
+  let fechasSel = [];        // las 7 fechas de la semana seleccionada
+  let diaSeleccionado = null;
+  let ticketsSel = [];
+  let movsSel = [];
+  let notasSel = [];
+  let notaBorrandoDia = null;
+  let pararTicketsSel = null, pararMovsSel = null, pararNotasSel = null;
+
+  const rangoSemana    = document.getElementById("rangoSemana");
+  const semAnterior    = document.getElementById("semAnterior");
+  const semSiguiente   = document.getElementById("semSiguiente");
+  const selectorDias   = document.getElementById("selectorDias");
+  const listaCobrosDia = document.getElementById("listaCobrosDia");
+  const listaMovsDia   = document.getElementById("listaMovsDia");
+  const listaNotasDia  = document.getElementById("listaNotasDia");
+  const diaProduccion  = document.getElementById("diaProduccion");
+  const diaEfectivo    = document.getElementById("diaEfectivo");
+  const diaTarjeta     = document.getElementById("diaTarjeta");
+  const diaGastos      = document.getElementById("diaGastos");
+  const diaAdelantos   = document.getElementById("diaAdelantos");
+  const diaClientes    = document.getElementById("diaClientes");
+
+  function fechasSemanaOffset(off){
+    const hoy = new Date();
+    const dia = (hoy.getDay() + 6) % 7; // 0 = lunes
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() - dia + off * 7);
+    const arr = [];
+    for(let i = 0; i < 7; i++){
+      const d = new Date(lunes);
+      d.setDate(lunes.getDate() + i);
+      arr.push(fechaISO(d));
+    }
+    return arr;
+  }
+
+  function etiquetaRango(){
+    const ini = new Date(fechasSel[0] + "T12:00:00");
+    const fin = new Date(fechasSel[6] + "T12:00:00");
+    const fIni = ini.toLocaleDateString("es-MX", { day:"numeric", month:"long" });
+    const fFin = fin.toLocaleDateString("es-MX", { day:"numeric", month:"long" });
+    return fIni + " – " + fFin;
+  }
+
+  function iniciarSemanaSel(){
+    semanaIniciada = true;
+    cargarSemanaSel();
+  }
+
+  function cargarSemanaSel(){
+    fechasSel = fechasSemanaOffset(offsetSemana);
+    diaSeleccionado = fechasSel.includes(fechaHoy()) ? fechaHoy() : fechasSel[0];
+    rangoSemana.textContent = etiquetaRango();
+    semSiguiente.disabled = offsetSemana >= 0;
+
+    // Detener listeners de la semana anterior seleccionada
+    if(pararTicketsSel){ pararTicketsSel(); }
+    if(pararMovsSel){ pararMovsSel(); }
+    if(pararNotasSel){ pararNotasSel(); }
+
+    pararTicketsSel = onSnapshot(
+      query(collection(db, "tickets"), where("fecha", ">=", fechasSel[0]), where("fecha", "<=", fechasSel[6])),
+      function(snap){
+        ticketsSel = [];
+        snap.forEach(function(d){ ticketsSel.push({ id: d.id, ...d.data() }); });
+        renderDia();
+      },
+      function(err){ mostrarError(err); }
+    );
+
+    pararMovsSel = onSnapshot(
+      query(collection(db, "movimientos"), where("fecha", ">=", fechasSel[0]), where("fecha", "<=", fechasSel[6])),
+      function(snap){
+        movsSel = [];
+        snap.forEach(function(d){ movsSel.push({ id: d.id, ...d.data() }); });
+        renderDia();
+      },
+      function(err){ mostrarError(err); }
+    );
+
+    pararNotasSel = onSnapshot(
+      query(collection(db, "notas"), where("fecha", ">=", fechasSel[0]), where("fecha", "<=", fechasSel[6])),
+      function(snap){
+        notasSel = [];
+        snap.forEach(function(d){ notasSel.push({ id: d.id, ...d.data() }); });
+        notaBorrandoDia = null;
+        renderDia();
+      },
+      function(err){ mostrarError(err); }
+    );
+
+    renderSelectorDias();
+    renderDia();
+  }
+
+  semAnterior.addEventListener("click", function(){
+    offsetSemana--;
+    cargarSemanaSel();
+  });
+
+  semSiguiente.addEventListener("click", function(){
+    if(offsetSemana < 0){
+      offsetSemana++;
+      cargarSemanaSel();
+    }
+  });
+
+  function renderSelectorDias(){
+    selectorDias.innerHTML = "";
+    fechasSel.forEach(function(f, i){
+      const b = document.createElement("button");
+      b.className = "btnDiaSel"
+        + (f === diaSeleccionado ? " activo" : "")
+        + (f === fechaHoy() ? " hoyDia" : "");
+      const numDia = parseInt(f.slice(8), 10);
+      b.innerHTML = '<div class="d1">' + NOMBRES_DIAS[i] + '</div><div class="d2">' + numDia + '</div>';
+      b.addEventListener("click", function(){
+        diaSeleccionado = f;
+        renderSelectorDias();
+        renderDia();
+      });
+      selectorDias.appendChild(b);
+    });
+  }
+
+  function renderDia(){
+    if(!diaSeleccionado) return;
+
+    function ordenDesc(a, b){
+      const ta = a.creado ? a.creado.toMillis() : 0;
+      const tb = b.creado ? b.creado.toMillis() : 0;
+      return tb - ta;
+    }
+
+    const tk = ticketsSel.filter(function(t){ return t.fecha === diaSeleccionado; }).sort(ordenDesc);
+    const mv = movsSel.filter(function(m){ return m.fecha === diaSeleccionado; }).sort(ordenDesc);
+    const nt = notasSel.filter(function(n){ return n.fecha === diaSeleccionado; }).sort(function(a, b){
+      const ta = tsDeNota(a) ? tsDeNota(a).toMillis() : 0;
+      const tb = tsDeNota(b) ? tsDeNota(b).toMillis() : 0;
+      return tb - ta;
+    });
+
+    // ----- Tarjetas del día -----
+    let prod = 0, tarj = 0, gas = 0, adel = 0;
+    tk.forEach(function(t){
+      prod += t.monto;
+      if(t.metodo === "tarjeta") tarj += t.monto;
+    });
+    mv.forEach(function(m){
+      if(m.tipo === "gasto") gas += m.monto;
+      else adel += m.monto;
+    });
+    const efec = prod - tarj - gas - adel;
+
+    diaProduccion.textContent = formatoDinero(prod);
+    diaEfectivo.textContent   = formatoDinero(efec);
+    diaEfectivo.classList.toggle("rojo", efec < 0);
+    diaEfectivo.classList.toggle("verde", efec >= 0);
+    diaTarjeta.textContent    = formatoDinero(tarj);
+    diaGastos.textContent     = formatoDinero(gas);
+    diaAdelantos.textContent  = formatoDinero(adel);
+    diaClientes.textContent   = tk.length;
+
+    // ----- Cobros del día (con Editar) -----
+    if(tk.length === 0){
+      listaCobrosDia.innerHTML = '<div class="vacio">Sin cobros este día.</div>';
+    } else {
+      listaCobrosDia.innerHTML = "";
+      tk.forEach(function(c){
+        const tarjeta = document.createElement("div");
+        tarjeta.className = "tarjetaCobro";
+
+        const info = document.createElement("div");
+        info.className = "info";
+
+        const nombre = document.createElement("div");
+        nombre.className = "barbero";
+        nombre.textContent = nombreBarbero(c.barbero);
+
+        const concepto = document.createElement("div");
+        concepto.className = "concepto";
+        concepto.textContent = c.concepto;
+
+        const hora = document.createElement("div");
+        hora.className = "hora";
+        hora.textContent = formatoHora(c.creado);
+
+        const etiqueta = document.createElement("span");
+        etiqueta.className = "etiqueta " + c.metodo;
+        etiqueta.textContent = c.metodo === "tarjeta" ? "Tarjeta" : "Efectivo";
+
+        info.appendChild(nombre);
+        info.appendChild(concepto);
+        info.appendChild(hora);
+        info.appendChild(etiqueta);
+
+        const derecha = document.createElement("div");
+        derecha.style.display = "flex";
+        derecha.style.flexDirection = "column";
+        derecha.style.alignItems = "flex-end";
+        derecha.style.gap = "8px";
+
+        const monto = document.createElement("div");
+        monto.className = "monto";
+        monto.textContent = formatoDinero(c.monto);
+
+        const btnEditar = document.createElement("button");
+        btnEditar.className = "btnMini";
+        btnEditar.textContent = "Editar";
+        btnEditar.addEventListener("click", function(){
+          abrirEditarTicket(c);
+        });
+
+        derecha.appendChild(monto);
+        derecha.appendChild(btnEditar);
+
+        tarjeta.appendChild(info);
+        tarjeta.appendChild(derecha);
+        listaCobrosDia.appendChild(tarjeta);
+      });
+    }
+
+    // ----- Gastos y adelantos del día (con Editar) -----
+    if(mv.length === 0){
+      listaMovsDia.innerHTML = '<div class="vacio">Sin movimientos este día.</div>';
+    } else {
+      listaMovsDia.innerHTML = "";
+      mv.forEach(function(m){
+        const tarjeta = document.createElement("div");
+        tarjeta.className = "tarjetaMov";
+
+        const info = document.createElement("div");
+        info.className = "info";
+
+        const concepto = document.createElement("div");
+        concepto.className = "concepto";
+        concepto.textContent = m.concepto;
+
+        const quien = document.createElement("div");
+        quien.className = "quien";
+        if(m.tipo === "adelanto"){
+          quien.textContent = m.quien === "recepcion" ? "Recepción" : nombreBarbero(m.quien);
+        } else {
+          quien.textContent = "Gasto operativo";
+        }
+
+        const hora = document.createElement("div");
+        hora.className = "hora";
+        hora.textContent = formatoHora(m.creado);
+
+        const etiqueta = document.createElement("span");
+        etiqueta.className = "etiqueta " + m.tipo;
+        etiqueta.textContent = m.tipo === "gasto" ? "Gasto" : "Adelanto";
+
+        info.appendChild(concepto);
+        info.appendChild(quien);
+        info.appendChild(hora);
+        info.appendChild(etiqueta);
+
+        const derecha = document.createElement("div");
+        derecha.style.display = "flex";
+        derecha.style.flexDirection = "column";
+        derecha.style.alignItems = "flex-end";
+        derecha.style.gap = "8px";
+
+        const monto = document.createElement("div");
+        monto.className = "monto";
+        monto.textContent = "−" + formatoDinero(m.monto);
+
+        const btnEditar = document.createElement("button");
+        btnEditar.className = "btnMini";
+        btnEditar.textContent = "Editar";
+        btnEditar.addEventListener("click", function(){
+          abrirEditarMov(m);
+        });
+
+        derecha.appendChild(monto);
+        derecha.appendChild(btnEditar);
+
+        tarjeta.appendChild(info);
+        tarjeta.appendChild(derecha);
+        listaMovsDia.appendChild(tarjeta);
+      });
+    }
+
+    // ----- Notas del día -----
+    pintarListaNotas(listaNotasDia, nt, notaBorrandoDia, async function(n){
+      if(notaBorrandoDia !== n.id){
+        notaBorrandoDia = n.id;
+        renderDia();
+        return;
+      }
+      try{
+        await deleteDoc(doc(db, "notas", n.id));
+      } catch(err){ mostrarError(err); }
+      notaBorrandoDia = null;
+    });
+  }
+
+  // ----- Agregar cobro / gasto / adelanto al día seleccionado -----
+  document.getElementById("diaAgregarCobro").addEventListener("click", function(){
+    abrirModalCobro(diaSeleccionado || fechaHoy());
+  });
+  document.getElementById("diaAgregarGasto").addEventListener("click", function(){
+    abrirModalMov("gasto", diaSeleccionado || fechaHoy());
+  });
+  document.getElementById("diaAgregarAdelanto").addEventListener("click", function(){
+    abrirModalMov("adelanto", diaSeleccionado || fechaHoy());
+  });
+
+  // ----- Agregar nota al día seleccionado -----
+  const diaNotaTexto   = document.getElementById("diaNotaTexto");
+  const diaNotaGuardar = document.getElementById("diaNotaGuardar");
+  const diaNotaMsg     = document.getElementById("diaNotaMsg");
+  let guardandoNotaDia = false;
+
+  diaNotaGuardar.addEventListener("click", async function(){
+    if(guardandoNotaDia) return;
+    const texto = diaNotaTexto.value.trim();
+    if(texto === ""){
+      diaNotaMsg.textContent = "Escribe la nota primero";
+      setTimeout(function(){ diaNotaMsg.textContent = ""; }, 2500);
+      return;
+    }
+
+    guardandoNotaDia = true;
+    diaNotaGuardar.disabled = true;
+    diaNotaMsg.textContent = "Guardando...";
+
+    try{
+      await addDoc(collection(db, "notas"), {
+        texto: texto,
+        fecha: diaSeleccionado || fechaHoy(),
+        creado: serverTimestamp()
+      });
+      diaNotaTexto.value = "";
+      diaNotaMsg.textContent = "Nota guardada ✓";
+    } catch(err){
+      diaNotaMsg.textContent = "Error al guardar: " + err.message;
+    }
+
+    guardandoNotaDia = false;
+    diaNotaGuardar.disabled = false;
+    setTimeout(function(){ diaNotaMsg.textContent = ""; }, 3000);
+  });
+
+  // ============================================================
+  // MODAL EDITAR MOVIMIENTO (gasto/adelanto)
+  // ============================================================
+  const modalEM       = document.getElementById("modalEditarMov");
+  const emTitulo      = document.getElementById("emTitulo");
+  const emBloqueQuien = document.getElementById("emBloqueQuien");
+  const emFilaQuien   = document.getElementById("emFilaQuien");
+  const emConcepto    = document.getElementById("emConcepto");
+  const emMonto       = document.getElementById("emMonto");
+  const emGuardar     = document.getElementById("emGuardar");
+  const emEliminar    = document.getElementById("emEliminar");
+  const emCancelar    = document.getElementById("emCancelar");
+  const emMsg         = document.getElementById("emMsg");
+
+  let movEditando = null;
+  let emQuien = null;
+  let emProcesando = false;
+  let emConfirmEliminar = false;
+
+  function pintarEmQuien(){
+    emFilaQuien.querySelectorAll(".btnBarbero").forEach(function(b){
+      b.classList.toggle("activo", b.dataset.num === emQuien);
+    });
+  }
+
+  function abrirEditarMov(m){
+    movEditando = m;
+    emQuien = m.tipo === "adelanto"
+      ? (m.quien === "recepcion" ? "R" : String(m.quien))
+      : null;
+    emTitulo.textContent = m.tipo === "gasto" ? "Editar gasto" : "Editar adelanto";
+    emBloqueQuien.style.display = m.tipo === "adelanto" ? "block" : "none";
+    emConcepto.value = m.concepto || "";
+    emMonto.value = m.monto;
+    emMsg.textContent = "";
+    emEliminar.textContent = "Eliminar movimiento";
+    emConfirmEliminar = false;
+    emProcesando = false;
+    emGuardar.disabled = false;
+    pintarEmQuien();
+    modalEM.classList.add("abierto");
+  }
+
+  emCancelar.addEventListener("click", function(){
+    modalEM.classList.remove("abierto");
+    movEditando = null;
+  });
+
+  emFilaQuien.addEventListener("click", function(e){
+    const btn = e.target.closest(".btnBarbero");
+    if(!btn) return;
+    emQuien = btn.dataset.num;
+    pintarEmQuien();
+  });
+
+  emGuardar.addEventListener("click", async function(){
+    if(emProcesando || !movEditando) return;
+
+    const monto = parseFloat(emMonto.value);
+    if(isNaN(monto) || monto <= 0){
+      emMsg.style.color = "#e05c5c";
+      emMsg.textContent = "Escribe un monto válido";
+      return;
+    }
+    if(movEditando.tipo === "adelanto" && emQuien === null){
+      emMsg.style.color = "#e05c5c";
+      emMsg.textContent = "Elige para quién es el adelanto";
+      return;
+    }
+    if(movEditando.tipo === "gasto" && emConcepto.value.trim() === ""){
+      emMsg.style.color = "#e05c5c";
+      emMsg.textContent = "Escribe el concepto del gasto";
+      return;
+    }
+
+    emProcesando = true;
+    emGuardar.disabled = true;
+    emMsg.style.color = "#9a9a9a";
+    emMsg.textContent = "Guardando...";
+
+    const datos = {
+      concepto: emConcepto.value.trim() || (movEditando.tipo === "adelanto" ? "Adelanto" : "Gasto"),
+      monto: monto,
+      editado: serverTimestamp()
+    };
+    if(movEditando.tipo === "adelanto"){
+      datos.quien = emQuien === "R" ? "recepcion" : parseInt(emQuien, 10);
+    }
+
+    try{
+      await updateDoc(doc(db, "movimientos", movEditando.id), datos);
+      modalEM.classList.remove("abierto");
+      movEditando = null;
+    } catch(err){
+      emMsg.style.color = "#e05c5c";
+      emMsg.textContent = "Error al guardar: " + err.message;
+    }
+
+    emProcesando = false;
+    emGuardar.disabled = false;
+  });
+
+  emEliminar.addEventListener("click", async function(){
+    if(emProcesando || !movEditando) return;
+
+    if(!emConfirmEliminar){
+      emConfirmEliminar = true;
+      emEliminar.textContent = "¿Seguro? Toca de nuevo para eliminar";
+      return;
+    }
+
+    emProcesando = true;
+    try{
+      await deleteDoc(doc(db, "movimientos", movEditando.id));
+      modalEM.classList.remove("abierto");
+      movEditando = null;
+    } catch(err){
+      emMsg.style.color = "#e05c5c";
+      emMsg.textContent = "Error al eliminar: " + err.message;
+    }
+    emProcesando = false;
   });
 
   // ============================================================
