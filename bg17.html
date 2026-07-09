@@ -502,6 +502,30 @@
   #nomTabs{ flex-wrap:wrap; }
   #nomTabs .subPestana{ flex:1 1 30%; min-width:92px; }
 
+  /* ===== GASTOS DEL NEGOCIO ===== */
+  .chipsCat{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .chipCat{
+    padding:9px 14px;
+    border-radius:20px;
+    border:1px solid var(--borde);
+    background:var(--fondo);
+    color:var(--texto);
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .chipCat.activo{
+    background:var(--ambar);
+    color:#121212;
+    border-color:var(--ambar);
+  }
+  .etiqueta.cat{ background:#26303a; color:#9fc3e8; }
+  input[type="date"]{ color-scheme:dark; }
+
   /* ===== NAVEGADOR DE SEMANA Y DÍAS ===== */
   .navSemana{
     display:flex;
@@ -1139,9 +1163,10 @@
     <div id="vistaAdmin">
       <div class="contenedorAngosto">
 
-        <div class="subPestanas">
+        <div class="subPestanas" id="adminSubTabs">
           <button class="subPestana activa" data-sub="resumen">Resumen</button>
           <button class="subPestana" data-sub="semana">Semana</button>
+          <button class="subPestana" data-sub="gastos">Gastos</button>
         </div>
 
         <div id="subResumen">
@@ -1342,6 +1367,45 @@
 
         </div><!-- fin subSemana -->
 
+        <!-- ===== SUB-VISTA GASTOS DEL NEGOCIO ===== -->
+        <div id="subGastos" style="display:none;">
+
+          <div class="navSemana">
+            <button id="gnAnterior">‹</button>
+            <div id="gnRango">—</div>
+            <button id="gnSiguiente" disabled>›</button>
+          </div>
+
+          <div class="formAgregar">
+            <h4>Registrar gasto del negocio</h4>
+            <div class="chipsCat" id="gnChips"></div>
+            <input type="text" id="gnNota" placeholder="Nota (opcional)" autocomplete="off" style="margin-top:10px;">
+            <div class="filaAgregar" style="grid-template-columns:1fr 1fr auto;">
+              <input type="date" id="gnFecha">
+              <input type="number" id="gnMonto" placeholder="$ Monto" inputmode="numeric" min="0">
+              <button id="gnGuardar" style="padding:12px 16px;font-size:14px;font-weight:700;border:none;border-radius:10px;background:var(--ambar);color:#121212;cursor:pointer;">Guardar</button>
+            </div>
+            <div id="gnMsg" style="font-size:13px;margin-top:8px;min-height:16px;color:var(--texto-suave);"></div>
+            <button class="btnAgregarChico" id="gnNuevaCat" style="width:100%;margin-top:6px;">+ Nueva categoría</button>
+          </div>
+
+          <div class="tituloSeccion"><span>Totales por categoría</span></div>
+          <div class="panelFilas" id="gnTotales">
+            <div class="filaPanel"><span class="etiquetaF">Sin gastos este mes.</span><span></span></div>
+          </div>
+
+          <div class="tituloSeccion">
+            <span>Gastos del mes</span>
+            <span id="gnTotalMes" style="color:var(--rojo);font-weight:700;font-size:15px;">−$0</span>
+          </div>
+          <div id="gnLista">
+            <div class="vacio">Sin gastos este mes.</div>
+          </div>
+
+          <div style="color:var(--texto-suave);font-size:12px;margin-top:14px;text-align:center;">Estos gastos no tocan la caja diaria. Lo que sale del cajón se registra en Hoy como siempre.</div>
+
+        </div><!-- fin subGastos -->
+
         <button id="btnCerrarAdmin">Cerrar sesión Admin</button>
 
       </div>
@@ -1457,6 +1521,37 @@
   </div>
 </div>
 
+<!-- MODAL NUEVA CATEGORÍA DE GASTO -->
+<div class="fondoModal" id="modalCatGasto">
+  <div class="modal">
+    <h3>Nueva categoría de gasto</h3>
+    <label>Nombre de la categoría</label>
+    <input type="text" id="ncNombre" autocomplete="off" placeholder="Ej. Publicidad">
+    <button class="btnGuardarModal" id="ncGuardar">Agregar</button>
+    <div class="msgModal" id="ncMsg"></div>
+    <button class="btnCancelarModal" id="ncCancelar">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL EDITAR GASTO DEL NEGOCIO -->
+<div class="fondoModal" id="modalEditGN">
+  <div class="modal">
+    <h3>Editar gasto</h3>
+    <label>Categoría</label>
+    <div class="chipsCat" id="egChips"></div>
+    <label>Nota</label>
+    <input type="text" id="egNota" autocomplete="off">
+    <label>Fecha</label>
+    <input type="date" id="egFecha">
+    <label>Monto ($)</label>
+    <input type="number" id="egMonto" inputmode="numeric" min="0">
+    <button class="btnGuardarModal" id="egGuardar">Guardar cambios</button>
+    <div class="msgModal" id="egMsg"></div>
+    <button class="btnDescartar" id="egEliminar">Eliminar gasto</button>
+    <button class="btnCancelarModal" id="egCancelar">Cancelar</button>
+  </div>
+</div>
+
 <!-- MODAL BONO / MULTA / EXTRA -->
 <div class="fondoModal" id="modalNomItem">
   <div class="modal">
@@ -1563,7 +1658,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
     getFirestore, collection, getDocs, getDoc, addDoc, setDoc, doc, updateDoc, deleteField, deleteDoc,
-    query, where, onSnapshot, serverTimestamp, writeBatch
+    query, where, onSnapshot, serverTimestamp, writeBatch, arrayUnion
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   // ----- Configuración del proyecto "agend" -----
@@ -3334,18 +3429,23 @@
   // ============================================================
   const subResumen = document.getElementById("subResumen");
   const subSemana  = document.getElementById("subSemana");
+  const subGastos  = document.getElementById("subGastos");
 
-  document.querySelectorAll(".subPestana").forEach(function(p){
+  document.querySelectorAll("#adminSubTabs .subPestana").forEach(function(p){
     p.addEventListener("click", function(){
-      document.querySelectorAll(".subPestana").forEach(function(x){
+      document.querySelectorAll("#adminSubTabs .subPestana").forEach(function(x){
         x.classList.remove("activa");
       });
       p.classList.add("activa");
       const cual = p.dataset.sub;
       subResumen.style.display = cual === "resumen" ? "block" : "none";
       subSemana.style.display  = cual === "semana" ? "block" : "none";
+      subGastos.style.display  = cual === "gastos" ? "block" : "none";
       if(cual === "semana" && !semanaIniciada){
         iniciarSemanaSel();
+      }
+      if(cual === "gastos" && !gnIniciada){
+        iniciarGastos();
       }
     });
   });
@@ -4282,6 +4382,409 @@
       }
     });
   }
+
+  // ============================================================
+  // GASTOS DEL NEGOCIO (Fase 5A — colección "gastosNegocio")
+  // Dinero que sale fuera de la caja diaria (renta, luz, bolsa propia)
+  // ============================================================
+  const CATS_BASE = ["Renta", "Luz", "Agua", "Internet", "Gastos digitales", "Mantenimiento", "Insumos", "Otro"];
+
+  let gnIniciada = false;
+  let gnOffset = 0;          // 0 = mes actual, -1 = anterior...
+  let gnMes = "";            // "2026-07"
+  let gnCats = CATS_BASE.slice();
+  let gnCatSel = null;
+  let gnGastos = [];
+  let pararGn = null;
+  let guardandoGn = false;
+
+  const gnAnterior  = document.getElementById("gnAnterior");
+  const gnSiguiente = document.getElementById("gnSiguiente");
+  const gnRango     = document.getElementById("gnRango");
+  const gnChips     = document.getElementById("gnChips");
+  const gnNota      = document.getElementById("gnNota");
+  const gnFecha     = document.getElementById("gnFecha");
+  const gnMonto     = document.getElementById("gnMonto");
+  const gnGuardar   = document.getElementById("gnGuardar");
+  const gnMsg       = document.getElementById("gnMsg");
+  const gnTotales   = document.getElementById("gnTotales");
+  const gnTotalMes  = document.getElementById("gnTotalMes");
+  const gnLista     = document.getElementById("gnLista");
+
+  function mesDeOffset(off){
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + off);
+    const clave = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+    let etiqueta = d.toLocaleDateString("es-MX", { month:"long", year:"numeric" });
+    etiqueta = etiqueta.charAt(0).toUpperCase() + etiqueta.slice(1);
+    return { clave: clave, etiqueta: etiqueta };
+  }
+
+  function diaCortoGN(f){
+    const d = new Date(f + "T12:00:00");
+    return d.toLocaleDateString("es-MX", { weekday:"short", day:"numeric" });
+  }
+
+  function iniciarGastos(){
+    gnIniciada = true;
+
+    // Categorías configurables (documento ajustes/categoriasGastos)
+    onSnapshot(doc(db, "ajustes", "categoriasGastos"), function(s){
+      if(s.exists() && Array.isArray(s.data().lista) && s.data().lista.length > 0){
+        gnCats = s.data().lista;
+      } else {
+        gnCats = CATS_BASE.slice();
+      }
+      pintarChips(gnChips, gnCatSel, function(c){
+        gnCatSel = c;
+      });
+    }, function(err){ /* usa las base */ });
+
+    cargarMesGN();
+  }
+
+  function pintarChips(contenedor, seleccionada, alElegir){
+    contenedor.innerHTML = "";
+    gnCats.forEach(function(c){
+      const chip = document.createElement("button");
+      chip.className = "chipCat" + (c === seleccionada ? " activo" : "");
+      chip.dataset.cat = c;
+      chip.textContent = c;
+      chip.addEventListener("click", function(){
+        contenedor.querySelectorAll(".chipCat").forEach(function(x){
+          x.classList.remove("activo");
+        });
+        chip.classList.add("activo");
+        if(alElegir) alElegir(c);
+      });
+      contenedor.appendChild(chip);
+    });
+  }
+
+  function cargarMesGN(){
+    const m = mesDeOffset(gnOffset);
+    gnMes = m.clave;
+    gnRango.textContent = m.etiqueta;
+    gnSiguiente.disabled = gnOffset >= 0;
+
+    // Fecha por default: hoy si es el mes actual, o el día 1 del mes elegido
+    gnFecha.value = gnOffset === 0 ? fechaHoy() : (gnMes + "-01");
+
+    if(pararGn){ pararGn(); }
+    pararGn = onSnapshot(query(collection(db, "gastosNegocio"), where("mes", "==", gnMes)), function(snap){
+      gnGastos = [];
+      snap.forEach(function(d){ gnGastos.push({ id: d.id, ...d.data() }); });
+      gnGastos.sort(function(a, b){
+        if(a.fecha !== b.fecha) return a.fecha < b.fecha ? 1 : -1;
+        const ta = a.creado ? a.creado.toMillis() : 0;
+        const tb = b.creado ? b.creado.toMillis() : 0;
+        return tb - ta;
+      });
+      renderGastosGN();
+    }, function(err){ mostrarError(err); });
+  }
+
+  gnAnterior.addEventListener("click", function(){
+    gnOffset--;
+    cargarMesGN();
+  });
+
+  gnSiguiente.addEventListener("click", function(){
+    if(gnOffset < 0){
+      gnOffset++;
+      cargarMesGN();
+    }
+  });
+
+  gnGuardar.addEventListener("click", async function(){
+    if(guardandoGn) return;
+
+    const monto = parseFloat(gnMonto.value);
+    const fecha = gnFecha.value;
+
+    if(gnCatSel === null){
+      gnMsg.style.color = "#e05c5c";
+      gnMsg.textContent = "Elige la categoría del gasto";
+      return;
+    }
+    if(!fecha){
+      gnMsg.style.color = "#e05c5c";
+      gnMsg.textContent = "Elige la fecha";
+      return;
+    }
+    if(isNaN(monto) || monto <= 0){
+      gnMsg.style.color = "#e05c5c";
+      gnMsg.textContent = "Escribe un monto válido";
+      return;
+    }
+
+    guardandoGn = true;
+    gnGuardar.disabled = true;
+    gnMsg.style.color = "#9a9a9a";
+    gnMsg.textContent = "Guardando...";
+
+    try{
+      await addDoc(collection(db, "gastosNegocio"), {
+        categoria: gnCatSel,
+        nota: gnNota.value.trim(),
+        monto: monto,
+        fecha: fecha,
+        mes: fecha.slice(0, 7),
+        creado: serverTimestamp()
+      });
+      gnNota.value = "";
+      gnMonto.value = "";
+      gnCatSel = null;
+      gnChips.querySelectorAll(".chipCat").forEach(function(x){
+        x.classList.remove("activo");
+      });
+      gnMsg.style.color = "#4caf50";
+      gnMsg.textContent = "Gasto guardado ✓";
+      setTimeout(function(){ gnMsg.textContent = ""; }, 3000);
+    } catch(err){
+      gnMsg.style.color = "#e05c5c";
+      gnMsg.textContent = "Error: " + err.message;
+    }
+
+    guardandoGn = false;
+    gnGuardar.disabled = false;
+  });
+
+  function renderGastosGN(){
+    // Totales por categoría
+    const porCat = {};
+    let total = 0;
+    gnGastos.forEach(function(g){
+      porCat[g.categoria] = (porCat[g.categoria] || 0) + g.monto;
+      total += g.monto;
+    });
+
+    gnTotalMes.textContent = "−" + formatoDinero(total);
+
+    const cats = Object.keys(porCat).sort(function(a, b){ return porCat[b] - porCat[a]; });
+    if(cats.length === 0){
+      gnTotales.innerHTML = '<div class="filaPanel"><span class="etiquetaF">Sin gastos este mes.</span><span></span></div>';
+    } else {
+      gnTotales.innerHTML = "";
+      cats.forEach(function(c){
+        const fila = document.createElement("div");
+        fila.className = "filaPanel";
+        fila.innerHTML =
+          '<span class="etiquetaF">' + esc(c) + '</span>' +
+          '<span class="valorF rojo">− ' + formatoDinero(porCat[c]) + '</span>';
+        gnTotales.appendChild(fila);
+      });
+      const filaT = document.createElement("div");
+      filaT.className = "filaPanel destacada";
+      filaT.innerHTML =
+        '<span class="etiquetaF">Total del mes</span>' +
+        '<span class="valorF rojo">− ' + formatoDinero(total) + '</span>';
+      gnTotales.appendChild(filaT);
+    }
+
+    // Lista de gastos
+    if(gnGastos.length === 0){
+      gnLista.innerHTML = '<div class="vacio">Sin gastos este mes.</div>';
+      return;
+    }
+
+    gnLista.innerHTML = "";
+    gnGastos.forEach(function(g){
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjetaMov";
+
+      const info = document.createElement("div");
+      info.className = "info";
+
+      const concepto = document.createElement("div");
+      concepto.className = "concepto";
+      concepto.textContent = g.categoria;
+
+      const quien = document.createElement("div");
+      quien.className = "quien";
+      quien.textContent = g.nota || "";
+
+      const hora = document.createElement("div");
+      hora.className = "hora";
+      hora.textContent = diaCortoGN(g.fecha);
+
+      const etiqueta = document.createElement("span");
+      etiqueta.className = "etiqueta cat";
+      etiqueta.textContent = "Negocio";
+
+      info.appendChild(concepto);
+      if(g.nota) info.appendChild(quien);
+      info.appendChild(hora);
+      info.appendChild(etiqueta);
+
+      const derecha = document.createElement("div");
+      derecha.style.display = "flex";
+      derecha.style.flexDirection = "column";
+      derecha.style.alignItems = "flex-end";
+      derecha.style.gap = "8px";
+
+      const monto = document.createElement("div");
+      monto.className = "monto";
+      monto.textContent = "−" + formatoDinero(g.monto);
+
+      const btnEditar = document.createElement("button");
+      btnEditar.className = "btnMini";
+      btnEditar.textContent = "Editar";
+      btnEditar.addEventListener("click", function(){
+        abrirEditarGN(g);
+      });
+
+      derecha.appendChild(monto);
+      derecha.appendChild(btnEditar);
+
+      tarjeta.appendChild(info);
+      tarjeta.appendChild(derecha);
+      gnLista.appendChild(tarjeta);
+    });
+  }
+
+  // ----- Nueva categoría -----
+  const modalCatGasto = document.getElementById("modalCatGasto");
+  const ncNombre  = document.getElementById("ncNombre");
+  const ncGuardar = document.getElementById("ncGuardar");
+  const ncCancelar = document.getElementById("ncCancelar");
+  const ncMsg     = document.getElementById("ncMsg");
+  let guardandoNc = false;
+
+  document.getElementById("gnNuevaCat").addEventListener("click", function(){
+    ncNombre.value = "";
+    ncMsg.textContent = "";
+    modalCatGasto.classList.add("abierto");
+  });
+
+  ncCancelar.addEventListener("click", function(){
+    modalCatGasto.classList.remove("abierto");
+  });
+
+  ncGuardar.addEventListener("click", async function(){
+    if(guardandoNc) return;
+    const nombre = ncNombre.value.trim();
+    if(nombre === ""){
+      ncMsg.textContent = "Escribe el nombre de la categoría";
+      return;
+    }
+    const yaExiste = gnCats.some(function(c){
+      return c.toLowerCase() === nombre.toLowerCase();
+    });
+    if(yaExiste){
+      ncMsg.textContent = "Esa categoría ya existe";
+      return;
+    }
+
+    guardandoNc = true;
+    ncGuardar.disabled = true;
+
+    try{
+      // Se guarda la lista completa (base + nuevas) para conservar el orden
+      await setDoc(doc(db, "ajustes", "categoriasGastos"), {
+        lista: gnCats.concat([nombre])
+      }, { merge: true });
+      modalCatGasto.classList.remove("abierto");
+    } catch(err){
+      ncMsg.textContent = "Error: " + err.message;
+    }
+
+    guardandoNc = false;
+    ncGuardar.disabled = false;
+  });
+
+  // ----- Editar / eliminar gasto del negocio -----
+  const modalEditGN = document.getElementById("modalEditGN");
+  const egChips    = document.getElementById("egChips");
+  const egNota     = document.getElementById("egNota");
+  const egFecha    = document.getElementById("egFecha");
+  const egMonto    = document.getElementById("egMonto");
+  const egGuardar  = document.getElementById("egGuardar");
+  const egEliminar = document.getElementById("egEliminar");
+  const egCancelar = document.getElementById("egCancelar");
+  const egMsg      = document.getElementById("egMsg");
+
+  let gnEditando = null;
+  let egCatSel = null;
+  let egProcesando = false;
+  let egConfirmEliminar = false;
+
+  function abrirEditarGN(g){
+    gnEditando = g;
+    egCatSel = g.categoria;
+    pintarChips(egChips, egCatSel, function(c){ egCatSel = c; });
+    egNota.value = g.nota || "";
+    egFecha.value = g.fecha;
+    egMonto.value = g.monto;
+    egMsg.textContent = "";
+    egEliminar.textContent = "Eliminar gasto";
+    egConfirmEliminar = false;
+    egProcesando = false;
+    egGuardar.disabled = false;
+    modalEditGN.classList.add("abierto");
+  }
+
+  egCancelar.addEventListener("click", function(){
+    modalEditGN.classList.remove("abierto");
+    gnEditando = null;
+  });
+
+  egGuardar.addEventListener("click", async function(){
+    if(egProcesando || !gnEditando) return;
+
+    const monto = parseFloat(egMonto.value);
+    const fecha = egFecha.value;
+    if(isNaN(monto) || monto <= 0){
+      egMsg.textContent = "Escribe un monto válido";
+      return;
+    }
+    if(!fecha){
+      egMsg.textContent = "Elige la fecha";
+      return;
+    }
+
+    egProcesando = true;
+    egGuardar.disabled = true;
+
+    try{
+      await updateDoc(doc(db, "gastosNegocio", gnEditando.id), {
+        categoria: egCatSel,
+        nota: egNota.value.trim(),
+        monto: monto,
+        fecha: fecha,
+        mes: fecha.slice(0, 7),
+        editado: serverTimestamp()
+      });
+      modalEditGN.classList.remove("abierto");
+      gnEditando = null;
+    } catch(err){
+      egMsg.textContent = "Error: " + err.message;
+    }
+
+    egProcesando = false;
+    egGuardar.disabled = false;
+  });
+
+  egEliminar.addEventListener("click", async function(){
+    if(egProcesando || !gnEditando) return;
+
+    if(!egConfirmEliminar){
+      egConfirmEliminar = true;
+      egEliminar.textContent = "¿Seguro? Toca de nuevo para eliminar";
+      return;
+    }
+
+    egProcesando = true;
+    try{
+      await deleteDoc(doc(db, "gastosNegocio", gnEditando.id));
+      modalEditGN.classList.remove("abierto");
+      gnEditando = null;
+    } catch(err){
+      egMsg.textContent = "Error: " + err.message;
+    }
+    egProcesando = false;
+  });
 
   // ============================================================
   // LOGIN Y SESIÓN
