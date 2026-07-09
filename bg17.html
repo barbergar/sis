@@ -461,6 +461,9 @@
   .etiqueta.adelanto{ background:#33261d; color:#e0b890; }
   .etiqueta.vip{ background:#3a2f14; color:#e8c060; }
   .etiqueta.transferencia{ background:#1d3330; color:#7fd8c8; }
+  .etiqueta.bono{ background:#1e3320; color:#8fd694; }
+  .etiqueta.multa{ background:#3a2020; color:#e8a0a0; }
+  .etiqueta.extra{ background:#3a2f14; color:#e8c060; }
   .vacio{
     background:var(--panel);
     border:1px dashed var(--borde);
@@ -1182,12 +1185,16 @@
         <div class="tituloSeccion"><span>Barber (Extra)</span></div>
         <div class="panelFilas">
           <div class="filaPanel">
-            <span class="etiquetaF">Monto BARBER</span>
-            <span class="valorF" id="montoBarber">$0</span>
+            <span class="etiquetaF">Extra total de la semana</span>
+            <span class="valorF" id="extraTotalSem">$0</span>
           </div>
           <div class="filaPanel">
-            <span class="etiquetaF" style="font-size:12px;">Se calculará en la hoja de nómina del barbero VIP (próxima fase)</span>
-            <span></span>
+            <span class="etiquetaF">ED (60%)</span>
+            <span class="valorF" id="extraEd">$0</span>
+          </div>
+          <div class="filaPanel destacada">
+            <span class="etiquetaF">Monto BARBER (40%)</span>
+            <span class="valorF" id="montoBarber">$0</span>
           </div>
         </div>
 
@@ -1447,6 +1454,20 @@
     <button class="btnGuardarModal" id="nomEntrar">Entrar</button>
     <div class="msgModal" id="nomModalMsg"></div>
     <button class="btnCancelarModal" id="nomCancelarBtn">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL BONO / MULTA / EXTRA -->
+<div class="fondoModal" id="modalNomItem">
+  <div class="modal">
+    <h3 id="niTitulo">Agregar</h3>
+    <label>Concepto</label>
+    <input type="text" id="niConcepto" autocomplete="off">
+    <label>Monto ($)</label>
+    <input type="number" id="niMonto" inputmode="numeric" min="0">
+    <button class="btnGuardarModal" id="niGuardar">Guardar</button>
+    <div class="msgModal" id="niMsg"></div>
+    <button class="btnCancelarModal" id="niCancelar">Cancelar</button>
   </div>
 </div>
 
@@ -2759,7 +2780,20 @@
   const semEfectivoTotal = document.getElementById("semEfectivoTotal");
   const semNominaTotal   = document.getElementById("semNominaTotal");
   const desgloseNomina   = document.getElementById("desgloseNomina");
+  const extraTotalSem    = document.getElementById("extraTotalSem");
+  const extraEd          = document.getElementById("extraEd");
   const montoBarber      = document.getElementById("montoBarber");
+
+  // Bonos, multas y extras de la semana actual (colección "nomina")
+  let itemsSemanaActual = [];
+  onSnapshot(query(collection(db, "nomina"), where("semana", "==", SEMANA[0])), function(snap){
+    itemsSemanaActual = [];
+    snap.forEach(function(d){
+      const x = d.data();
+      if(x.tipo) itemsSemanaActual.push({ id: d.id, ...x });
+    });
+    recalcularSemana();
+  }, function(err){ /* sin registros aún */ });
   const rfEfectivoDisp   = document.getElementById("rfEfectivoDisp");
   const rfNomina         = document.getElementById("rfNomina");
   const rfEfectivoRest   = document.getElementById("rfEfectivoRest");
@@ -2882,13 +2916,22 @@
     // Días de Recepción: capturados en Nómina > Recepción (por semana)
     const diasRecepcion = diasRecepcionSemanaActual;
 
+    // Bonos y multas por barbero (de la colección "nomina")
+    const bonosPor = {};
+    const multasPor = {};
+    itemsSemanaActual.forEach(function(it){
+      if(it.tipo === "bono")  bonosPor[it.barbero]  = (bonosPor[it.barbero]  || 0) + it.monto;
+      if(it.tipo === "multa") multasPor[it.barbero] = (multasPor[it.barbero] || 0) + it.monto;
+    });
+
     desgloseNomina.innerHTML = "";
     let nominaTotal = 0;
 
     activos.forEach(function(b){
       const prod = prodPorBarbero[b.num] || 0;
       const adel = adelPorQuien[b.num] || 0;
-      const nomina = prod * (b.porcentaje / 100) - adel;
+      const nomina = prod * (b.porcentaje / 100) - adel
+                   + (bonosPor[b.num] || 0) - (multasPor[b.num] || 0);
       nominaTotal += nomina;
 
       const fila = document.createElement("div");
@@ -2926,8 +2969,14 @@
     semEfectivoTotal.textContent = formatoDinero(tot.efectivo);
     semNominaTotal.textContent = "− " + formatoDinero(nominaTotal);
 
-    // ----- Barber (Extra): pendiente de la hoja de nómina -----
-    const BARBER = 0;
+    // ----- Barber (Extra): 40% del extra del VIP -----
+    let extraTotal = 0;
+    itemsSemanaActual.forEach(function(it){
+      if(it.tipo === "extra") extraTotal += it.monto;
+    });
+    const BARBER = extraTotal * 0.4;
+    extraTotalSem.textContent = formatoDinero(extraTotal);
+    extraEd.textContent = formatoDinero(extraTotal * 0.6);
     montoBarber.textContent = formatoDinero(BARBER);
 
     // ----- Resultado final -----
@@ -3785,8 +3834,10 @@
   const nomDesbloqueadas = {};  // hojas abiertas en esta sesión
   let nomTicketsC = [];
   let nomMovsC = [];
+  let nomItemsC = [];           // bonos, multas y extras de la semana elegida
+  let nomItemBorrando = null;   // item en confirmación de borrado
   let nomDias = 0;              // días de recepción de la semana elegida
-  let pararNomT = null, pararNomM = null, pararNomC = null;
+  let pararNomT = null, pararNomM = null, pararNomC = null, pararNomI = null;
   let hojaIntento = null;
 
   const nomAnterior  = document.getElementById("nomAnterior");
@@ -3823,6 +3874,7 @@
     if(pararNomT){ pararNomT(); }
     if(pararNomM){ pararNomM(); }
     if(pararNomC){ pararNomC(); }
+    if(pararNomI){ pararNomI(); }
 
     pararNomT = onSnapshot(
       query(collection(db, "tickets"), where("fecha", ">=", nomFechas[0]), where("fecha", "<=", nomFechas[6])),
@@ -3848,6 +3900,16 @@
       nomDias = (s.exists() && s.data().diasRecepcion) ? s.data().diasRecepcion : 0;
       renderHoja();
     }, function(err){ /* sin captura aún */ });
+
+    pararNomI = onSnapshot(query(collection(db, "nomina"), where("semana", "==", nomFechas[0])), function(snap){
+      nomItemsC = [];
+      snap.forEach(function(d){
+        const x = d.data();
+        if(x.tipo) nomItemsC.push({ id: d.id, ...x });
+      });
+      nomItemBorrando = null;
+      renderHoja();
+    }, function(err){ /* sin registros aún */ });
 
     renderNomTabs();
     renderHoja();
@@ -3967,21 +4029,208 @@
       if(m.tipo === "adelanto" && m.quien === num) adel += m.monto;
     });
 
+    // Bonos, multas y extras de este barbero en la semana
+    const misItems = nomItemsC.filter(function(it){ return it.barbero === num; });
+    let bonos = 0, multas = 0, extra = 0;
+    misItems.forEach(function(it){
+      if(it.tipo === "bono") bonos += it.monto;
+      else if(it.tipo === "multa") multas += it.monto;
+      else if(it.tipo === "extra") extra += it.monto;
+    });
+
     const sub = prod * (b.porcentaje / 100);
-    const total = sub - adel;
+    const total = sub - adel + bonos - multas;
     const nombre = b.nombre || ("Barbero " + b.num);
 
-    nomContenido.innerHTML =
+    let html =
       '<div class="tituloSeccion"><span>Nómina de ' + esc(nombre) + '</span></div>' +
       '<div class="panelFilas">' +
         '<div class="filaPanel"><span class="etiquetaF">Producción de la semana</span><span class="valorF">' + formatoDinero(prod) + '</span></div>' +
         '<div class="filaPanel"><span class="etiquetaF">Porcentaje</span><span class="valorF">' + b.porcentaje + '%</span></div>' +
         '<div class="filaPanel"><span class="etiquetaF">Subtotal (producción × %)</span><span class="valorF">' + formatoDinero(sub) + '</span></div>' +
         '<div class="filaPanel"><span class="etiquetaF">− Adelantos</span><span class="valorF rojo">− ' + formatoDinero(adel) + '</span></div>' +
+        '<div class="filaPanel"><span class="etiquetaF">+ Bonos</span><span class="valorF verde">+ ' + formatoDinero(bonos) + '</span></div>' +
+        '<div class="filaPanel"><span class="etiquetaF">− Multas</span><span class="valorF rojo">− ' + formatoDinero(multas) + '</span></div>' +
         '<div class="filaPanel destacada"><span class="etiquetaF">Total a pagar</span><span class="valorF" style="color:' + (total < 0 ? '#e05c5c' : '#4caf50') + ';">' + formatoDinero(total) + '</span></div>' +
-      '</div>' +
-      '<div style="color:var(--texto-suave);font-size:12px;margin-top:10px;text-align:center;">Bonos, multas' + (b.vip ? ' y extra' : '') + ': se agregan en la siguiente capa.</div>';
+      '</div>';
+
+    if(b.vip){
+      const totalConExtra = total + extra * 0.6;
+      html +=
+        '<div class="tituloSeccion"><span>Extra (fuera de horario)</span></div>' +
+        '<div class="panelFilas">' +
+          '<div class="filaPanel"><span class="etiquetaF">Extra total de la semana</span><span class="valorF">' + formatoDinero(extra) + '</span></div>' +
+          '<div class="filaPanel"><span class="etiquetaF">Tu parte (60%)</span><span class="valorF verde">+ ' + formatoDinero(extra * 0.6) + '</span></div>' +
+          '<div class="filaPanel"><span class="etiquetaF">Para BARBER (40%)</span><span class="valorF azul">' + formatoDinero(extra * 0.4) + '</span></div>' +
+          '<div class="filaPanel destacada"><span class="etiquetaF">Total nómina + 60% extra</span><span class="valorF" style="color:' + (totalConExtra < 0 ? '#e05c5c' : '#4caf50') + ';">' + formatoDinero(totalConExtra) + '</span></div>' +
+        '</div>';
+    }
+
+    html +=
+      '<div class="filaAgregarDia" id="nomBtnsFila" style="margin-top:14px;' + (b.vip ? 'grid-template-columns:1fr 1fr 1fr;' : '') + '"></div>' +
+      '<div id="nomItemsLista" style="display:flex;flex-direction:column;gap:8px;"></div>';
+
+    nomContenido.innerHTML = html;
+
+    // Botones + Bono / + Multa (/ + Extra si es VIP)
+    const fila = document.getElementById("nomBtnsFila");
+
+    const btnBono = document.createElement("button");
+    btnBono.className = "btnAgregarChico";
+    btnBono.textContent = "+ Bono";
+    btnBono.addEventListener("click", function(){ abrirNomItem("bono", num); });
+    fila.appendChild(btnBono);
+
+    const btnMulta = document.createElement("button");
+    btnMulta.className = "btnAgregarChico";
+    btnMulta.textContent = "+ Multa";
+    btnMulta.addEventListener("click", function(){ abrirNomItem("multa", num); });
+    fila.appendChild(btnMulta);
+
+    if(b.vip){
+      const btnExtra = document.createElement("button");
+      btnExtra.className = "btnAgregarChico";
+      btnExtra.textContent = "+ Extra";
+      btnExtra.addEventListener("click", function(){ abrirNomItem("extra", num); });
+      fila.appendChild(btnExtra);
+    }
+
+    // Lista de bonos, multas y extras de la semana
+    const lista = document.getElementById("nomItemsLista");
+    const ordenados = misItems.slice().sort(function(a, c){
+      const ta = a.creado ? a.creado.toMillis() : 0;
+      const tb = c.creado ? c.creado.toMillis() : 0;
+      return tb - ta;
+    });
+
+    ordenados.forEach(function(it){
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjetaMov";
+
+      const info = document.createElement("div");
+      info.className = "info";
+
+      const concepto = document.createElement("div");
+      concepto.className = "concepto";
+      concepto.textContent = it.concepto;
+
+      const etiqueta = document.createElement("span");
+      etiqueta.className = "etiqueta " + it.tipo;
+      etiqueta.textContent = it.tipo === "bono" ? "Bono" : (it.tipo === "multa" ? "Multa" : "Extra");
+
+      info.appendChild(concepto);
+      info.appendChild(etiqueta);
+
+      const derecha = document.createElement("div");
+      derecha.style.display = "flex";
+      derecha.style.alignItems = "center";
+      derecha.style.gap = "10px";
+
+      const monto = document.createElement("div");
+      monto.style.fontWeight = "700";
+      monto.style.whiteSpace = "nowrap";
+      if(it.tipo === "bono"){
+        monto.style.color = "#4caf50";
+        monto.textContent = "+ " + formatoDinero(it.monto);
+      } else if(it.tipo === "multa"){
+        monto.style.color = "#e05c5c";
+        monto.textContent = "− " + formatoDinero(it.monto);
+      } else {
+        monto.style.color = "#e8a33d";
+        monto.textContent = formatoDinero(it.monto);
+      }
+
+      const btnBorrar = document.createElement("button");
+      btnBorrar.className = "btnBorrarNota";
+      btnBorrar.textContent = nomItemBorrando === it.id ? "¿Seguro?" : "✕";
+      btnBorrar.addEventListener("click", async function(){
+        if(nomItemBorrando !== it.id){
+          nomItemBorrando = it.id;
+          renderHoja();
+          return;
+        }
+        try{
+          await deleteDoc(doc(db, "nomina", it.id));
+        } catch(err){ mostrarError(err); }
+        nomItemBorrando = null;
+      });
+
+      derecha.appendChild(monto);
+      derecha.appendChild(btnBorrar);
+
+      tarjeta.appendChild(info);
+      tarjeta.appendChild(derecha);
+      lista.appendChild(tarjeta);
+    });
   }
+
+  // ----- Modal para capturar bono / multa / extra -----
+  const modalNomItem = document.getElementById("modalNomItem");
+  const niTitulo     = document.getElementById("niTitulo");
+  const niConcepto   = document.getElementById("niConcepto");
+  const niMonto      = document.getElementById("niMonto");
+  const niGuardar    = document.getElementById("niGuardar");
+  const niCancelar   = document.getElementById("niCancelar");
+  const niMsg        = document.getElementById("niMsg");
+
+  let nomItemTipo = null;
+  let nomItemBarbero = null;
+  let guardandoNomItem = false;
+
+  function abrirNomItem(tipo, num){
+    nomItemTipo = tipo;
+    nomItemBarbero = num;
+    niTitulo.textContent = tipo === "bono" ? "Agregar bono"
+                         : tipo === "multa" ? "Agregar multa"
+                         : "Agregar extra (fuera de horario)";
+    niConcepto.value = "";
+    niConcepto.placeholder = tipo === "extra" ? "Nota (opcional)" : "Ej. Puntualidad, faltante de caja";
+    niMonto.value = "";
+    niMsg.textContent = "";
+    modalNomItem.classList.add("abierto");
+  }
+
+  niCancelar.addEventListener("click", function(){
+    modalNomItem.classList.remove("abierto");
+  });
+
+  niGuardar.addEventListener("click", async function(){
+    if(guardandoNomItem) return;
+
+    const monto = parseFloat(niMonto.value);
+    if(isNaN(monto) || monto <= 0){
+      niMsg.textContent = "Escribe un monto válido";
+      return;
+    }
+    if(nomItemTipo !== "extra" && niConcepto.value.trim() === ""){
+      niMsg.textContent = "Escribe el concepto";
+      return;
+    }
+
+    guardandoNomItem = true;
+    niGuardar.disabled = true;
+    niMsg.style.color = "#9a9a9a";
+    niMsg.textContent = "Guardando...";
+
+    try{
+      await addDoc(collection(db, "nomina"), {
+        tipo: nomItemTipo,
+        barbero: nomItemBarbero,
+        concepto: niConcepto.value.trim() || "Extra fuera de horario",
+        monto: monto,
+        semana: nomFechas[0],
+        creado: serverTimestamp()
+      });
+      modalNomItem.classList.remove("abierto");
+    } catch(err){
+      niMsg.style.color = "#e05c5c";
+      niMsg.textContent = "Error: " + err.message;
+    }
+
+    guardandoNomItem = false;
+    niGuardar.disabled = false;
+    niMsg.style.color = "#e05c5c";
+  });
 
   function renderHojaRecepcion(){
     let adel = 0;
