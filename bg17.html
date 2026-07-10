@@ -1167,6 +1167,7 @@
           <button class="subPestana activa" data-sub="resumen">Resumen</button>
           <button class="subPestana" data-sub="semana">Semana</button>
           <button class="subPestana" data-sub="gastos">Gastos</button>
+          <button class="subPestana" data-sub="graficos">Gráficos</button>
         </div>
 
         <div id="subResumen">
@@ -1405,6 +1406,81 @@
           <div style="color:var(--texto-suave);font-size:12px;margin-top:14px;text-align:center;">Estos gastos no tocan la caja diaria. Lo que sale del cajón se registra en Hoy como siempre.</div>
 
         </div><!-- fin subGastos -->
+
+        <!-- ===== SUB-VISTA GRÁFICOS ===== -->
+        <div id="subGraficos" style="display:none;">
+
+          <div class="navSemana">
+            <div id="grEstado" style="font-size:13px;color:var(--texto-suave);padding-left:6px;">Cargando...</div>
+            <button id="grActualizar" style="width:auto;padding:0 16px;font-size:14px;">Actualizar</button>
+          </div>
+
+          <div class="tituloSeccion"><span>Producción · Efectivo · Nómina (por semana)</span></div>
+          <div class="card" style="height:280px;"><canvas id="chLineas"></canvas></div>
+
+          <div class="tituloSeccion"><span>Gastos de caja · Adelantos · Gastos del negocio</span></div>
+          <div class="card" style="height:280px;"><canvas id="chBarras"></canvas></div>
+
+          <div class="tituloSeccion"><span>T1 semanal (lo que queda tras nómina)</span></div>
+          <div class="card" style="height:280px;"><canvas id="chT1"></canvas></div>
+
+          <!-- ===== RENTABILIDAD (Capa 5C) ===== -->
+          <div class="tituloSeccion"><span>Rentabilidad</span></div>
+          <div class="navSemana">
+            <button id="rtAnterior">‹</button>
+            <div id="rtRango">—</div>
+            <button id="rtSiguiente" disabled>›</button>
+          </div>
+
+          <div class="tituloSeccion"><span>Aporte por barbero (mes)</span></div>
+          <div class="tablaScroll">
+            <table class="semanal">
+              <thead>
+                <tr>
+                  <th>Barbero</th>
+                  <th>Producción</th>
+                  <th>Clientes</th>
+                  <th>Ticket prom.</th>
+                  <th>Nómina</th>
+                  <th>Aporte</th>
+                </tr>
+              </thead>
+              <tbody id="rtTablaMes"></tbody>
+            </table>
+          </div>
+
+          <div class="tituloSeccion"><span>Utilidad del mes</span></div>
+          <div class="panelFilas" id="rtPanelMes">
+            <div class="filaPanel"><span class="etiquetaF">Sin datos.</span><span></span></div>
+          </div>
+
+          <div class="tituloSeccion"><span>Acumulado del año — por barbero</span></div>
+          <div class="tablaScroll">
+            <table class="semanal">
+              <thead>
+                <tr>
+                  <th>Barbero</th>
+                  <th>Producción</th>
+                  <th>Clientes</th>
+                  <th>Ticket prom.</th>
+                  <th>Nómina</th>
+                  <th>Aporte</th>
+                </tr>
+              </thead>
+              <tbody id="rtTablaAcum"></tbody>
+            </table>
+          </div>
+
+          <div class="tituloSeccion"><span>Utilidad acumulada del año</span></div>
+          <div class="panelFilas" id="rtPanelAcum">
+            <div class="filaPanel"><span class="etiquetaF">Sin datos.</span><span></span></div>
+          </div>
+
+          <div style="color:var(--texto-suave);font-size:12px;margin-top:14px;text-align:center;">El aporte del barbero VIP incluye el 40% de sus extras. Los bonos, multas, extras y días de Recepción se asignan al mes en que inicia su semana.</div>
+
+          <div style="color:var(--texto-suave);font-size:12px;margin-top:8px;text-align:center;">Las gráficas muestran todas las semanas del año con datos. La nómina histórica usa los porcentajes actuales de cada barbero.</div>
+
+        </div><!-- fin subGraficos -->
 
         <button id="btnCerrarAdmin">Cerrar sesión Admin</button>
 
@@ -1652,6 +1728,9 @@
     <button class="btnCancelarModal" id="editCancelar">Cancelar</button>
   </div>
 </div>
+
+<!-- ===== CHART.JS (gráficas) ===== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <!-- ===== FIREBASE + TODA LA LÓGICA ===== -->
 <script type="module">
@@ -3427,9 +3506,10 @@
   // ============================================================
   // ADMIN: SUB-PESTAÑAS (Resumen / Semana)
   // ============================================================
-  const subResumen = document.getElementById("subResumen");
-  const subSemana  = document.getElementById("subSemana");
-  const subGastos  = document.getElementById("subGastos");
+  const subResumen  = document.getElementById("subResumen");
+  const subSemana   = document.getElementById("subSemana");
+  const subGastos   = document.getElementById("subGastos");
+  const subGraficos = document.getElementById("subGraficos");
 
   document.querySelectorAll("#adminSubTabs .subPestana").forEach(function(p){
     p.addEventListener("click", function(){
@@ -3438,14 +3518,18 @@
       });
       p.classList.add("activa");
       const cual = p.dataset.sub;
-      subResumen.style.display = cual === "resumen" ? "block" : "none";
-      subSemana.style.display  = cual === "semana" ? "block" : "none";
-      subGastos.style.display  = cual === "gastos" ? "block" : "none";
+      subResumen.style.display  = cual === "resumen" ? "block" : "none";
+      subSemana.style.display   = cual === "semana" ? "block" : "none";
+      subGastos.style.display   = cual === "gastos" ? "block" : "none";
+      subGraficos.style.display = cual === "graficos" ? "block" : "none";
       if(cual === "semana" && !semanaIniciada){
         iniciarSemanaSel();
       }
       if(cual === "gastos" && !gnIniciada){
         iniciarGastos();
+      }
+      if(cual === "graficos" && !grIniciada){
+        iniciarGraficos();
       }
     });
   });
@@ -4785,6 +4869,365 @@
     }
     egProcesando = false;
   });
+
+  // ============================================================
+  // GRÁFICOS (Fase 5B — Chart.js, solo lectura)
+  // ============================================================
+  let grIniciada = false;
+  let chLineas = null, chBarras = null, chT1 = null;
+  let grTickets = [], grMovs = [], grNomina = [], grGN = []; // datos crudos del año
+  let rtOffset = 0; // mes de rentabilidad (0 = actual)
+
+  const grEstado = document.getElementById("grEstado");
+  const grActualizar = document.getElementById("grActualizar");
+
+  // Lunes de la semana a la que pertenece una fecha
+  function lunesDe(fechaStr){
+    const d = new Date(fechaStr + "T12:00:00");
+    const dia = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - dia);
+    return fechaISO(d);
+  }
+
+  function iniciarGraficos(){
+    grIniciada = true;
+    if(window.Chart){
+      Chart.defaults.color = "#9a9a9a";
+      Chart.defaults.borderColor = "#2c2c2c";
+    }
+    cargarGraficos();
+  }
+
+  grActualizar.addEventListener("click", cargarGraficos);
+
+  async function cargarGraficos(){
+    if(!window.Chart){
+      grEstado.textContent = "No se pudo cargar la librería de gráficas (revisa tu conexión)";
+      return;
+    }
+    grEstado.textContent = "Cargando datos del año...";
+    grActualizar.disabled = true;
+
+    try{
+      const anio = new Date().getFullYear();
+      const ini = anio + "-01-01";
+      const fin = fechaHoy();
+      const lunesIni = lunesDe(ini);
+
+      // Una sola lectura de todo el año (no son listeners, no consumen en vivo)
+      const resultados = await Promise.all([
+        getDocs(query(collection(db, "tickets"), where("fecha", ">=", ini), where("fecha", "<=", fin))),
+        getDocs(query(collection(db, "movimientos"), where("fecha", ">=", ini), where("fecha", "<=", fin))),
+        getDocs(query(collection(db, "nomina"), where("semana", ">=", lunesIni), where("semana", "<=", SEMANA[0]))),
+        getDocs(query(collection(db, "gastosNegocio"), where("fecha", ">=", ini), where("fecha", "<=", fin)))
+      ]);
+
+      // ----- Agrupar todo por semana (clave = lunes) -----
+      const semanas = {};
+      function sem(lunes){
+        if(!semanas[lunes]){
+          semanas[lunes] = {
+            prod: 0, tcvta: 0, clientes: 0,
+            gastosCaja: 0, adelantos: 0,
+            prodPor: {}, adelPor: {},
+            bonosPor: {}, multasPor: {}, extra: 0,
+            dias: 0, gastosNeg: 0
+          };
+        }
+        return semanas[lunes];
+      }
+
+      // Guardar los datos crudos (también los usa Rentabilidad)
+      grTickets = []; resultados[0].forEach(function(d){ grTickets.push(d.data()); });
+      grMovs = [];    resultados[1].forEach(function(d){ grMovs.push(d.data()); });
+      grNomina = [];  resultados[2].forEach(function(d){ grNomina.push(d.data()); });
+      grGN = [];      resultados[3].forEach(function(d){ grGN.push(d.data()); });
+
+      grTickets.forEach(function(t){
+        const s = sem(lunesDe(t.fecha));
+        s.prod += t.monto;
+        s.clientes += 1;
+        if(t.metodo === "tarjeta") s.tcvta += t.monto;
+        s.prodPor[t.barbero] = (s.prodPor[t.barbero] || 0) + t.monto;
+      });
+
+      grMovs.forEach(function(m){
+        const s = sem(lunesDe(m.fecha));
+        if(m.tipo === "gasto"){
+          s.gastosCaja += m.monto;
+        } else {
+          s.adelantos += m.monto;
+          s.adelPor[m.quien] = (s.adelPor[m.quien] || 0) + m.monto;
+        }
+      });
+
+      grNomina.forEach(function(x){
+        if(!x.semana) return;
+        const s = sem(x.semana);
+        if(x.tipo === "bono")  s.bonosPor[x.barbero]  = (s.bonosPor[x.barbero]  || 0) + x.monto;
+        else if(x.tipo === "multa") s.multasPor[x.barbero] = (s.multasPor[x.barbero] || 0) + x.monto;
+        else if(x.tipo === "extra") s.extra += x.monto;
+        else if(x.diasRecepcion !== undefined) s.dias = x.diasRecepcion;
+      });
+
+      grGN.forEach(function(g){
+        const s = sem(lunesDe(g.fecha));
+        s.gastosNeg += g.monto;
+      });
+
+      // ----- Semanas continuas desde la primera con datos hasta la actual -----
+      const claves = Object.keys(semanas).sort();
+      if(claves.length === 0){
+        grEstado.textContent = "Aún no hay datos este año";
+        grActualizar.disabled = false;
+        return;
+      }
+      const listaLunes = [];
+      let cursor = claves[0];
+      while(cursor <= SEMANA[0]){
+        listaLunes.push(cursor);
+        const d = new Date(cursor + "T12:00:00");
+        d.setDate(d.getDate() + 7);
+        cursor = fechaISO(d);
+      }
+
+      // ----- Series por semana -----
+      const etiquetas = [];
+      const serieProd = [], serieEfec = [], serieNom = [];
+      const serieGCaja = [], serieAdel = [], serieGNeg = [];
+      const serieT1 = [];
+
+      listaLunes.forEach(function(lunes){
+        const s = semanas[lunes] || sem(lunes);
+        const d = new Date(lunes + "T12:00:00");
+        etiquetas.push(d.toLocaleDateString("es-MX", { day:"numeric", month:"short" }));
+
+        const efectivo = s.prod - s.tcvta - s.gastosCaja - s.adelantos;
+
+        // Nómina de la semana (con los porcentajes actuales)
+        let nomina = 0;
+        barberosCache.forEach(function(b){
+          const prodB = s.prodPor[b.num] || 0;
+          const adelB = s.adelPor[b.num] || 0;
+          const bonoB = s.bonosPor[b.num] || 0;
+          const multaB = s.multasPor[b.num] || 0;
+          if(prodB === 0 && adelB === 0 && bonoB === 0 && multaB === 0) return;
+          nomina += prodB * (b.porcentaje / 100) - adelB + bonoB - multaB;
+        });
+        nomina += s.dias * TARIFA_RECEPCION - (s.adelPor["recepcion"] || 0);
+
+        serieProd.push(s.prod);
+        serieEfec.push(efectivo);
+        serieNom.push(nomina);
+        serieGCaja.push(s.gastosCaja);
+        serieAdel.push(s.adelantos);
+        serieGNeg.push(s.gastosNeg);
+        serieT1.push(efectivo - nomina);
+      });
+
+      // ----- Dibujar gráficas -----
+      if(chLineas) chLineas.destroy();
+      chLineas = new Chart(document.getElementById("chLineas"), {
+        type: "line",
+        data: {
+          labels: etiquetas,
+          datasets: [
+            { label: "Producción", data: serieProd, borderColor: "#e8a33d", backgroundColor: "#e8a33d", tension: 0.3 },
+            { label: "Efectivo", data: serieEfec, borderColor: "#4caf50", backgroundColor: "#4caf50", tension: 0.3 },
+            { label: "Nómina", data: serieNom, borderColor: "#e05c5c", backgroundColor: "#e05c5c", tension: 0.3 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      if(chBarras) chBarras.destroy();
+      chBarras = new Chart(document.getElementById("chBarras"), {
+        type: "bar",
+        data: {
+          labels: etiquetas,
+          datasets: [
+            { label: "Gastos de caja", data: serieGCaja, backgroundColor: "#e05c5c" },
+            { label: "Adelantos", data: serieAdel, backgroundColor: "#e0b890" },
+            { label: "Gastos del negocio", data: serieGNeg, backgroundColor: "#8ab8e8" }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      if(chT1) chT1.destroy();
+      chT1 = new Chart(document.getElementById("chT1"), {
+        type: "bar",
+        data: {
+          labels: etiquetas,
+          datasets: [{
+            label: "T1 (Efectivo − Nómina)",
+            data: serieT1,
+            backgroundColor: serieT1.map(function(v){ return v < 0 ? "#e05c5c" : "#4caf50"; })
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      grEstado.textContent = listaLunes.length + " semana" + (listaLunes.length === 1 ? "" : "s") + " · datos al " + fechaLegible().toLowerCase();
+      renderRentabilidad();
+    } catch(err){
+      grEstado.textContent = "Error al cargar: " + err.message;
+    }
+
+    grActualizar.disabled = false;
+  }
+
+  // ============================================================
+  // RENTABILIDAD (Capa 5C — usa los datos ya cargados del año)
+  // ============================================================
+  const rtAnterior  = document.getElementById("rtAnterior");
+  const rtSiguiente = document.getElementById("rtSiguiente");
+  const rtRango     = document.getElementById("rtRango");
+  const rtTablaMes  = document.getElementById("rtTablaMes");
+  const rtTablaAcum = document.getElementById("rtTablaAcum");
+  const rtPanelMes  = document.getElementById("rtPanelMes");
+  const rtPanelAcum = document.getElementById("rtPanelAcum");
+
+  rtAnterior.addEventListener("click", function(){
+    rtOffset--;
+    renderRentabilidad();
+  });
+
+  rtSiguiente.addEventListener("click", function(){
+    if(rtOffset < 0){
+      rtOffset++;
+      renderRentabilidad();
+    }
+  });
+
+  // Calcula la rentabilidad de un mes ("2026-07") o de todo el año (null)
+  function calcularRent(mesClave){
+    function delMes(f){ return mesClave === null || f.slice(0, 7) === mesClave; }
+
+    // Acumuladores por barbero
+    const por = {};
+    function pb(num){
+      if(!por[num]) por[num] = { prod: 0, cli: 0, adel: 0, bono: 0, multa: 0, extra: 0 };
+      return por[num];
+    }
+
+    grTickets.forEach(function(t){
+      if(!delMes(t.fecha)) return;
+      const p = pb(t.barbero);
+      p.prod += t.monto;
+      p.cli += 1;
+    });
+
+    let gastosCaja = 0;
+    let adelRecep = 0;
+    grMovs.forEach(function(m){
+      if(!delMes(m.fecha)) return;
+      if(m.tipo === "gasto"){
+        gastosCaja += m.monto;
+      } else if(m.quien === "recepcion"){
+        adelRecep += m.monto;
+      } else {
+        pb(m.quien).adel += m.monto;
+      }
+    });
+
+    let diasRecep = 0;
+    grNomina.forEach(function(x){
+      if(!x.semana || !delMes(x.semana)) return;
+      if(x.tipo === "bono") pb(x.barbero).bono += x.monto;
+      else if(x.tipo === "multa") pb(x.barbero).multa += x.monto;
+      else if(x.tipo === "extra") pb(x.barbero).extra += x.monto;
+      else if(x.diasRecepcion !== undefined) diasRecep += x.diasRecepcion;
+    });
+
+    let gastosNeg = 0;
+    grGN.forEach(function(g){
+      if(delMes(g.fecha)) gastosNeg += g.monto;
+    });
+
+    // Filas por barbero
+    const filas = [];
+    let aportesTotal = 0;
+    let clientesTotal = 0;
+
+    barberosCache.forEach(function(b){
+      const p = por[b.num];
+      if(!p) return;
+      if(p.prod === 0 && p.cli === 0 && p.adel === 0 && p.bono === 0 && p.multa === 0 && p.extra === 0) return;
+
+      const nomina = p.prod * (b.porcentaje / 100) - p.adel + p.bono - p.multa;
+      const aporte = p.prod - nomina + p.extra * 0.4;
+      const ticket = p.cli > 0 ? p.prod / p.cli : 0;
+
+      filas.push({
+        nombre: b.nombre || ("Barbero " + b.num),
+        prod: p.prod, cli: p.cli, ticket: ticket,
+        nomina: nomina, aporte: aporte
+      });
+      aportesTotal += aporte;
+      clientesTotal += p.cli;
+    });
+
+    const recepCosto = diasRecep * TARIFA_RECEPCION - adelRecep;
+    const utilidad = aportesTotal - recepCosto - gastosCaja - gastosNeg;
+    const utilCliente = clientesTotal > 0 ? utilidad / clientesTotal : 0;
+
+    return {
+      filas: filas,
+      aportesTotal: aportesTotal,
+      recepCosto: recepCosto,
+      diasRecep: diasRecep,
+      gastosCaja: gastosCaja,
+      gastosNeg: gastosNeg,
+      clientes: clientesTotal,
+      utilidad: utilidad,
+      utilCliente: utilCliente
+    };
+  }
+
+  function pintarTablaRent(tbody, r){
+    if(r.filas.length === 0){
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--texto-suave);">Sin datos en este periodo.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = "";
+    r.filas.forEach(function(f){
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>" + esc(f.nombre) + "</td>" +
+        "<td>" + formatoDinero(f.prod) + "</td>" +
+        "<td>" + f.cli + "</td>" +
+        "<td>" + formatoDinero(f.ticket) + "</td>" +
+        "<td>" + formatoDinero(f.nomina) + "</td>" +
+        "<td style='font-weight:800;color:" + (f.aporte < 0 ? "#e05c5c" : "#4caf50") + ";'>" + formatoDinero(f.aporte) + "</td>";
+      tbody.appendChild(tr);
+    });
+  }
+
+  function pintarPanelRent(panel, r){
+    panel.innerHTML =
+      '<div class="filaPanel"><span class="etiquetaF">Aporte de barberos</span><span class="valorF">' + formatoDinero(r.aportesTotal) + '</span></div>' +
+      '<div class="filaPanel"><span class="etiquetaF">− Recepción (' + r.diasRecep + (r.diasRecep === 1 ? ' día' : ' días') + ')</span><span class="valorF rojo">− ' + formatoDinero(r.recepCosto) + '</span></div>' +
+      '<div class="filaPanel"><span class="etiquetaF">− Gastos de caja</span><span class="valorF rojo">− ' + formatoDinero(r.gastosCaja) + '</span></div>' +
+      '<div class="filaPanel"><span class="etiquetaF">− Gastos del negocio</span><span class="valorF rojo">− ' + formatoDinero(r.gastosNeg) + '</span></div>' +
+      '<div class="filaPanel destacada"><span class="etiquetaF">Utilidad</span><span class="valorF" style="color:' + (r.utilidad < 0 ? '#e05c5c' : '#4caf50') + ';">' + formatoDinero(r.utilidad) + '</span></div>' +
+      '<div class="filaPanel"><span class="etiquetaF">Clientes atendidos</span><span class="valorF">' + r.clientes + '</span></div>' +
+      '<div class="filaPanel destacada"><span class="etiquetaF">Utilidad por cliente</span><span class="valorF" style="color:var(--ambar);">' + formatoDinero(r.utilCliente) + '</span></div>';
+  }
+
+  function renderRentabilidad(){
+    const m = mesDeOffset(rtOffset);
+    rtRango.textContent = m.etiqueta;
+    rtSiguiente.disabled = rtOffset >= 0;
+
+    const mes = calcularRent(m.clave);
+    const acum = calcularRent(null);
+
+    pintarTablaRent(rtTablaMes, mes);
+    pintarPanelRent(rtPanelMes, mes);
+    pintarTablaRent(rtTablaAcum, acum);
+    pintarPanelRent(rtPanelAcum, acum);
+  }
 
   // ============================================================
   // LOGIN Y SESIÓN
