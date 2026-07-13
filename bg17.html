@@ -280,12 +280,20 @@
   }
 
   /* ===== COLUMNAS POR BARBERO ===== */
-  #columnasBarberos{
+  #columnasBarberos, #columnasDia{
     display:flex;
     gap:10px;
     overflow-x:auto;
     padding-bottom:8px;
   }
+  /* En Admin > Semana cada servicio se puede tocar para editar */
+  #columnasDia .colItem{
+    cursor:pointer;
+    margin:0 -6px;
+    padding:4px 6px;
+    border-radius:8px;
+  }
+  #columnasDia .colItem:active{ background:rgba(255,255,255,0.07); }
   .colBarbero{
     background:var(--panel);
     border:1px solid var(--borde);
@@ -1323,6 +1331,14 @@
             <div id="rangoSemana">—</div>
             <button id="semSiguiente" disabled>›</button>
           </div>
+
+          <div class="subPestanas" id="semanaSubTabs">
+            <button class="subPestana activa" data-ssub="dias">Días</button>
+            <button class="subPestana" data-ssub="resumen">Resumen semanal</button>
+          </div>
+
+          <!-- ===== Sub-pestaña DÍAS ===== -->
+          <div id="ssubDias">
           <div class="selectorDias" id="selectorDias"></div>
 
           <div class="cuadriculaCards">
@@ -1353,9 +1369,10 @@
           </div>
 
           <div class="tituloSeccion"><span>Cobros del día</span></div>
+          <div style="color:var(--texto-suave);font-size:12px;margin:-6px 0 10px;">Toca un servicio para editarlo.</div>
           <button class="btnAgregarChico" id="diaAgregarCobro" style="width:100%;margin-bottom:10px;">+ Agregar cobro a este día</button>
-          <div id="listaCobrosDia">
-            <div class="vacio">Sin cobros este día.</div>
+          <div id="columnasDia">
+            <div class="vacio" style="flex:1;">Sin cobros este día.</div>
           </div>
 
           <div class="tituloSeccion"><span>Gastos y adelantos del día</span></div>
@@ -1372,6 +1389,13 @@
           <button id="diaNotaGuardar">Guardar nota</button>
           <div id="diaNotaMsg"></div>
           <div id="listaNotasDia"></div>
+
+          </div><!-- fin ssubDias -->
+
+          <!-- ===== Sub-pestaña RESUMEN SEMANAL ===== -->
+          <div id="ssubResumenSem" style="display:none;">
+            <div class="vacio">El resumen de esta semana estará disponible en la siguiente entrega.</div>
+          </div>
 
         </div><!-- fin subSemana -->
 
@@ -3558,7 +3582,7 @@
   const semAnterior    = document.getElementById("semAnterior");
   const semSiguiente   = document.getElementById("semSiguiente");
   const selectorDias   = document.getElementById("selectorDias");
-  const listaCobrosDia = document.getElementById("listaCobrosDia");
+  const columnasDia    = document.getElementById("columnasDia");
   const listaMovsDia   = document.getElementById("listaMovsDia");
   const listaNotasDia  = document.getElementById("listaNotasDia");
   const diaProduccion  = document.getElementById("diaProduccion");
@@ -3567,6 +3591,22 @@
   const diaGastos      = document.getElementById("diaGastos");
   const diaAdelantos   = document.getElementById("diaAdelantos");
   const diaClientes    = document.getElementById("diaClientes");
+
+  // Sub-pestañas dentro de Semana: Días / Resumen semanal
+  const ssubDias       = document.getElementById("ssubDias");
+  const ssubResumenSem = document.getElementById("ssubResumenSem");
+
+  document.querySelectorAll("#semanaSubTabs .subPestana").forEach(function(p){
+    p.addEventListener("click", function(){
+      document.querySelectorAll("#semanaSubTabs .subPestana").forEach(function(x){
+        x.classList.remove("activa");
+      });
+      p.classList.add("activa");
+      const cual = p.dataset.ssub;
+      ssubDias.style.display       = cual === "dias" ? "block" : "none";
+      ssubResumenSem.style.display = cual === "resumen" ? "block" : "none";
+    });
+  });
 
   function fechasSemanaOffset(off){
     const hoy = new Date();
@@ -3671,6 +3711,116 @@
     });
   }
 
+  // Columnas por barbero para el día seleccionado (como en "Hoy",
+  // pero cada servicio se puede tocar para abrir su modal de editar)
+  function renderColumnasDia(tk){
+    const activos = barberosActivos();
+
+    // Columnas: barberos activos + cualquier barbero con cobros ese día
+    // que ya no exista (para no ocultar cobros viejos)
+    const columnas = activos.map(function(b){
+      return { num: b.num, nombre: b.nombre || ("Barbero " + b.num) };
+    });
+    tk.forEach(function(c){
+      const ya = columnas.some(function(col){ return col.num === c.barbero; });
+      if(!ya) columnas.push({ num: c.barbero, nombre: nombreBarbero(c.barbero) });
+    });
+
+    if(columnas.length === 0){
+      columnasDia.innerHTML = '<div class="vacio" style="flex:1;">Aún no hay barberos configurados (se crean desde Admin).</div>';
+      return;
+    }
+
+    // Del más antiguo al más reciente (orden del día)
+    const cobros = tk.slice().sort(function(a, b){
+      const ta = a.creado ? a.creado.toMillis() : 0;
+      const tb = b.creado ? b.creado.toMillis() : 0;
+      return ta - tb;
+    });
+
+    columnasDia.innerHTML = "";
+    columnas.forEach(function(b){
+      const items = cobros.filter(function(c){ return c.barbero === b.num; });
+      let total = 0;
+      items.forEach(function(c){ total += c.monto; });
+
+      const col = document.createElement("div");
+      col.className = "colBarbero";
+
+      const cabeza = document.createElement("div");
+      cabeza.className = "colCabeza";
+      const nom = document.createElement("div");
+      nom.className = "nombreCol";
+      nom.textContent = b.nombre;
+      const cli = document.createElement("div");
+      cli.className = "clientesCol";
+      cli.textContent = items.length + (items.length === 1 ? " cliente" : " clientes");
+      cabeza.appendChild(nom);
+      cabeza.appendChild(cli);
+
+      const cont = document.createElement("div");
+      cont.className = "colItems";
+
+      if(items.length === 0){
+        const v = document.createElement("div");
+        v.className = "colVacia";
+        v.textContent = "—";
+        cont.appendChild(v);
+      } else {
+        items.forEach(function(c){
+          const item = document.createElement("div");
+          item.className = "colItem";
+
+          const fila = document.createElement("div");
+          fila.className = "filaItem";
+          const con = document.createElement("span");
+          con.className = "conceptoItem";
+          con.textContent = c.concepto;
+          const mon = document.createElement("span");
+          mon.className = "montoItem";
+          mon.textContent = formatoDinero(c.monto);
+          fila.appendChild(con);
+          fila.appendChild(mon);
+
+          const sub = document.createElement("div");
+          sub.className = "subItem";
+          const puntoM = document.createElement("span");
+          puntoM.className = "puntoMetodo " + c.metodo;
+          const horaT = document.createElement("span");
+          horaT.textContent = formatoHora(c.creado);
+          sub.appendChild(puntoM);
+          sub.appendChild(horaT);
+
+          item.appendChild(fila);
+          item.appendChild(sub);
+
+          // Tocar el servicio abre su modal de editar
+          item.addEventListener("click", function(){
+            abrirEditarTicket(c);
+          });
+
+          cont.appendChild(item);
+        });
+      }
+
+      const pie = document.createElement("div");
+      pie.className = "colTotal";
+      const tEt = document.createElement("span");
+      tEt.textContent = "Total";
+      tEt.style.color = "var(--texto-suave)";
+      const tVal = document.createElement("span");
+      tVal.className = "montoTotal";
+      tVal.textContent = formatoDinero(total);
+      pie.appendChild(tEt);
+      pie.appendChild(tVal);
+
+      col.appendChild(cabeza);
+      col.appendChild(cont);
+      col.appendChild(pie);
+      columnasDia.appendChild(col);
+    });
+  }
+
   function renderDia(){
     if(!diaSeleccionado) return;
 
@@ -3709,64 +3859,8 @@
     diaAdelantos.textContent  = formatoDinero(adel);
     diaClientes.textContent   = tk.length;
 
-    // ----- Cobros del día (con Editar) -----
-    if(tk.length === 0){
-      listaCobrosDia.innerHTML = '<div class="vacio">Sin cobros este día.</div>';
-    } else {
-      listaCobrosDia.innerHTML = "";
-      tk.forEach(function(c){
-        const tarjeta = document.createElement("div");
-        tarjeta.className = "tarjetaCobro";
-
-        const info = document.createElement("div");
-        info.className = "info";
-
-        const nombre = document.createElement("div");
-        nombre.className = "barbero";
-        nombre.textContent = nombreBarbero(c.barbero);
-
-        const concepto = document.createElement("div");
-        concepto.className = "concepto";
-        concepto.textContent = c.concepto;
-
-        const hora = document.createElement("div");
-        hora.className = "hora";
-        hora.textContent = formatoHora(c.creado);
-
-        const etiqueta = document.createElement("span");
-        etiqueta.className = "etiqueta " + c.metodo;
-        etiqueta.textContent = c.metodo === "tarjeta" ? "Tarjeta" : "Efectivo";
-
-        info.appendChild(nombre);
-        info.appendChild(concepto);
-        info.appendChild(hora);
-        info.appendChild(etiqueta);
-
-        const derecha = document.createElement("div");
-        derecha.style.display = "flex";
-        derecha.style.flexDirection = "column";
-        derecha.style.alignItems = "flex-end";
-        derecha.style.gap = "8px";
-
-        const monto = document.createElement("div");
-        monto.className = "monto";
-        monto.textContent = formatoDinero(c.monto);
-
-        const btnEditar = document.createElement("button");
-        btnEditar.className = "btnMini";
-        btnEditar.textContent = "Editar";
-        btnEditar.addEventListener("click", function(){
-          abrirEditarTicket(c);
-        });
-
-        derecha.appendChild(monto);
-        derecha.appendChild(btnEditar);
-
-        tarjeta.appendChild(info);
-        tarjeta.appendChild(derecha);
-        listaCobrosDia.appendChild(tarjeta);
-      });
-    }
+    // ----- Cobros del día: columnas por barbero (tocar un servicio abre editar) -----
+    renderColumnasDia(tk);
 
     // ----- Gastos y adelantos del día (con Editar) -----
     if(mv.length === 0){
