@@ -1394,7 +1394,109 @@
 
           <!-- ===== Sub-pestaña RESUMEN SEMANAL ===== -->
           <div id="ssubResumenSem" style="display:none;">
-            <div class="vacio">El resumen de esta semana estará disponible en la siguiente entrega.</div>
+
+            <div class="tituloSeccion"><span>Resumen semanal</span></div>
+            <div class="tablaScroll">
+              <table class="semanal">
+                <thead>
+                  <tr>
+                    <th>Día</th>
+                    <th>Producción</th>
+                    <th>Servicios</th>
+                    <th>TC VTA</th>
+                    <th>Comisión 4%</th>
+                    <th>Gastos</th>
+                    <th>Adelantos</th>
+                    <th>Efectivo</th>
+                  </tr>
+                </thead>
+                <tbody id="rsCuerpoSemanal"></tbody>
+              </table>
+            </div>
+
+            <div class="tituloSeccion"><span>Efectivo vs Nómina</span></div>
+            <div class="panelFilas">
+              <div class="filaPanel">
+                <span class="etiquetaF">Efectivo total semana</span>
+                <span class="valorF" id="rsSemEfectivoTotal">$0</span>
+              </div>
+              <div class="filaPanel">
+                <span class="etiquetaF">Nómina total</span>
+                <span class="valorF rojo" id="rsSemNominaTotal">−$0</span>
+              </div>
+            </div>
+
+            <div class="tituloSeccion"><span>Desglose nómina</span></div>
+            <div class="panelFilas" id="rsDesgloseNomina">
+              <div class="filaPanel"><span class="etiquetaF">Cargando...</span></div>
+            </div>
+
+            <div class="tituloSeccion"><span>Barber (Extra)</span></div>
+            <div class="panelFilas">
+              <div class="filaPanel">
+                <span class="etiquetaF">Extra total de la semana</span>
+                <span class="valorF" id="rsExtraTotalSem">$0</span>
+              </div>
+              <div class="filaPanel">
+                <span class="etiquetaF">ED (60%)</span>
+                <span class="valorF" id="rsExtraEd">$0</span>
+              </div>
+              <div class="filaPanel destacada">
+                <span class="etiquetaF">Monto BARBER (40%)</span>
+                <span class="valorF" id="rsMontoBarber">$0</span>
+              </div>
+            </div>
+
+            <div class="tituloSeccion"><span>Resultado final</span></div>
+            <div class="panelFilas">
+              <div class="filaPanel">
+                <span class="etiquetaF">Efectivo disponible</span>
+                <span class="valorF" id="rsEfectivoDisp">$0</span>
+              </div>
+              <div class="filaPanel">
+                <span class="etiquetaF">− Nómina</span>
+                <span class="valorF rojo" id="rsNomina">−$0</span>
+              </div>
+              <div class="filaPanel">
+                <span class="etiquetaF">Efectivo restante</span>
+                <span class="valorF" id="rsEfectivoRest">$0</span>
+              </div>
+              <div class="filaPanel">
+                <span class="etiquetaF">+ Tarjeta neta (−4% comisión)</span>
+                <span class="valorF azul" id="rsTarjetaNeta">+ $0</span>
+              </div>
+              <div class="filaPanel">
+                <span class="etiquetaF">+ BARBER</span>
+                <span class="valorF" id="rsBarber">+ $0</span>
+              </div>
+            </div>
+
+            <div class="dosCards">
+              <div class="cardResultado">
+                <div class="tituloCard">Efectivo restante</div>
+                <div class="valorCard" id="rsCardEfectivoRest">$0</div>
+              </div>
+              <div class="cardResultado">
+                <div class="tituloCard">Tarjeta neta</div>
+                <div class="valorCard" id="rsCardTarjetaNeta">$0</div>
+              </div>
+            </div>
+
+            <div class="cardT1">
+              <span class="tituloT1">T1 · Efectivo − Nómina</span>
+              <span class="valorT1" id="rsValorT1">$0</span>
+            </div>
+            <div class="cardT1">
+              <span class="tituloT1">T2 · T1 + BARBER</span>
+              <span class="valorT1" id="rsValorT2">$0</span>
+            </div>
+            <div class="cardT1">
+              <span class="tituloT1">T3 · T2 + Tarjeta neta</span>
+              <span class="valorT1" id="rsValorT3">$0</span>
+            </div>
+
+            <div style="color:var(--texto-suave);font-size:12px;margin-top:14px;text-align:center;">La nómina de semanas pasadas se calcula con los porcentajes actuales de cada barbero y la tarifa actual de Recepción. Bonos, multas, extras y días de Recepción sí son los guardados de esa semana.</div>
+
           </div>
 
         </div><!-- fin subSemana -->
@@ -3575,8 +3677,11 @@
   let ticketsSel = [];
   let movsSel = [];
   let notasSel = [];
+  let itemsNominaSel = [];      // bonos, multas y extras de la semana navegada
+  let diasRecepcionSel = 0;     // días de Recepción de la semana navegada
   let notaBorrandoDia = null;
   let pararTicketsSel = null, pararMovsSel = null, pararNotasSel = null;
+  let pararNominaSel = null, pararConfigSel = null;
 
   const rangoSemana    = document.getElementById("rangoSemana");
   const semAnterior    = document.getElementById("semAnterior");
@@ -3607,6 +3712,192 @@
       ssubResumenSem.style.display = cual === "resumen" ? "block" : "none";
     });
   });
+
+  // ----- Resumen semanal de la semana navegada -----
+  const rsCuerpoSemanal    = document.getElementById("rsCuerpoSemanal");
+  const rsSemEfectivoTotal = document.getElementById("rsSemEfectivoTotal");
+  const rsSemNominaTotal   = document.getElementById("rsSemNominaTotal");
+  const rsDesgloseNomina   = document.getElementById("rsDesgloseNomina");
+  const rsExtraTotalSem    = document.getElementById("rsExtraTotalSem");
+  const rsExtraEd          = document.getElementById("rsExtraEd");
+  const rsMontoBarber      = document.getElementById("rsMontoBarber");
+  const rsEfectivoDisp     = document.getElementById("rsEfectivoDisp");
+  const rsNomina           = document.getElementById("rsNomina");
+  const rsEfectivoRest     = document.getElementById("rsEfectivoRest");
+  const rsTarjetaNeta      = document.getElementById("rsTarjetaNeta");
+  const rsBarber           = document.getElementById("rsBarber");
+  const rsCardEfectivoRest = document.getElementById("rsCardEfectivoRest");
+  const rsCardTarjetaNeta  = document.getElementById("rsCardTarjetaNeta");
+  const rsValorT1          = document.getElementById("rsValorT1");
+  const rsValorT2          = document.getElementById("rsValorT2");
+  const rsValorT3          = document.getElementById("rsValorT3");
+
+  // Mismo cálculo que la pestaña Resumen, pero con los datos de la
+  // semana navegada con las flechas ‹ › (fechasSel)
+  function rsRecalcular(){
+    if(fechasSel.length === 0) return;
+
+    // ----- Tabla por día -----
+    const hoy = fechaHoy();
+    const porDia = fechasSel.map(function(f){
+      return { fecha: f, produccion: 0, servicios: 0, tcvta: 0, gastos: 0, adelantos: 0 };
+    });
+
+    ticketsSel.forEach(function(t){
+      const i = fechasSel.indexOf(t.fecha);
+      if(i === -1) return;
+      porDia[i].produccion += t.monto;
+      porDia[i].servicios += 1;
+      if(t.metodo === "tarjeta") porDia[i].tcvta += t.monto;
+    });
+
+    movsSel.forEach(function(m){
+      const i = fechasSel.indexOf(m.fecha);
+      if(i === -1) return;
+      if(m.tipo === "gasto") porDia[i].gastos += m.monto;
+      else porDia[i].adelantos += m.monto;
+    });
+
+    const tot = { produccion:0, servicios:0, tcvta:0, comision:0, gastos:0, adelantos:0, efectivo:0 };
+
+    rsCuerpoSemanal.innerHTML = "";
+    porDia.forEach(function(d, i){
+      const comision = d.tcvta * 0.04;
+      const efectivo = d.produccion - d.tcvta - d.gastos - d.adelantos;
+
+      tot.produccion += d.produccion;
+      tot.servicios  += d.servicios;
+      tot.tcvta      += d.tcvta;
+      tot.comision   += comision;
+      tot.gastos     += d.gastos;
+      tot.adelantos  += d.adelantos;
+      tot.efectivo   += efectivo;
+
+      const tr = document.createElement("tr");
+      if(d.fecha === hoy) tr.className = "hoyFila";
+      tr.innerHTML =
+        "<td>" + NOMBRES_DIAS[i] + "</td>" +
+        "<td>" + formatoDinero(d.produccion) + "</td>" +
+        "<td>" + d.servicios + "</td>" +
+        "<td>" + formatoDinero(d.tcvta) + "</td>" +
+        "<td>" + formatoDinero(comision) + "</td>" +
+        "<td>" + formatoDinero(d.gastos) + "</td>" +
+        "<td>" + formatoDinero(d.adelantos) + "</td>" +
+        "<td>" + formatoDinero(efectivo) + "</td>";
+      rsCuerpoSemanal.appendChild(tr);
+    });
+
+    const trTotal = document.createElement("tr");
+    trTotal.className = "filaTotal";
+    trTotal.innerHTML =
+      "<td>Total</td>" +
+      "<td>" + formatoDinero(tot.produccion) + "</td>" +
+      "<td>" + tot.servicios + "</td>" +
+      "<td>" + formatoDinero(tot.tcvta) + "</td>" +
+      "<td>" + formatoDinero(tot.comision) + "</td>" +
+      "<td>" + formatoDinero(tot.gastos) + "</td>" +
+      "<td>" + formatoDinero(tot.adelantos) + "</td>" +
+      "<td>" + formatoDinero(tot.efectivo) + "</td>";
+    rsCuerpoSemanal.appendChild(trTotal);
+
+    // ----- Nómina por barbero -----
+    const activos = barberosActivos();
+    const prodPorBarbero = {};
+    const adelPorQuien = {};
+
+    ticketsSel.forEach(function(t){
+      prodPorBarbero[t.barbero] = (prodPorBarbero[t.barbero] || 0) + t.monto;
+    });
+    movsSel.forEach(function(m){
+      if(m.tipo === "adelanto"){
+        adelPorQuien[m.quien] = (adelPorQuien[m.quien] || 0) + m.monto;
+      }
+    });
+
+    // Bonos y multas por barbero (de la semana navegada)
+    const bonosPor = {};
+    const multasPor = {};
+    itemsNominaSel.forEach(function(it){
+      if(it.tipo === "bono")  bonosPor[it.barbero]  = (bonosPor[it.barbero]  || 0) + it.monto;
+      if(it.tipo === "multa") multasPor[it.barbero] = (multasPor[it.barbero] || 0) + it.monto;
+    });
+
+    rsDesgloseNomina.innerHTML = "";
+    let nominaTotal = 0;
+
+    activos.forEach(function(b){
+      const prod = prodPorBarbero[b.num] || 0;
+      const adel = adelPorQuien[b.num] || 0;
+      const nomina = prod * (b.porcentaje / 100) - adel
+                   + (bonosPor[b.num] || 0) - (multasPor[b.num] || 0);
+      nominaTotal += nomina;
+
+      const fila = document.createElement("div");
+      fila.className = "filaPanel";
+      const et = document.createElement("span");
+      et.className = "etiquetaF";
+      et.textContent = b.nombre || ("Barbero " + b.num);
+      const val = document.createElement("span");
+      val.className = "valorF";
+      val.textContent = formatoDinero(nomina);
+      fila.appendChild(et);
+      fila.appendChild(val);
+      rsDesgloseNomina.appendChild(fila);
+    });
+
+    const adelRecep = adelPorQuien["recepcion"] || 0;
+    const nominaRecep = diasRecepcionSel * TARIFA_RECEPCION - adelRecep;
+    nominaTotal += nominaRecep;
+
+    const filaR = document.createElement("div");
+    filaR.className = "filaPanel";
+    filaR.innerHTML =
+      '<span class="etiquetaF">Recepción (' + diasRecepcionSel + (diasRecepcionSel === 1 ? ' día' : ' días') + ')</span>' +
+      '<span class="valorF">' + formatoDinero(nominaRecep) + '</span>';
+    rsDesgloseNomina.appendChild(filaR);
+
+    const filaT = document.createElement("div");
+    filaT.className = "filaPanel destacada";
+    filaT.innerHTML =
+      '<span class="etiquetaF">Total nómina</span>' +
+      '<span class="valorF">' + formatoDinero(nominaTotal) + '</span>';
+    rsDesgloseNomina.appendChild(filaT);
+
+    // ----- Efectivo vs Nómina -----
+    rsSemEfectivoTotal.textContent = formatoDinero(tot.efectivo);
+    rsSemNominaTotal.textContent = "− " + formatoDinero(nominaTotal);
+
+    // ----- Barber (Extra): 40% del extra del VIP -----
+    let extraTotal = 0;
+    itemsNominaSel.forEach(function(it){
+      if(it.tipo === "extra") extraTotal += it.monto;
+    });
+    const BARBER = extraTotal * 0.4;
+    rsExtraTotalSem.textContent = formatoDinero(extraTotal);
+    rsExtraEd.textContent = formatoDinero(extraTotal * 0.6);
+    rsMontoBarber.textContent = formatoDinero(BARBER);
+
+    // ----- Resultado final -----
+    const efectivoRestante = tot.efectivo - nominaTotal;
+    const tarjetaNeta = tot.tcvta - tot.comision;
+    const t1 = efectivoRestante;      // Efectivo − Nómina
+    const t2 = t1 + BARBER;           // + 40% del extra del VIP
+    const t3 = t2 + tarjetaNeta;      // + Tarjeta neta
+
+    rsEfectivoDisp.textContent = formatoDinero(tot.efectivo);
+    rsNomina.textContent = "− " + formatoDinero(nominaTotal);
+    rsEfectivoRest.textContent = formatoDinero(efectivoRestante);
+    rsEfectivoRest.style.color = efectivoRestante < 0 ? "#e05c5c" : "";
+    rsTarjetaNeta.textContent = "+ " + formatoDinero(tarjetaNeta);
+    rsBarber.textContent = "+ " + formatoDinero(BARBER);
+
+    rsCardEfectivoRest.textContent = formatoDinero(efectivoRestante);
+    rsCardEfectivoRest.style.color = efectivoRestante < 0 ? "#e05c5c" : "";
+    rsCardTarjetaNeta.textContent = formatoDinero(tarjetaNeta);
+    rsValorT1.textContent = formatoDinero(t1);
+    rsValorT2.textContent = formatoDinero(t2);
+    rsValorT3.textContent = formatoDinero(t3);
+  }
 
   function fechasSemanaOffset(off){
     const hoy = new Date();
@@ -3645,6 +3936,8 @@
     if(pararTicketsSel){ pararTicketsSel(); }
     if(pararMovsSel){ pararMovsSel(); }
     if(pararNotasSel){ pararNotasSel(); }
+    if(pararNominaSel){ pararNominaSel(); }
+    if(pararConfigSel){ pararConfigSel(); }
 
     pararTicketsSel = onSnapshot(
       query(collection(db, "tickets"), where("fecha", ">=", fechasSel[0]), where("fecha", "<=", fechasSel[6])),
@@ -3652,6 +3945,7 @@
         ticketsSel = [];
         snap.forEach(function(d){ ticketsSel.push({ id: d.id, ...d.data() }); });
         renderDia();
+        rsRecalcular();
       },
       function(err){ mostrarError(err); }
     );
@@ -3662,8 +3956,35 @@
         movsSel = [];
         snap.forEach(function(d){ movsSel.push({ id: d.id, ...d.data() }); });
         renderDia();
+        rsRecalcular();
       },
       function(err){ mostrarError(err); }
+    );
+
+    // Bonos, multas y extras de la semana navegada (colección "nomina")
+    itemsNominaSel = [];
+    pararNominaSel = onSnapshot(
+      query(collection(db, "nomina"), where("semana", "==", fechasSel[0])),
+      function(snap){
+        itemsNominaSel = [];
+        snap.forEach(function(d){
+          const x = d.data();
+          if(x.tipo) itemsNominaSel.push({ id: d.id, ...x });
+        });
+        rsRecalcular();
+      },
+      function(err){ /* sin registros aún */ }
+    );
+
+    // Días de Recepción de la semana navegada
+    diasRecepcionSel = 0;
+    pararConfigSel = onSnapshot(
+      doc(db, "nomina", "config-" + fechasSel[0]),
+      function(s){
+        diasRecepcionSel = (s.exists() && s.data().diasRecepcion) ? s.data().diasRecepcion : 0;
+        rsRecalcular();
+      },
+      function(err){ /* sin captura aún */ }
     );
 
     pararNotasSel = onSnapshot(
@@ -3679,6 +4000,7 @@
 
     renderSelectorDias();
     renderDia();
+    rsRecalcular();
   }
 
   semAnterior.addEventListener("click", function(){
