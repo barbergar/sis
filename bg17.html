@@ -1548,13 +1548,16 @@
             <button id="grActualizar" style="width:auto;padding:0 16px;font-size:14px;">Actualizar</button>
           </div>
 
-          <div class="tituloSeccion"><span>Producción · Efectivo · Nómina (por semana)</span></div>
+          <div class="tituloSeccion"><span>Ingresos · Producción dividida en Efectivo y Tarjeta</span></div>
           <div class="card" style="height:280px;"><canvas id="chLineas"></canvas></div>
 
-          <div class="tituloSeccion"><span>Gastos de caja · Adelantos · Gastos del negocio</span></div>
+          <div class="tituloSeccion"><span>Restas · Gastos (caja + negocio) y Nómina</span></div>
           <div class="card" style="height:280px;"><canvas id="chBarras"></canvas></div>
 
-          <div class="tituloSeccion"><span>T1 semanal (lo que queda tras nómina)</span></div>
+          <div class="tituloSeccion"><span>Solo gastos · Caja · Negocio · Comisión de tarjeta</span></div>
+          <div class="card" style="height:280px;"><canvas id="chGastos"></canvas></div>
+
+          <div class="tituloSeccion"><span>Restante tras nómina · Efectivo + Tarjeta neta (T2+T3)</span></div>
           <div class="card" style="height:280px;"><canvas id="chT1"></canvas></div>
 
           <!-- ===== RENTABILIDAD (Capa 5C) ===== -->
@@ -1565,7 +1568,7 @@
             <button id="rtSiguiente" disabled>›</button>
           </div>
 
-          <div class="tituloSeccion"><span>Aporte por barbero (mes)</span></div>
+          <div class="tituloSeccion"><span>UD por barbero (mes)</span></div>
           <div class="tablaScroll">
             <table class="semanal">
               <thead>
@@ -1574,8 +1577,9 @@
                   <th>Producción</th>
                   <th>Clientes</th>
                   <th>Ticket prom.</th>
+                  <th>Tarjeta</th>
                   <th>Nómina</th>
-                  <th>Aporte</th>
+                  <th>UD</th>
                 </tr>
               </thead>
               <tbody id="rtTablaMes"></tbody>
@@ -1596,8 +1600,9 @@
                   <th>Producción</th>
                   <th>Clientes</th>
                   <th>Ticket prom.</th>
+                  <th>Tarjeta</th>
                   <th>Nómina</th>
-                  <th>Aporte</th>
+                  <th>UD</th>
                 </tr>
               </thead>
               <tbody id="rtTablaAcum"></tbody>
@@ -1609,9 +1614,19 @@
             <div class="filaPanel"><span class="etiquetaF">Sin datos.</span><span></span></div>
           </div>
 
-          <div style="color:var(--texto-suave);font-size:12px;margin-top:14px;text-align:center;">El aporte del barbero VIP incluye el 40% de sus extras. Los bonos, multas, extras y días de Recepción se asignan al mes en que inicia su semana.</div>
+          <div style="color:var(--texto-suave);font-size:12px;margin-top:14px;text-align:center;">La UD del barbero VIP incluye el 40% de sus extras. La columna Tarjeta muestra el total cobrado con tarjeta por cada uno. Los bonos, multas, extras y días de Recepción se asignan al mes en que inicia su semana.</div>
 
           <div style="color:var(--texto-suave);font-size:12px;margin-top:8px;text-align:center;">Las gráficas muestran todas las semanas del año con datos. La nómina histórica usa los porcentajes actuales de cada barbero.</div>
+
+          <!-- ===== HISTORIAL DE CAMBIOS ===== -->
+          <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+            <button id="btnHist" style="padding:6px 14px;font-size:12px;font-weight:600;border:none;border-radius:8px;background:#232323;color:#6a6a6a;cursor:pointer;">Hist</button>
+          </div>
+          <div id="histPanel" style="display:none;margin-top:10px;">
+            <div class="tituloSeccion"><span>Historial de cambios</span></div>
+            <div id="histEstado" style="font-size:13px;color:var(--texto-suave);padding:4px 6px;"></div>
+            <div id="histLista" style="display:flex;flex-direction:column;gap:6px;"></div>
+          </div>
 
         </div><!-- fin subGraficos -->
 
@@ -1683,8 +1698,11 @@
       <div class="servicios" id="pendServicios">Servicios</div>
     </div>
 
-    <label>Monto ($) — puedes ajustarlo</label>
-    <input type="number" id="pendMonto" placeholder="0" inputmode="numeric" min="0">
+    <label>Monto ($)</label>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;">
+      <input type="number" id="pendMonto" placeholder="0" inputmode="numeric" min="0" readonly>
+      <button id="pendModificar" style="padding:10px 12px;font-size:13px;font-weight:700;border:none;border-radius:10px;background:#2c2c2c;color:#e8a33d;cursor:pointer;">Modificar 🔒</button>
+    </div>
 
     <div class="filaMetodo">
       <button class="btnMetodo efectivo" id="pendEfectivo">Efectivo</button>
@@ -1727,6 +1745,32 @@
     <button class="btnGuardarModal" id="nomEntrar">Entrar</button>
     <div class="msgModal" id="nomModalMsg"></div>
     <button class="btnCancelarModal" id="nomCancelarBtn">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL DE CONTRASEÑA (reutilizable) -->
+<div class="fondoModal" id="modalPassGen">
+  <div class="modal">
+    <h3 id="mpTitulo">Contraseña</h3>
+    <label id="mpLabel">Escribe la contraseña</label>
+    <input type="password" id="mpInput" autocomplete="off" inputmode="numeric">
+    <button class="btnGuardarModal" id="mpAceptar">Aceptar</button>
+    <div class="msgModal" id="mpMsg"></div>
+    <button class="btnCancelarModal" id="mpCancelar">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL PAGADO: MÉTODO DE PAGO -->
+<div class="fondoModal" id="modalPagado">
+  <div class="modal">
+    <h3 id="pgTitulo">Marcar como pagado</h3>
+    <div style="color:var(--texto-suave);font-size:13px;margin-bottom:12px;" id="pgDetalle"></div>
+    <div class="filaMetodo">
+      <button class="btnMetodo efectivo" id="pgEfectivo">Efectivo</button>
+      <button class="btnMetodo tarjeta" id="pgTransfer">Transferencia</button>
+    </div>
+    <div class="msgModal" id="pgMsg"></div>
+    <button class="btnCancelarModal" id="pgCancelar">Cancelar</button>
   </div>
 </div>
 
@@ -1891,6 +1935,7 @@
   // ============================================================
   let PASS_CAJA  = "peluqueriacochera1720";
   let PASS_ADMIN = "4764";
+  let PASS_HIST  = "4769"; // contraseña especial del historial
 
   async function cargarConfig(){
     try{
@@ -1899,10 +1944,180 @@
         const c = s.data();
         if(c.passCaja)  PASS_CAJA  = c.passCaja;
         if(c.passAdmin) PASS_ADMIN = c.passAdmin;
+        if(c.passHist)  PASS_HIST  = c.passHist;
       }
     } catch(err){ /* si falla, se usan los valores por defecto */ }
   }
   const configLista = cargarConfig();
+
+  // ============================================================
+  // HISTORIAL DE CAMBIOS (colección "historial")
+  // Registra toda modificación hecha desde Caja/Admin para
+  // poder auditar quién cambió qué. Se consulta con el botón
+  // "Hist" al final de Gráficos.
+  // ============================================================
+  function registrarHistorial(seccion, accion, detalle){
+    try{
+      addDoc(collection(db, "historial"), {
+        seccion: seccion,
+        accion: accion,
+        detalle: detalle || "",
+        fecha: fechaHoy(),
+        creado: serverTimestamp()
+      });
+    } catch(err){ /* el historial nunca debe bloquear la operación */ }
+  }
+
+  // ============================================================
+  // MODAL DE CONTRASEÑA REUTILIZABLE
+  // pedirPass(titulo, validar, onOk): abre el modal; "validar" es
+  // una función que recibe el texto y regresa true/false.
+  // ============================================================
+  const modalPassGen = document.getElementById("modalPassGen");
+  const mpTitulo   = document.getElementById("mpTitulo");
+  const mpInput    = document.getElementById("mpInput");
+  const mpAceptar  = document.getElementById("mpAceptar");
+  const mpCancelar = document.getElementById("mpCancelar");
+  const mpMsg      = document.getElementById("mpMsg");
+  let mpValidar = null, mpOnOk = null;
+
+  function pedirPass(titulo, validar, onOk){
+    mpTitulo.textContent = titulo;
+    mpInput.value = "";
+    mpMsg.textContent = "";
+    mpValidar = validar;
+    mpOnOk = onOk;
+    modalPassGen.classList.add("abierto");
+    setTimeout(function(){ mpInput.focus(); }, 100);
+  }
+
+  function pedirPassAdmin(titulo, onOk){
+    pedirPass(titulo, function(v){ return v === PASS_ADMIN; }, onOk);
+  }
+
+  function mpIntentar(){
+    if(!mpValidar) return;
+    if(mpValidar(mpInput.value.trim())){
+      modalPassGen.classList.remove("abierto");
+      const fn = mpOnOk;
+      mpValidar = null; mpOnOk = null;
+      if(fn) fn();
+    } else {
+      mpMsg.style.color = "#e05c5c";
+      mpMsg.textContent = "Contraseña incorrecta";
+      mpInput.value = "";
+    }
+  }
+  mpAceptar.addEventListener("click", mpIntentar);
+  mpInput.addEventListener("keydown", function(e){ if(e.key === "Enter") mpIntentar(); });
+  mpCancelar.addEventListener("click", function(){
+    modalPassGen.classList.remove("abierto");
+    mpValidar = null; mpOnOk = null;
+  });
+
+  // ============================================================
+  // PAGOS DE NÓMINA (colección "pagos")
+  // Un documento por persona por semana: {semana, quien, metodo,
+  // monto, creado}. quien = número de barbero o "recepcion".
+  // El descuento en pantalla usa SIEMPRE la nómina calculada en
+  // vivo (no el monto guardado) para que todo cuadre.
+  // ============================================================
+  const modalPagado = document.getElementById("modalPagado");
+  const pgTitulo    = document.getElementById("pgTitulo");
+  const pgDetalle   = document.getElementById("pgDetalle");
+  const pgEfectivo  = document.getElementById("pgEfectivo");
+  const pgTransfer  = document.getElementById("pgTransfer");
+  const pgCancelar  = document.getElementById("pgCancelar");
+  const pgMsg       = document.getElementById("pgMsg");
+  let pgContexto = null; // { semana, quien, nombre, monto }
+  let pgGuardando = false;
+
+  function idPago(semana, quien){ return semana + "_" + quien; }
+
+  function abrirModalPagado(semana, quien, nombre, monto){
+    pgContexto = { semana: semana, quien: quien, nombre: nombre, monto: monto };
+    pgGuardando = false;
+    pgTitulo.textContent = "Pagar a " + nombre;
+    pgDetalle.textContent = "Nómina de la semana: " + formatoDinero(monto) + ". ¿Cómo se pagó?";
+    pgMsg.textContent = "";
+    modalPagado.classList.add("abierto");
+  }
+
+  async function guardarPago(metodo){
+    if(pgGuardando || !pgContexto) return;
+    pgGuardando = true;
+    pgMsg.style.color = "#9a9a9a";
+    pgMsg.textContent = "Guardando...";
+    try{
+      await setDoc(doc(db, "pagos", idPago(pgContexto.semana, pgContexto.quien)), {
+        semana: pgContexto.semana,
+        quien: pgContexto.quien,
+        metodo: metodo,
+        monto: pgContexto.monto,
+        creado: serverTimestamp()
+      });
+      registrarHistorial("Nómina", "Marcar pagado",
+        pgContexto.nombre + " · " + formatoDinero(pgContexto.monto) + " · " + metodo + " · semana " + pgContexto.semana);
+      modalPagado.classList.remove("abierto");
+      pgContexto = null;
+    } catch(err){
+      pgMsg.style.color = "#e05c5c";
+      pgMsg.textContent = "Error: " + err.message;
+      pgGuardando = false;
+    }
+  }
+
+  pgEfectivo.addEventListener("click", function(){ guardarPago("efectivo"); });
+  pgTransfer.addEventListener("click", function(){ guardarPago("transferencia"); });
+  pgCancelar.addEventListener("click", function(){
+    modalPagado.classList.remove("abierto");
+    pgContexto = null;
+  });
+
+  async function quitarPago(semana, quien, nombre){
+    try{
+      await deleteDoc(doc(db, "pagos", idPago(semana, quien)));
+      registrarHistorial("Nómina", "Desmarcar pagado", nombre + " · semana " + semana);
+    } catch(err){ mostrarError(err); }
+  }
+
+  // Crea el botón PAGADO / PAGADO ✓ que se usa en Resumen, Semana y Nómina
+  function crearBotonPagado(semana, quien, nombre, monto, pago){
+    const btn = document.createElement("button");
+    btn.style.cssText = "padding:6px 10px;font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;white-space:nowrap;";
+    if(pago){
+      btn.textContent = "PAGADO ✓ " + (pago.metodo === "transferencia" ? "Transf." : "Efectivo");
+      btn.style.background = "#1e3320";
+      btn.style.color = "#8fd694";
+      let confirmando = false;
+      btn.addEventListener("click", function(){
+        if(!confirmando){
+          confirmando = true;
+          btn.textContent = "¿Quitar marca?";
+          btn.style.background = "#3a2626";
+          btn.style.color = "#e0a0a0";
+          setTimeout(function(){
+            if(confirmando){
+              confirmando = false;
+              btn.textContent = "PAGADO ✓ " + (pago.metodo === "transferencia" ? "Transf." : "Efectivo");
+              btn.style.background = "#1e3320";
+              btn.style.color = "#8fd694";
+            }
+          }, 3000);
+          return;
+        }
+        quitarPago(semana, quien, nombre);
+      });
+    } else {
+      btn.textContent = "PAGADO";
+      btn.style.background = "var(--ambar)";
+      btn.style.color = "#121212";
+      btn.addEventListener("click", function(){
+        abrirModalPagado(semana, quien, nombre, monto);
+      });
+    }
+    return btn;
+  }
 
   // ============================================================
   // FECHAS
@@ -2699,23 +2914,49 @@
   const pendCancelar   = document.getElementById("pendCancelar");
   const pendMsg        = document.getElementById("pendMsg");
 
+  const pendModificar = document.getElementById("pendModificar");
+
   let pendienteAbierto = null;
   let procesando = false;
   let confirmandoDescarte = false;
+  let pendMontoOriginal = 0;
+  let pendDesbloqueado = false; // ya validó contraseña de admin en este ticket
 
   function abrirModalPendiente(p){
     pendienteAbierto = p;
     procesando = false;
     confirmandoDescarte = false;
+    pendMontoOriginal = p.monto;
+    pendDesbloqueado = false;
     pendBarbero.textContent = nombreBarbero(p.barbero);
     pendServicios.textContent = Array.isArray(p.servicios) ? p.servicios.join(" + ") : String(p.servicios || "");
     pendMonto.value = p.monto;
+    pendMonto.readOnly = true;
+    pendModificar.textContent = "Modificar 🔒";
+    pendModificar.style.color = "#e8a33d";
     pendMsg.textContent = "";
     pendDescartar.textContent = "Descartar ticket";
     pendEfectivo.disabled = false;
     pendTarjeta.disabled = false;
     modalPendiente.classList.add("abierto");
   }
+
+  // Modificar el monto requiere la contraseña de admin
+  pendModificar.addEventListener("click", function(){
+    if(!pendienteAbierto || procesando) return;
+    if(pendDesbloqueado){
+      pendMonto.readOnly = false;
+      pendMonto.focus();
+      return;
+    }
+    pedirPassAdmin("Contraseña para modificar", function(){
+      pendDesbloqueado = true;
+      pendMonto.readOnly = false;
+      pendModificar.textContent = "Modificar 🔓";
+      pendModificar.style.color = "#4caf50";
+      pendMonto.focus();
+    });
+  });
 
   function cerrarModalPendiente(){
     modalPendiente.classList.remove("abierto");
@@ -2758,7 +2999,13 @@
 
       batch.delete(doc(db, "pendientes", pendienteAbierto.id));
 
+      const montoCambio = monto !== pendMontoOriginal;
+      const nomB = nombreBarbero(pendienteAbierto.barbero);
       await batch.commit();
+      if(montoCambio){
+        registrarHistorial("Hoy", "Ticket cobrado con monto modificado",
+          nomB + " · " + formatoDinero(pendMontoOriginal) + " → " + formatoDinero(monto) + " · " + metodo);
+      }
       cerrarModalPendiente();
     } catch(err){
       pendMsg.style.color = "#e05c5c";
@@ -2772,9 +3019,7 @@
   pendEfectivo.addEventListener("click", function(){ cobrarPendiente("efectivo"); });
   pendTarjeta.addEventListener("click", function(){ cobrarPendiente("tarjeta"); });
 
-  pendDescartar.addEventListener("click", async function(){
-    if(procesando || !pendienteAbierto) return;
-
+  async function ejecutarDescarte(){
     if(!confirmandoDescarte){
       confirmandoDescarte = true;
       pendDescartar.textContent = "¿Seguro? Toca de nuevo para descartar";
@@ -2783,15 +3028,33 @@
 
     procesando = true;
     try{
+      const nomB = nombreBarbero(pendienteAbierto.barbero);
+      const montoP = pendienteAbierto.monto;
       const batch = writeBatch(db);
       batch.delete(doc(db, "pendientes", pendienteAbierto.id));
       await batch.commit();
+      registrarHistorial("Hoy", "Ticket descartado", nomB + " · " + formatoDinero(montoP));
       cerrarModalPendiente();
     } catch(err){
       pendMsg.style.color = "#e05c5c";
       pendMsg.textContent = "Error: " + err.message;
       procesando = false;
     }
+  }
+
+  // Descartar un ticket requiere la contraseña de admin
+  pendDescartar.addEventListener("click", function(){
+    if(procesando || !pendienteAbierto) return;
+    if(pendDesbloqueado){
+      ejecutarDescarte();
+      return;
+    }
+    pedirPassAdmin("Contraseña para descartar", function(){
+      pendDesbloqueado = true;
+      pendModificar.textContent = "Modificar 🔓";
+      pendModificar.style.color = "#4caf50";
+      ejecutarDescarte();
+    });
   });
 
   onSnapshot(collection(db, "pendientes"), function(snap){
@@ -3040,6 +3303,7 @@
     tickMsg.textContent = "Guardando...";
 
     try{
+      const antes = ticketEditando;
       await updateDoc(doc(db, "tickets", ticketEditando.id), {
         barbero: tickBarbero,
         concepto: tickConcepto.value.trim() || "Cobro",
@@ -3047,6 +3311,12 @@
         metodo: tickMetodo,
         editado: serverTimestamp()
       });
+      const cambios = [];
+      if(antes.monto !== monto) cambios.push(formatoDinero(antes.monto) + " → " + formatoDinero(monto));
+      if(antes.metodo !== tickMetodo) cambios.push(antes.metodo + " → " + tickMetodo);
+      if(antes.barbero !== tickBarbero) cambios.push(nombreBarbero(antes.barbero) + " → " + nombreBarbero(tickBarbero));
+      registrarHistorial("Semana", "Editar ticket",
+        nombreBarbero(tickBarbero) + " · " + (antes.fecha || "") + (cambios.length ? " · " + cambios.join(" · ") : " · sin cambio de monto/método"));
       modalTicket.classList.remove("abierto");
       ticketEditando = null;
     } catch(err){
@@ -3069,7 +3339,10 @@
 
     guardandoTicket = true;
     try{
+      const antes = ticketEditando;
       await deleteDoc(doc(db, "tickets", ticketEditando.id));
+      registrarHistorial("Semana", "Eliminar ticket",
+        nombreBarbero(antes.barbero) + " · " + (antes.fecha || "") + " · " + formatoDinero(antes.monto) + " · " + (antes.metodo || ""));
       modalTicket.classList.remove("abierto");
       ticketEditando = null;
     } catch(err){
@@ -3101,6 +3374,17 @@
     });
     recalcularSemana();
   }, function(err){ /* sin registros aún */ });
+
+  // Pagos de nómina marcados esta semana (colección "pagos")
+  let pagosSemanaActual = {};
+  onSnapshot(query(collection(db, "pagos"), where("semana", "==", SEMANA[0])), function(snap){
+    pagosSemanaActual = {};
+    snap.forEach(function(d){
+      const p = d.data();
+      pagosSemanaActual[String(p.quien)] = p;
+    });
+    recalcularSemana();
+  }, function(err){ /* sin pagos aún */ });
   const rfEfectivoDisp   = document.getElementById("rfEfectivoDisp");
   const rfNomina         = document.getElementById("rfNomina");
   const rfEfectivoRest   = document.getElementById("rfEfectivoRest");
@@ -3231,8 +3515,16 @@
       if(it.tipo === "multa") multasPor[it.barbero] = (multasPor[it.barbero] || 0) + it.monto;
     });
 
+    // Tarjeta cobrada por barbero (para ver cuánto aporta el negocio en sus cobros con tarjeta)
+    const tarjPorBarbero = {};
+    ticketsSemana.forEach(function(t){
+      if(t.metodo === "tarjeta") tarjPorBarbero[t.barbero] = (tarjPorBarbero[t.barbero] || 0) + t.monto;
+    });
+
     desgloseNomina.innerHTML = "";
     let nominaTotal = 0;
+    let pagadoEfectivo = 0;      // nóminas ya pagadas en efectivo
+    let pagadoTransfer = 0;      // nóminas ya pagadas por transferencia
 
     activos.forEach(function(b){
       const prod = prodPorBarbero[b.num] || 0;
@@ -3241,16 +3533,32 @@
                    + (bonosPor[b.num] || 0) - (multasPor[b.num] || 0);
       nominaTotal += nomina;
 
+      const pago = pagosSemanaActual[String(b.num)];
+      if(pago){
+        if(pago.metodo === "transferencia") pagadoTransfer += nomina;
+        else pagadoEfectivo += nomina;
+      }
+
+      const nombreB = b.nombre || ("Barbero " + b.num);
+      const tarjB = tarjPorBarbero[b.num] || 0;
+
       const fila = document.createElement("div");
       fila.className = "filaPanel";
       const et = document.createElement("span");
       et.className = "etiquetaF";
-      et.textContent = b.nombre || ("Barbero " + b.num);
+      et.innerHTML = esc(nombreB) +
+        '<span style="display:block;font-size:11px;color:var(--texto-suave);">Tarjeta: ' + formatoDinero(tarjB) + '</span>';
+      const der = document.createElement("span");
+      der.className = "valorF";
+      der.style.display = "flex";
+      der.style.alignItems = "center";
+      der.style.gap = "8px";
       const val = document.createElement("span");
-      val.className = "valorF";
       val.textContent = formatoDinero(nomina);
+      der.appendChild(val);
+      der.appendChild(crearBotonPagado(SEMANA[0], b.num, nombreB, nomina, pago));
       fila.appendChild(et);
-      fila.appendChild(val);
+      fila.appendChild(der);
       desgloseNomina.appendChild(fila);
     });
 
@@ -3258,12 +3566,31 @@
     const nominaRecep = diasRecepcion * TARIFA_RECEPCION - adelRecep;
     nominaTotal += nominaRecep;
 
+    const pagoRecep = pagosSemanaActual["recepcion"];
+    if(pagoRecep){
+      if(pagoRecep.metodo === "transferencia") pagadoTransfer += nominaRecep;
+      else pagadoEfectivo += nominaRecep;
+    }
+
     const filaR = document.createElement("div");
     filaR.className = "filaPanel";
-    filaR.innerHTML =
-      '<span class="etiquetaF">Recepción (' + diasRecepcion + (diasRecepcion === 1 ? ' día' : ' días') + ')</span>' +
-      '<span class="valorF">' + formatoDinero(nominaRecep) + '</span>';
+    const etR = document.createElement("span");
+    etR.className = "etiquetaF";
+    etR.textContent = "Recepción (" + diasRecepcion + (diasRecepcion === 1 ? " día" : " días") + ")";
+    const derR = document.createElement("span");
+    derR.className = "valorF";
+    derR.style.display = "flex";
+    derR.style.alignItems = "center";
+    derR.style.gap = "8px";
+    const valR = document.createElement("span");
+    valR.textContent = formatoDinero(nominaRecep);
+    derR.appendChild(valR);
+    derR.appendChild(crearBotonPagado(SEMANA[0], "recepcion", "Recepción", nominaRecep, pagoRecep));
+    filaR.appendChild(etR);
+    filaR.appendChild(derR);
     desgloseNomina.appendChild(filaR);
+
+    const nominaPendiente = nominaTotal - pagadoEfectivo - pagadoTransfer;
 
     const filaT = document.createElement("div");
     filaT.className = "filaPanel destacada";
@@ -3272,9 +3599,20 @@
       '<span class="valorF">' + formatoDinero(nominaTotal) + '</span>';
     desgloseNomina.appendChild(filaT);
 
+    if(pagadoEfectivo > 0 || pagadoTransfer > 0){
+      const filaP = document.createElement("div");
+      filaP.className = "filaPanel";
+      filaP.innerHTML =
+        '<span class="etiquetaF">Pagado (efectivo ' + formatoDinero(pagadoEfectivo) + ' · transf. ' + formatoDinero(pagadoTransfer) + ')</span>' +
+        '<span class="valorF" style="color:#8fd694;">Pendiente: ' + formatoDinero(nominaPendiente) + '</span>';
+      desgloseNomina.appendChild(filaP);
+    }
+
     // ----- Efectivo vs Nómina -----
-    semEfectivoTotal.textContent = formatoDinero(tot.efectivo);
-    semNominaTotal.textContent = "− " + formatoDinero(nominaTotal);
+    // El efectivo mostrado descuenta las nóminas ya pagadas en efectivo;
+    // la nómina mostrada es la que queda pendiente. T1/T2/T3 no cambian.
+    semEfectivoTotal.textContent = formatoDinero(tot.efectivo - pagadoEfectivo);
+    semNominaTotal.textContent = "− " + formatoDinero(nominaPendiente);
 
     // ----- Barber (Extra): 40% del extra del VIP -----
     let extraTotal = 0;
@@ -3287,22 +3625,25 @@
     montoBarber.textContent = formatoDinero(BARBER);
 
     // ----- Resultado final -----
+    // T1/T2/T3 se calculan SIEMPRE con la nómina completa: marcar
+    // pagos solo ajusta lo que se muestra en Efectivo, Nómina y
+    // Tarjeta neta (lo pendiente/real en caja), nunca el rendimiento.
     const efectivoRestante = tot.efectivo - nominaTotal;
     const tarjetaNeta = tot.tcvta - tot.comision;
     const t1 = efectivoRestante;      // Efectivo − Nómina
     const t2 = t1 + BARBER;           // + 40% del extra del VIP
     const t3 = t2 + tarjetaNeta;      // + Tarjeta neta
 
-    rfEfectivoDisp.textContent = formatoDinero(tot.efectivo);
-    rfNomina.textContent = "− " + formatoDinero(nominaTotal);
+    rfEfectivoDisp.textContent = formatoDinero(tot.efectivo - pagadoEfectivo);
+    rfNomina.textContent = "− " + formatoDinero(nominaPendiente);
     rfEfectivoRest.textContent = formatoDinero(efectivoRestante);
     rfEfectivoRest.style.color = efectivoRestante < 0 ? "#e05c5c" : "";
-    rfTarjetaNeta.textContent = "+ " + formatoDinero(tarjetaNeta);
+    rfTarjetaNeta.textContent = "+ " + formatoDinero(tarjetaNeta - pagadoTransfer);
     rfBarber.textContent = "+ " + formatoDinero(BARBER);
 
     cardEfectivoRest.textContent = formatoDinero(efectivoRestante);
     cardEfectivoRest.style.color = efectivoRestante < 0 ? "#e05c5c" : "";
-    cardTarjetaNeta.textContent = formatoDinero(tarjetaNeta);
+    cardTarjetaNeta.textContent = formatoDinero(tarjetaNeta - pagadoTransfer);
     valorT1.textContent = formatoDinero(t1);
     valorT2.textContent = formatoDinero(t2);
     valorT3.textContent = formatoDinero(t3);
@@ -3681,7 +4022,8 @@
   let diasRecepcionSel = 0;     // días de Recepción de la semana navegada
   let notaBorrandoDia = null;
   let pararTicketsSel = null, pararMovsSel = null, pararNotasSel = null;
-  let pararNominaSel = null, pararConfigSel = null;
+  let pararNominaSel = null, pararConfigSel = null, pararPagosSel = null;
+  let pagosSel = {};            // pagos de nómina de la semana navegada
 
   const rangoSemana    = document.getElementById("rangoSemana");
   const semAnterior    = document.getElementById("semAnterior");
@@ -3822,8 +4164,16 @@
       if(it.tipo === "multa") multasPor[it.barbero] = (multasPor[it.barbero] || 0) + it.monto;
     });
 
+    // Tarjeta cobrada por barbero (semana navegada)
+    const tarjPorBarbero = {};
+    ticketsSel.forEach(function(t){
+      if(t.metodo === "tarjeta") tarjPorBarbero[t.barbero] = (tarjPorBarbero[t.barbero] || 0) + t.monto;
+    });
+
     rsDesgloseNomina.innerHTML = "";
     let nominaTotal = 0;
+    let pagadoEfectivo = 0;
+    let pagadoTransfer = 0;
 
     activos.forEach(function(b){
       const prod = prodPorBarbero[b.num] || 0;
@@ -3832,16 +4182,32 @@
                    + (bonosPor[b.num] || 0) - (multasPor[b.num] || 0);
       nominaTotal += nomina;
 
+      const pago = pagosSel[String(b.num)];
+      if(pago){
+        if(pago.metodo === "transferencia") pagadoTransfer += nomina;
+        else pagadoEfectivo += nomina;
+      }
+
+      const nombreB = b.nombre || ("Barbero " + b.num);
+      const tarjB = tarjPorBarbero[b.num] || 0;
+
       const fila = document.createElement("div");
       fila.className = "filaPanel";
       const et = document.createElement("span");
       et.className = "etiquetaF";
-      et.textContent = b.nombre || ("Barbero " + b.num);
+      et.innerHTML = esc(nombreB) +
+        '<span style="display:block;font-size:11px;color:var(--texto-suave);">Tarjeta: ' + formatoDinero(tarjB) + '</span>';
+      const der = document.createElement("span");
+      der.className = "valorF";
+      der.style.display = "flex";
+      der.style.alignItems = "center";
+      der.style.gap = "8px";
       const val = document.createElement("span");
-      val.className = "valorF";
       val.textContent = formatoDinero(nomina);
+      der.appendChild(val);
+      der.appendChild(crearBotonPagado(fechasSel[0], b.num, nombreB, nomina, pago));
       fila.appendChild(et);
-      fila.appendChild(val);
+      fila.appendChild(der);
       rsDesgloseNomina.appendChild(fila);
     });
 
@@ -3849,12 +4215,31 @@
     const nominaRecep = diasRecepcionSel * TARIFA_RECEPCION - adelRecep;
     nominaTotal += nominaRecep;
 
+    const pagoRecep = pagosSel["recepcion"];
+    if(pagoRecep){
+      if(pagoRecep.metodo === "transferencia") pagadoTransfer += nominaRecep;
+      else pagadoEfectivo += nominaRecep;
+    }
+
     const filaR = document.createElement("div");
     filaR.className = "filaPanel";
-    filaR.innerHTML =
-      '<span class="etiquetaF">Recepción (' + diasRecepcionSel + (diasRecepcionSel === 1 ? ' día' : ' días') + ')</span>' +
-      '<span class="valorF">' + formatoDinero(nominaRecep) + '</span>';
+    const etR = document.createElement("span");
+    etR.className = "etiquetaF";
+    etR.textContent = "Recepción (" + diasRecepcionSel + (diasRecepcionSel === 1 ? " día" : " días") + ")";
+    const derR = document.createElement("span");
+    derR.className = "valorF";
+    derR.style.display = "flex";
+    derR.style.alignItems = "center";
+    derR.style.gap = "8px";
+    const valR = document.createElement("span");
+    valR.textContent = formatoDinero(nominaRecep);
+    derR.appendChild(valR);
+    derR.appendChild(crearBotonPagado(fechasSel[0], "recepcion", "Recepción", nominaRecep, pagoRecep));
+    filaR.appendChild(etR);
+    filaR.appendChild(derR);
     rsDesgloseNomina.appendChild(filaR);
+
+    const nominaPendiente = nominaTotal - pagadoEfectivo - pagadoTransfer;
 
     const filaT = document.createElement("div");
     filaT.className = "filaPanel destacada";
@@ -3863,9 +4248,18 @@
       '<span class="valorF">' + formatoDinero(nominaTotal) + '</span>';
     rsDesgloseNomina.appendChild(filaT);
 
+    if(pagadoEfectivo > 0 || pagadoTransfer > 0){
+      const filaP = document.createElement("div");
+      filaP.className = "filaPanel";
+      filaP.innerHTML =
+        '<span class="etiquetaF">Pagado (efectivo ' + formatoDinero(pagadoEfectivo) + ' · transf. ' + formatoDinero(pagadoTransfer) + ')</span>' +
+        '<span class="valorF" style="color:#8fd694;">Pendiente: ' + formatoDinero(nominaPendiente) + '</span>';
+      rsDesgloseNomina.appendChild(filaP);
+    }
+
     // ----- Efectivo vs Nómina -----
-    rsSemEfectivoTotal.textContent = formatoDinero(tot.efectivo);
-    rsSemNominaTotal.textContent = "− " + formatoDinero(nominaTotal);
+    rsSemEfectivoTotal.textContent = formatoDinero(tot.efectivo - pagadoEfectivo);
+    rsSemNominaTotal.textContent = "− " + formatoDinero(nominaPendiente);
 
     // ----- Barber (Extra): 40% del extra del VIP -----
     let extraTotal = 0;
@@ -3884,16 +4278,16 @@
     const t2 = t1 + BARBER;           // + 40% del extra del VIP
     const t3 = t2 + tarjetaNeta;      // + Tarjeta neta
 
-    rsEfectivoDisp.textContent = formatoDinero(tot.efectivo);
-    rsNomina.textContent = "− " + formatoDinero(nominaTotal);
+    rsEfectivoDisp.textContent = formatoDinero(tot.efectivo - pagadoEfectivo);
+    rsNomina.textContent = "− " + formatoDinero(nominaPendiente);
     rsEfectivoRest.textContent = formatoDinero(efectivoRestante);
     rsEfectivoRest.style.color = efectivoRestante < 0 ? "#e05c5c" : "";
-    rsTarjetaNeta.textContent = "+ " + formatoDinero(tarjetaNeta);
+    rsTarjetaNeta.textContent = "+ " + formatoDinero(tarjetaNeta - pagadoTransfer);
     rsBarber.textContent = "+ " + formatoDinero(BARBER);
 
     rsCardEfectivoRest.textContent = formatoDinero(efectivoRestante);
     rsCardEfectivoRest.style.color = efectivoRestante < 0 ? "#e05c5c" : "";
-    rsCardTarjetaNeta.textContent = formatoDinero(tarjetaNeta);
+    rsCardTarjetaNeta.textContent = formatoDinero(tarjetaNeta - pagadoTransfer);
     rsValorT1.textContent = formatoDinero(t1);
     rsValorT2.textContent = formatoDinero(t2);
     rsValorT3.textContent = formatoDinero(t3);
@@ -3985,6 +4379,22 @@
         rsRecalcular();
       },
       function(err){ /* sin captura aún */ }
+    );
+
+    // Pagos de nómina de la semana navegada
+    pagosSel = {};
+    if(pararPagosSel){ pararPagosSel(); }
+    pararPagosSel = onSnapshot(
+      query(collection(db, "pagos"), where("semana", "==", fechasSel[0])),
+      function(snap){
+        pagosSel = {};
+        snap.forEach(function(d){
+          const p = d.data();
+          pagosSel[String(p.quien)] = p;
+        });
+        rsRecalcular();
+      },
+      function(err){ /* sin pagos aún */ }
     );
 
     pararNotasSel = onSnapshot(
@@ -4398,7 +4808,13 @@
     }
 
     try{
+      const antes = movEditando;
       await updateDoc(doc(db, "movimientos", movEditando.id), datos);
+      const cambios = [];
+      if(antes.monto !== monto) cambios.push(formatoDinero(antes.monto) + " → " + formatoDinero(monto));
+      if((antes.concepto || "") !== datos.concepto) cambios.push('"' + (antes.concepto || "") + '" → "' + datos.concepto + '"');
+      registrarHistorial("Semana", "Editar " + (antes.tipo === "adelanto" ? "adelanto" : "gasto"),
+        (antes.fecha || "") + (cambios.length ? " · " + cambios.join(" · ") : " · sin cambios visibles"));
       modalEM.classList.remove("abierto");
       movEditando = null;
     } catch(err){
@@ -4421,7 +4837,10 @@
 
     emProcesando = true;
     try{
+      const antes = movEditando;
       await deleteDoc(doc(db, "movimientos", movEditando.id));
+      registrarHistorial("Semana", "Eliminar " + (antes.tipo === "adelanto" ? "adelanto" : "gasto"),
+        (antes.fecha || "") + " · " + formatoDinero(antes.monto) + ' · "' + (antes.concepto || "") + '"');
       modalEM.classList.remove("abierto");
       movEditando = null;
     } catch(err){
@@ -4444,7 +4863,8 @@
   let nomItemsC = [];           // bonos, multas y extras de la semana elegida
   let nomItemBorrando = null;   // item en confirmación de borrado
   let nomDias = 0;              // días de recepción de la semana elegida
-  let pararNomT = null, pararNomM = null, pararNomC = null, pararNomI = null;
+  let nomPagosC = {};           // pagos de nómina de la semana elegida
+  let pararNomT = null, pararNomM = null, pararNomC = null, pararNomI = null, pararNomP = null;
   let hojaIntento = null;
 
   const nomAnterior  = document.getElementById("nomAnterior");
@@ -4517,6 +4937,17 @@
       nomItemBorrando = null;
       renderHoja();
     }, function(err){ /* sin registros aún */ });
+
+    nomPagosC = {};
+    if(pararNomP){ pararNomP(); }
+    pararNomP = onSnapshot(query(collection(db, "pagos"), where("semana", "==", nomFechas[0])), function(snap){
+      nomPagosC = {};
+      snap.forEach(function(d){
+        const p = d.data();
+        nomPagosC[String(p.quien)] = p;
+      });
+      renderHoja();
+    }, function(err){ /* sin pagos aún */ });
 
     renderNomTabs();
     renderHoja();
@@ -4645,6 +5076,12 @@
       else if(it.tipo === "extra") extra += it.monto;
     });
 
+    // Total cobrado con tarjeta por este barbero en la semana
+    let tarj = 0;
+    nomTicketsC.forEach(function(t){
+      if(t.barbero === num && t.metodo === "tarjeta") tarj += t.monto;
+    });
+
     const sub = prod * (b.porcentaje / 100);
     const total = sub - adel + bonos - multas;
     const nombre = b.nombre || ("Barbero " + b.num);
@@ -4653,13 +5090,15 @@
       '<div class="tituloSeccion"><span>Nómina de ' + esc(nombre) + '</span></div>' +
       '<div class="panelFilas">' +
         '<div class="filaPanel"><span class="etiquetaF">Producción de la semana</span><span class="valorF">' + formatoDinero(prod) + '</span></div>' +
+        '<div class="filaPanel"><span class="etiquetaF">Cobros con tarjeta</span><span class="valorF azul">' + formatoDinero(tarj) + '</span></div>' +
         '<div class="filaPanel"><span class="etiquetaF">Porcentaje</span><span class="valorF">' + b.porcentaje + '%</span></div>' +
         '<div class="filaPanel"><span class="etiquetaF">Subtotal (producción × %)</span><span class="valorF">' + formatoDinero(sub) + '</span></div>' +
         '<div class="filaPanel"><span class="etiquetaF">− Adelantos</span><span class="valorF rojo">− ' + formatoDinero(adel) + '</span></div>' +
         '<div class="filaPanel"><span class="etiquetaF">+ Bonos</span><span class="valorF verde">+ ' + formatoDinero(bonos) + '</span></div>' +
         '<div class="filaPanel"><span class="etiquetaF">− Multas</span><span class="valorF rojo">− ' + formatoDinero(multas) + '</span></div>' +
         '<div class="filaPanel destacada"><span class="etiquetaF">Total a pagar</span><span class="valorF" style="color:' + (total < 0 ? '#e05c5c' : '#4caf50') + ';">' + formatoDinero(total) + '</span></div>' +
-      '</div>';
+      '</div>' +
+      '<div id="nomPagadoFila" style="display:flex;justify-content:flex-end;margin-top:10px;"></div>';
 
     if(b.vip){
       const totalConExtra = total + extra * 0.6;
@@ -4678,6 +5117,11 @@
       '<div id="nomItemsLista" style="display:flex;flex-direction:column;gap:8px;"></div>';
 
     nomContenido.innerHTML = html;
+
+    // Botón PAGADO de este barbero (usa el total con extra si es VIP)
+    const montoPago = b.vip ? total + extra * 0.6 : total;
+    document.getElementById("nomPagadoFila")
+      .appendChild(crearBotonPagado(nomFechas[0], num, nombre, montoPago, nomPagosC[String(num)]));
 
     // Botones + Bono / + Multa (/ + Extra si es VIP)
     const fila = document.getElementById("nomBtnsFila");
@@ -4758,6 +5202,8 @@
         }
         try{
           await deleteDoc(doc(db, "nomina", it.id));
+          registrarHistorial("Nómina", "Eliminar " + it.tipo,
+            nombreBarbero(it.barbero) + " · " + formatoDinero(it.monto) + " · semana " + nomFechas[0]);
         } catch(err){ mostrarError(err); }
         nomItemBorrando = null;
       });
@@ -4828,6 +5274,8 @@
         semana: nomFechas[0],
         creado: serverTimestamp()
       });
+      registrarHistorial("Nómina", "Agregar " + nomItemTipo,
+        nombreBarbero(nomItemBarbero) + " · " + formatoDinero(monto) + " · semana " + nomFechas[0]);
       modalNomItem.classList.remove("abierto");
     } catch(err){
       niMsg.style.color = "#e05c5c";
@@ -4862,7 +5310,12 @@
         '<div class="filaPanel"><span class="etiquetaF">Días × ' + formatoDinero(TARIFA_RECEPCION) + '</span><span class="valorF">' + formatoDinero(sub) + '</span></div>' +
         '<div class="filaPanel"><span class="etiquetaF">− Adelantos</span><span class="valorF rojo">− ' + formatoDinero(adel) + '</span></div>' +
         '<div class="filaPanel destacada"><span class="etiquetaF">Total a pagar</span><span class="valorF" style="color:' + (total < 0 ? '#e05c5c' : '#4caf50') + ';">' + formatoDinero(total) + '</span></div>' +
-      '</div>';
+      '</div>' +
+      '<div id="nomPagadoFilaR" style="display:flex;justify-content:flex-end;margin-top:10px;"></div>';
+
+    // Botón PAGADO de Recepción
+    document.getElementById("nomPagadoFilaR")
+      .appendChild(crearBotonPagado(nomFechas[0], "recepcion", "Recepción", total, nomPagosC["recepcion"]));
 
     // Guardar días (queda registrado por semana y alimenta Admin > Resumen)
     document.getElementById("nomDiasGuardar").addEventListener("click", async function(){
@@ -4876,11 +5329,16 @@
       msg.style.color = "#9a9a9a";
       msg.textContent = "Guardando...";
       try{
+        const diasAntes = nomDias;
         await setDoc(doc(db, "nomina", "config-" + nomFechas[0]), {
           semana: nomFechas[0],
           diasRecepcion: n,
           actualizado: serverTimestamp()
         }, { merge: true });
+        if(n !== diasAntes){
+          registrarHistorial("Nómina", "Días de Recepción",
+            diasAntes + " → " + n + " · semana " + nomFechas[0]);
+        }
         msg.style.color = "#4caf50";
         msg.textContent = "Días guardados ✓";
       } catch(err){
@@ -5297,7 +5755,7 @@
   // GRÁFICOS (Fase 5B — Chart.js, solo lectura)
   // ============================================================
   let grIniciada = false;
-  let chLineas = null, chBarras = null, chT1 = null;
+  let chLineas = null, chBarras = null, chGastos = null, chT1 = null;
   let grTickets = [], grMovs = [], grNomina = [], grGN = []; // datos crudos del año
   let rtOffset = 0; // mes de rentabilidad (0 = actual)
 
@@ -5415,17 +5873,26 @@
       }
 
       // ----- Series por semana -----
+      // Estructura: Producción total → dividida en Efectivo y Tarjeta;
+      // luego las restas: Gastos (caja + negocio, un solo rubro) y Nómina;
+      // desglose de solo gastos (caja, negocio, comisión de tarjeta);
+      // y al final el restante: efectivo tras nómina + BARBER + tarjeta neta.
       const etiquetas = [];
-      const serieProd = [], serieEfec = [], serieNom = [];
-      const serieGCaja = [], serieAdel = [], serieGNeg = [];
-      const serieT1 = [];
+      const serieProd = [], serieEfecIng = [], serieTarj = [];
+      const serieGastos = [], serieNom = [];
+      const serieGCaja = [], serieGNeg = [], serieCom = [];
+      const serieFinal = [];
 
       listaLunes.forEach(function(lunes){
         const s = semanas[lunes] || sem(lunes);
         const d = new Date(lunes + "T12:00:00");
         etiquetas.push(d.toLocaleDateString("es-MX", { day:"numeric", month:"short" }));
 
-        const efectivo = s.prod - s.tcvta - s.gastosCaja - s.adelantos;
+        // Ingresos: producción dividida en efectivo y tarjeta
+        const efectivoIngreso = s.prod - s.tcvta;
+
+        // Efectivo real en caja (para el restante final, misma lógica que Resumen)
+        const efectivoCaja = s.prod - s.tcvta - s.gastosCaja - s.adelantos;
 
         // Nómina de la semana (con los porcentajes actuales)
         let nomina = 0;
@@ -5439,13 +5906,20 @@
         });
         nomina += s.dias * TARIFA_RECEPCION - (s.adelPor["recepcion"] || 0);
 
+        const comision = s.tcvta * 0.04;
+        const tarjetaNeta = s.tcvta - comision;
+        const BARBER = s.extra * 0.4;
+
         serieProd.push(s.prod);
-        serieEfec.push(efectivo);
+        serieEfecIng.push(efectivoIngreso);
+        serieTarj.push(s.tcvta);
+        serieGastos.push(s.gastosCaja + s.gastosNeg);
         serieNom.push(nomina);
         serieGCaja.push(s.gastosCaja);
-        serieAdel.push(s.adelantos);
         serieGNeg.push(s.gastosNeg);
-        serieT1.push(efectivo - nomina);
+        serieCom.push(comision);
+        // Restante final = (efectivo − nómina) + BARBER + tarjeta neta (T2 y T3 en uno)
+        serieFinal.push(efectivoCaja - nomina + BARBER + tarjetaNeta);
       });
 
       // ----- Dibujar gráficas -----
@@ -5455,9 +5929,9 @@
         data: {
           labels: etiquetas,
           datasets: [
-            { label: "Producción", data: serieProd, borderColor: "#e8a33d", backgroundColor: "#e8a33d", tension: 0.3 },
-            { label: "Efectivo", data: serieEfec, borderColor: "#4caf50", backgroundColor: "#4caf50", tension: 0.3 },
-            { label: "Nómina", data: serieNom, borderColor: "#e05c5c", backgroundColor: "#e05c5c", tension: 0.3 }
+            { label: "Producción (total)", data: serieProd, borderColor: "#e8a33d", backgroundColor: "#e8a33d", tension: 0.3 },
+            { label: "Efectivo", data: serieEfecIng, borderColor: "#4caf50", backgroundColor: "#4caf50", tension: 0.3 },
+            { label: "Tarjeta", data: serieTarj, borderColor: "#8ab8e8", backgroundColor: "#8ab8e8", tension: 0.3 }
           ]
         },
         options: { responsive: true, maintainAspectRatio: false }
@@ -5469,9 +5943,22 @@
         data: {
           labels: etiquetas,
           datasets: [
+            { label: "Gastos (caja + negocio)", data: serieGastos, backgroundColor: "#e05c5c" },
+            { label: "Nómina", data: serieNom, backgroundColor: "#e0b890" }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      if(chGastos) chGastos.destroy();
+      chGastos = new Chart(document.getElementById("chGastos"), {
+        type: "bar",
+        data: {
+          labels: etiquetas,
+          datasets: [
             { label: "Gastos de caja", data: serieGCaja, backgroundColor: "#e05c5c" },
-            { label: "Adelantos", data: serieAdel, backgroundColor: "#e0b890" },
-            { label: "Gastos del negocio", data: serieGNeg, backgroundColor: "#8ab8e8" }
+            { label: "Gastos del negocio", data: serieGNeg, backgroundColor: "#8ab8e8" },
+            { label: "Comisión tarjeta (4%)", data: serieCom, backgroundColor: "#b58ae8" }
           ]
         },
         options: { responsive: true, maintainAspectRatio: false }
@@ -5483,9 +5970,9 @@
         data: {
           labels: etiquetas,
           datasets: [{
-            label: "T1 (Efectivo − Nómina)",
-            data: serieT1,
-            backgroundColor: serieT1.map(function(v){ return v < 0 ? "#e05c5c" : "#4caf50"; })
+            label: "Restante (efectivo + tarjeta neta)",
+            data: serieFinal,
+            backgroundColor: serieFinal.map(function(v){ return v < 0 ? "#e05c5c" : "#4caf50"; })
           }]
         },
         options: { responsive: true, maintainAspectRatio: false }
@@ -5530,7 +6017,7 @@
     // Acumuladores por barbero
     const por = {};
     function pb(num){
-      if(!por[num]) por[num] = { prod: 0, cli: 0, adel: 0, bono: 0, multa: 0, extra: 0 };
+      if(!por[num]) por[num] = { prod: 0, cli: 0, adel: 0, bono: 0, multa: 0, extra: 0, tarj: 0 };
       return por[num];
     }
 
@@ -5539,6 +6026,7 @@
       const p = pb(t.barbero);
       p.prod += t.monto;
       p.cli += 1;
+      if(t.metodo === "tarjeta") p.tarj += t.monto;
     });
 
     let gastosCaja = 0;
@@ -5579,13 +6067,13 @@
       if(p.prod === 0 && p.cli === 0 && p.adel === 0 && p.bono === 0 && p.multa === 0 && p.extra === 0) return;
 
       const nomina = p.prod * (b.porcentaje / 100) - p.adel + p.bono - p.multa;
-      const aporte = p.prod - nomina + p.extra * 0.4;
+      const aporte = p.prod - nomina + p.extra * 0.4; // UD del barbero
       const ticket = p.cli > 0 ? p.prod / p.cli : 0;
 
       filas.push({
         nombre: b.nombre || ("Barbero " + b.num),
         prod: p.prod, cli: p.cli, ticket: ticket,
-        nomina: nomina, aporte: aporte
+        tarj: p.tarj, nomina: nomina, aporte: aporte
       });
       aportesTotal += aporte;
       clientesTotal += p.cli;
@@ -5610,7 +6098,7 @@
 
   function pintarTablaRent(tbody, r){
     if(r.filas.length === 0){
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--texto-suave);">Sin datos en este periodo.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--texto-suave);">Sin datos en este periodo.</td></tr>';
       return;
     }
     tbody.innerHTML = "";
@@ -5621,6 +6109,7 @@
         "<td>" + formatoDinero(f.prod) + "</td>" +
         "<td>" + f.cli + "</td>" +
         "<td>" + formatoDinero(f.ticket) + "</td>" +
+        "<td style='color:#8ab8e8;'>" + formatoDinero(f.tarj) + "</td>" +
         "<td>" + formatoDinero(f.nomina) + "</td>" +
         "<td style='font-weight:800;color:" + (f.aporte < 0 ? "#e05c5c" : "#4caf50") + ";'>" + formatoDinero(f.aporte) + "</td>";
       tbody.appendChild(tr);
@@ -5629,7 +6118,7 @@
 
   function pintarPanelRent(panel, r){
     panel.innerHTML =
-      '<div class="filaPanel"><span class="etiquetaF">Aporte de barberos</span><span class="valorF">' + formatoDinero(r.aportesTotal) + '</span></div>' +
+      '<div class="filaPanel"><span class="etiquetaF">UD de barberos</span><span class="valorF">' + formatoDinero(r.aportesTotal) + '</span></div>' +
       '<div class="filaPanel"><span class="etiquetaF">− Recepción (' + r.diasRecep + (r.diasRecep === 1 ? ' día' : ' días') + ')</span><span class="valorF rojo">− ' + formatoDinero(r.recepCosto) + '</span></div>' +
       '<div class="filaPanel"><span class="etiquetaF">− Gastos de caja</span><span class="valorF rojo">− ' + formatoDinero(r.gastosCaja) + '</span></div>' +
       '<div class="filaPanel"><span class="etiquetaF">− Gastos del negocio</span><span class="valorF rojo">− ' + formatoDinero(r.gastosNeg) + '</span></div>' +
@@ -5650,6 +6139,116 @@
     pintarPanelRent(rtPanelMes, mes);
     pintarTablaRent(rtTablaAcum, acum);
     pintarPanelRent(rtPanelAcum, acum);
+  }
+
+  // ============================================================
+  // HISTORIAL — visor (botón "Hist" al final de Gráficos)
+  // Dejar el cursor encima (o el dedo presionado) sobre un
+  // registro ~1.2s revela la opción de borrarlo; borrar pide la
+  // contraseña especial del historial.
+  // ============================================================
+  const btnHist    = document.getElementById("btnHist");
+  const histPanel  = document.getElementById("histPanel");
+  const histEstado = document.getElementById("histEstado");
+  const histLista  = document.getElementById("histLista");
+
+  btnHist.addEventListener("click", function(){
+    if(histPanel.style.display === "none"){
+      histPanel.style.display = "block";
+      cargarHistorial();
+    } else {
+      histPanel.style.display = "none";
+    }
+  });
+
+  async function cargarHistorial(){
+    histEstado.textContent = "Cargando historial...";
+    histLista.innerHTML = "";
+    try{
+      const snap = await getDocs(collection(db, "historial"));
+      const items = [];
+      snap.forEach(function(d){ items.push({ id: d.id, ...d.data() }); });
+      items.sort(function(a, b){
+        const ta = a.creado ? a.creado.toMillis() : 0;
+        const tb = b.creado ? b.creado.toMillis() : 0;
+        return tb - ta;
+      });
+      const mostrar = items.slice(0, 100);
+
+      if(mostrar.length === 0){
+        histEstado.textContent = "Sin registros todavía.";
+        return;
+      }
+      histEstado.textContent = mostrar.length + " registro" + (mostrar.length === 1 ? "" : "s") +
+        (items.length > 100 ? " (mostrando los 100 más recientes)" : "");
+
+      mostrar.forEach(function(it){
+        histLista.appendChild(crearFilaHist(it));
+      });
+    } catch(err){
+      histEstado.textContent = "Error al cargar: " + err.message;
+    }
+  }
+
+  function crearFilaHist(it){
+    const fila = document.createElement("div");
+    fila.style.cssText = "display:flex;align-items:center;gap:10px;background:#1c1c1c;border-radius:10px;padding:10px 12px;";
+
+    const info = document.createElement("div");
+    info.style.cssText = "flex:1;min-width:0;";
+
+    let hora = "";
+    if(it.creado && it.creado.toDate){
+      hora = it.creado.toDate().toLocaleString("es-MX", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" });
+    } else {
+      hora = it.fecha || "";
+    }
+
+    info.innerHTML =
+      '<div style="font-size:12px;color:var(--texto-suave);">' + esc(hora) + ' · ' + esc(it.seccion || "") + '</div>' +
+      '<div style="font-size:13px;font-weight:600;">' + esc(it.accion || "") + '</div>' +
+      (it.detalle ? '<div style="font-size:12px;color:var(--texto-suave);word-break:break-word;">' + esc(it.detalle) + '</div>' : '');
+
+    const btnX = document.createElement("button");
+    btnX.textContent = "✕";
+    btnX.style.cssText = "display:none;padding:6px 10px;font-size:13px;font-weight:700;border:none;border-radius:8px;background:#3a2626;color:#e0a0a0;cursor:pointer;";
+    btnX.addEventListener("click", function(e){
+      e.stopPropagation();
+      pedirPass("Contraseña del historial", function(v){ return v === PASS_HIST; }, async function(){
+        try{
+          await deleteDoc(doc(db, "historial", it.id));
+          fila.remove();
+        } catch(err){ mostrarError(err); }
+      });
+    });
+
+    // Revelar el botón tras dejar el cursor / dedo ~1.2s
+    let timerRevela = null;
+    let timerOculta = null;
+    function revelar(){
+      btnX.style.display = "inline-block";
+      if(timerOculta) clearTimeout(timerOculta);
+      timerOculta = setTimeout(function(){ btnX.style.display = "none"; }, 6000);
+    }
+    fila.addEventListener("mouseenter", function(){
+      timerRevela = setTimeout(revelar, 1200);
+    });
+    fila.addEventListener("mouseleave", function(){
+      if(timerRevela) clearTimeout(timerRevela);
+    });
+    fila.addEventListener("touchstart", function(){
+      timerRevela = setTimeout(revelar, 1200);
+    }, { passive: true });
+    fila.addEventListener("touchend", function(){
+      if(timerRevela) clearTimeout(timerRevela);
+    });
+    fila.addEventListener("touchmove", function(){
+      if(timerRevela) clearTimeout(timerRevela);
+    }, { passive: true });
+
+    fila.appendChild(info);
+    fila.appendChild(btnX);
+    return fila;
   }
 
   // ============================================================
