@@ -673,6 +673,12 @@
     getFirestore, collection, getDocs, doc, getDoc, addDoc, deleteDoc,
     query, where, onSnapshot, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import {
+    getAuth, signInWithCustomToken, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFunctions, httpsCallable
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
   // ----- Configuración del proyecto "agend" -----
   const firebaseConfig = {
@@ -684,6 +690,21 @@
 
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
+  const auth = getAuth(app);
+  const functions = getFunctions(app, "us-central1");
+  const loginBarberoFn = httpsCallable(functions, "loginBarbero");
+
+  // ============================================================
+  // authListo: se resuelve en cuanto el SDK determina si YA había
+  // una sesión de Firebase Auth restaurada (p.ej. al recargar la
+  // página). No dispara ningún login por sí sola — solo avisa.
+  // ============================================================
+  const authListo = new Promise(function(resolve){
+    const quitar = onAuthStateChanged(auth, function(user){
+      quitar();
+      resolve(user); // user = objeto si hay sesión viva, null si no
+    });
+  });
 
   // ----- Fechas -----
   function fechaHoy(){
@@ -744,8 +765,8 @@
     } catch(e){ return null; }
   }
 
-  function guardarSesion(num){
-    localStorage.setItem(CLAVE_SESION, JSON.stringify({ num: num, inicio: Date.now() }));
+  function guardarSesion(num, nombre, vip){
+    localStorage.setItem(CLAVE_SESION, JSON.stringify({ num: num, nombre: nombre, vip: vip, inicio: Date.now() }));
   }
 
   function cerrarSesion(){
@@ -763,12 +784,8 @@
   // ============================================================
   // ENTRAR: cargar datos del barbero y arrancar su pantalla
   // ============================================================
-  async function entrarComoBarbero(num){
-    const s = await getDoc(doc(db, "barberos", String(num)));
-    if(!s.exists() || s.data().activo === false){
-      return false;
-    }
-    barberoActual = { id: s.id, ...s.data() };
+  async function entrarComoBarbero(num, nombre, vip){
+    barberoActual = { num: num, nombre: nombre, vip: vip === true };
 
     nombreBarberoEl.textContent = barberoActual.nombre || ("Barbero " + barberoActual.num);
     pantallaPin.style.display = "none";
@@ -1275,30 +1292,25 @@
     msgPin.textContent = "Verificando...";
 
     try{
-      // Buscar barbero activo con ese PIN
-      const consulta = query(collection(db, "barberos"), where("pin", "==", pinActual));
-      const res = await getDocs(consulta);
+      // La Cloud Function valida el PIN del lado del servidor y
+      // devuelve un token de sesión + los datos del barbero.
+      const resultado = await loginBarberoFn({ pin: pinActual });
+      const data = resultado.data; // { token, num, nombre, vip }
 
-      let encontrado = null;
-      res.forEach(function(d){
-        const b = d.data();
-        if(b.activo !== false && encontrado === null) encontrado = b;
-      });
+      await signInWithCustomToken(auth, data.token);
 
-      if(encontrado){
-        guardarSesion(encontrado.num);
-        await entrarComoBarbero(encontrado.num);
-        limpiarPin();
-      } else {
-        puntosPin.classList.add("error");
-        msgPin.style.color = "#e05c5c";
-        msgPin.textContent = "PIN incorrecto";
-        setTimeout(limpiarPin, 900);
-      }
+      guardarSesion(data.num, data.nombre, data.vip);
+      await entrarComoBarbero(data.num, data.nombre, data.vip);
+      limpiarPin();
     } catch(err){
+      puntosPin.classList.add("error");
       msgPin.style.color = "#e05c5c";
-      msgPin.textContent = "Error de conexión: " + err.message;
-      setTimeout(limpiarPin, 1500);
+      if(err.code === "functions/permission-denied" || err.code === "functions/invalid-argument"){
+        msgPin.textContent = "PIN incorrecto";
+      } else {
+        msgPin.textContent = "Error de conexión: " + (err.message || err);
+      }
+      setTimeout(limpiarPin, 900);
     }
 
     validandoPin = false;
@@ -1330,12 +1342,20 @@
   });
 
   // ============================================================
-  // ARRANQUE: si hay sesión viva, entrar directo
+  // ARRANQUE: si hay sesión local Y Firebase Auth restauró una
+  // sesión real, entrar directo con los datos cacheados (sin leer
+  // Firestore). Si la sesión de Firebase Auth no está (se perdió,
+  // expiró o es un dispositivo/navegador nuevo), se pide el PIN
+  // de nuevo — la sesión local sola ya no basta.
   // ============================================================
   const sesion = leerSesion();
   if(sesion){
-    entrarComoBarbero(sesion.num).then(function(ok){
-      if(!ok) cerrarSesion(); // barbero dado de baja o inexistente
+    authListo.then(function(user){
+      if(user){
+        entrarComoBarbero(sesion.num, sesion.nombre, sesion.vip);
+      } else {
+        cerrarSesion();
+      }
     }).catch(function(err){
       mostrarError(err);
     });
