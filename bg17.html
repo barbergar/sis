@@ -1916,6 +1916,9 @@
     getFirestore, collection, getDocs, getDoc, addDoc, setDoc, doc, updateDoc, deleteField, deleteDoc,
     query, where, onSnapshot, serverTimestamp, writeBatch, arrayUnion
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import {
+    getAuth, signInWithEmailAndPassword
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   // ----- Configuración del proyecto "agend" -----
   const firebaseConfig = {
@@ -1927,7 +1930,33 @@
 
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
+  const auth = getAuth(app);
   window.db = db;
+
+  // ============================================================
+  // LOGIN MAESTRO INVISIBLE (Firebase Auth)
+  // Recepción no ve ni teclea esto — la página inicia sesión sola
+  // contra la cuenta maestra para que Firestore pueda verificar
+  // request.auth != null en sus reglas. El password de la CAJA
+  // (pantalla que sí ve recepción) es un control totalmente aparte
+  // y no cambia.
+  // Rellena MASTER_PASS con la contraseña real que le pusiste a la
+  // cuenta maestra en Authentication (proyecto agend-1d0e5).
+  // ============================================================
+  const MASTER_EMAIL = "sis.bar01+garage-caja@gmail.com";
+  const MASTER_PASS  = "dZ7JZgr9lyggiL4yVVneKG6tgFO2";
+
+  const authListo = signInWithEmailAndPassword(auth, MASTER_EMAIL, MASTER_PASS)
+    .catch(function(err){
+      console.error("No se pudo iniciar la sesión maestra:", err);
+    });
+
+  // Envoltura: los listeners en tiempo real esperan a que la sesión
+  // maestra esté lista antes de tocar Firestore (no bloquea nada más).
+  function onSnapshotSeguro(){
+    const args = arguments;
+    authListo.then(function(){ onSnapshot.apply(null, args); });
+  }
 
   // ============================================================
   // CONTRASEÑAS (con valores por defecto; se pueden cambiar
@@ -1938,6 +1967,7 @@
   let PASS_HIST  = "4769"; // contraseña especial del historial
 
   async function cargarConfig(){
+    await authListo;
     try{
       const s = await getDoc(doc(db, "ajustes", "config"));
       if(s.exists()){
@@ -2564,7 +2594,7 @@
     });
   }
 
-  onSnapshot(query(collection(db, "notas"), where("fecha", "==", fechaHoy())), function(snap){
+  onSnapshotSeguro(query(collection(db, "notas"), where("fecha", "==", fechaHoy())), function(snap){
     notasHoyCache = [];
     snap.forEach(function(d){ notasHoyCache.push({ id: d.id, ...d.data() }); });
     notasHoyCache.sort(function(a, b){
@@ -2829,7 +2859,7 @@
   const listaMovimientos = document.getElementById("listaMovimientos");
   const totalMovimientos = document.getElementById("totalMovimientos");
 
-  onSnapshot(query(collection(db, "movimientos"), where("fecha", "==", fechaHoy())), function(snap){
+  onSnapshotSeguro(query(collection(db, "movimientos"), where("fecha", "==", fechaHoy())), function(snap){
     const movs = [];
     snap.forEach(function(d){ movs.push({ id: d.id, ...d.data() }); });
 
@@ -3057,7 +3087,7 @@
     });
   });
 
-  onSnapshot(collection(db, "pendientes"), function(snap){
+  onSnapshotSeguro(collection(db, "pendientes"), function(snap){
     const pendientes = [];
     snap.forEach(function(d){ pendientes.push({ id: d.id, ...d.data() }); });
 
@@ -3132,7 +3162,7 @@
   // ============================================================
   // COBROS DE HOY (tiempo real) → tarjetas, columnas y admin
   // ============================================================
-  onSnapshot(query(collection(db, "tickets"), where("fecha", "==", fechaHoy())), function(snap){
+  onSnapshotSeguro(query(collection(db, "tickets"), where("fecha", "==", fechaHoy())), function(snap){
     const cobros = [];
     snap.forEach(function(d){ cobros.push({ id: d.id, ...d.data() }); });
 
@@ -3366,7 +3396,7 @@
 
   // Bonos, multas y extras de la semana actual (colección "nomina")
   let itemsSemanaActual = [];
-  onSnapshot(query(collection(db, "nomina"), where("semana", "==", SEMANA[0])), function(snap){
+  onSnapshotSeguro(query(collection(db, "nomina"), where("semana", "==", SEMANA[0])), function(snap){
     itemsSemanaActual = [];
     snap.forEach(function(d){
       const x = d.data();
@@ -3377,7 +3407,7 @@
 
   // Pagos de nómina marcados esta semana (colección "pagos")
   let pagosSemanaActual = {};
-  onSnapshot(query(collection(db, "pagos"), where("semana", "==", SEMANA[0])), function(snap){
+  onSnapshotSeguro(query(collection(db, "pagos"), where("semana", "==", SEMANA[0])), function(snap){
     pagosSemanaActual = {};
     snap.forEach(function(d){
       const p = d.data();
@@ -3398,7 +3428,7 @@
 
   // Días de Recepción de la semana actual (capturados en Nómina > Recepción)
   let diasRecepcionSemanaActual = 0;
-  onSnapshot(doc(db, "nomina", "config-" + SEMANA[0]), function(s){
+  onSnapshotSeguro(doc(db, "nomina", "config-" + SEMANA[0]), function(s){
     diasRecepcionSemanaActual = (s.exists() && s.data().diasRecepcion) ? s.data().diasRecepcion : 0;
     recalcularSemana();
   }, function(err){ /* sin captura aún */ });
@@ -3406,7 +3436,7 @@
   let ticketsSemana = [];
   let movsSemana = [];
 
-  onSnapshot(
+  onSnapshotSeguro(
     query(collection(db, "tickets"), where("fecha", ">=", SEMANA[0]), where("fecha", "<=", SEMANA[6])),
     function(snap){
       ticketsSemana = [];
@@ -3416,7 +3446,7 @@
     function(err){ mostrarError(err); }
   );
 
-  onSnapshot(
+  onSnapshotSeguro(
     query(collection(db, "movimientos"), where("fecha", ">=", SEMANA[0]), where("fecha", "<=", SEMANA[6])),
     function(snap){
       movsSemana = [];
@@ -3853,7 +3883,7 @@
   });
 
   // ----- Escuchar barberos en tiempo real -----
-  onSnapshot(collection(db, "barberos"), function(snap){
+  onSnapshotSeguro(collection(db, "barberos"), function(snap){
     const barberos = [];
     snap.forEach(function(d){ barberos.push({ id: d.id, ...d.data() }); });
     barberos.sort(function(a, b){ return a.num - b.num; });
@@ -6286,6 +6316,7 @@
 
   async function intentarEntrar(){
     await configLista; // espera a que cargue la contraseña guardada
+    await authListo;   // espera a que la sesión maestra de Firebase esté lista
     if(inputPass.value === PASS_CAJA){
       localStorage.setItem(CLAVE_SESION, Date.now().toString());
       mostrarCaja();
