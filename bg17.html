@@ -1947,6 +1947,13 @@
   const MASTER_PASS  = "dZ7JZgr9lyggiL4yVVneKG6tgFO2";
 
   const authListo = signInWithEmailAndPassword(auth, MASTER_EMAIL, MASTER_PASS)
+    .then(function(cred){
+      // Forzar un token FRESCO para que traiga el claim rol:"maestra"
+      // recién asignado a la cuenta. Sin el "true", Firebase reutiliza
+      // el token cacheado (que puede ser de antes del claim) y las
+      // reglas de Firestore rechazarían a recepción.
+      return cred.user.getIdToken(true);
+    })
     .catch(function(err){
       console.error("No se pudo iniciar la sesión maestra:", err);
     });
