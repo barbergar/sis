@@ -1047,6 +1047,20 @@
 </head>
 <body>
 
+<!-- SIEMBRA DE SESIÓN MAESTRA (solo aparece si no hay sesión guardada) -->
+<div id="master-overlay" style="display:none;position:fixed;inset:0;z-index:99999;background:#111;color:#fff;flex-direction:column;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;padding:24px;">
+  <div style="max-width:360px;width:100%;text-align:center;">
+    <h2 style="margin:0 0 6px;font-size:20px;">Conectar Caja</h2>
+    <p style="margin:0 0 18px;font-size:13px;opacity:.7;line-height:1.4;">Solo esta vez en este dispositivo. Escribe la contraseña maestra; el equipo la recordará después.</p>
+    <input id="master-pass" type="password" placeholder="Contraseña maestra" autocomplete="off"
+      onkeydown="if(event.key==='Enter')sembrarSesion()"
+      style="width:100%;box-sizing:border-box;padding:12px;font-size:15px;border:1px solid #444;border-radius:8px;background:#1c1c1c;color:#fff;margin-bottom:10px;">
+    <button id="master-btn" onclick="sembrarSesion()"
+      style="width:100%;padding:12px;font-size:15px;border:0;border-radius:8px;background:#c8a04a;color:#111;font-weight:600;cursor:pointer;">Conectar</button>
+    <div id="master-err" style="margin-top:10px;font-size:13px;color:#ff8a8a;min-height:18px;"></div>
+  </div>
+</div>
+
 <!-- PANTALLA DE LOGIN -->
 <div id="pantallaLogin">
   <div class="cajaLogin">
@@ -1917,7 +1931,8 @@
     query, where, onSnapshot, serverTimestamp, writeBatch, arrayUnion
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import {
-    getAuth, signInWithEmailAndPassword
+    getAuth, signInWithEmailAndPassword, setPersistence,
+    browserLocalPersistence, onAuthStateChanged
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   // ----- Configuración del proyecto "agend" -----
@@ -1934,29 +1949,61 @@
   window.db = db;
 
   // ============================================================
-  // LOGIN MAESTRO INVISIBLE (Firebase Auth)
-  // Recepción no ve ni teclea esto — la página inicia sesión sola
-  // contra la cuenta maestra para que Firestore pueda verificar
-  // request.auth != null en sus reglas. El password de la CAJA
-  // (pantalla que sí ve recepción) es un control totalmente aparte
-  // y no cambia.
-  // Rellena MASTER_PASS con la contraseña real que le pusiste a la
-  // cuenta maestra en Authentication (proyecto agend-1d0e5).
+  // SESIÓN MAESTRA (Firebase Auth) — SIN CONTRASEÑA EN EL CÓDIGO
+  // La cuenta maestra da a recepción acceso amplio a Firestore.
+  // Antes el password vivía aquí en texto plano (visible con
+  // "ver código fuente"). Ahora NO: se teclea UNA sola vez en el
+  // formulario de siembra y Firebase recuerda la sesión de forma
+  // permanente (browserLocalPersistence). En cargas siguientes
+  // onAuthStateChanged restaura la sesión y el formulario ni aparece.
+  // El correo NO es secreto, se deja como valor por defecto.
+  // El password de la CAJA (pantalla que sí ve recepción) es un
+  // control totalmente aparte y no cambia.
   // ============================================================
   const MASTER_EMAIL = "sis.bar01+garage-caja@gmail.com";
-  const MASTER_PASS  = "gara1720sis";
 
-  const authListo = signInWithEmailAndPassword(auth, MASTER_EMAIL, MASTER_PASS)
-    .then(function(cred){
-      // Forzar un token FRESCO para que traiga el claim rol:"maestra"
-      // recién asignado a la cuenta. Sin el "true", Firebase reutiliza
-      // el token cacheado (que puede ser de antes del claim) y las
-      // reglas de Firestore rechazarían a recepción.
-      return cred.user.getIdToken(true);
-    })
-    .catch(function(err){
-      console.error("No se pudo iniciar la sesión maestra:", err);
+  // authListo se resuelve cuando hay un usuario real en sesión
+  // (restaurado o recién sembrado), y ya con token fresco que trae
+  // el claim rol:"maestra". Todo el resto del script espera esto.
+  let _resolverAuth;
+  const authListo = new Promise(function(res){ _resolverAuth = res; });
+
+  setPersistence(auth, browserLocalPersistence).then(function(){
+    onAuthStateChanged(auth, function(user){
+      if(user){
+        // Token FRESCO para asegurar el claim rol:"maestra".
+        user.getIdToken(true).then(function(){ _resolverAuth(); });
+        ocultarSiembra();
+      } else {
+        // No hay sesión guardada → pedir la llave maestra una vez.
+        mostrarSiembra();
+      }
     });
+  });
+
+  function sembrarSesion(){
+    const pass = document.getElementById("master-pass").value.trim();
+    const err  = document.getElementById("master-err");
+    const btn  = document.getElementById("master-btn");
+    if(!pass){ err.textContent = "Escribe la contraseña maestra."; return; }
+    btn.disabled = true; err.textContent = "Conectando…";
+    signInWithEmailAndPassword(auth, MASTER_EMAIL, pass)
+      .then(function(){ /* onAuthStateChanged hace el resto */ })
+      .catch(function(e){
+        btn.disabled = false;
+        err.textContent = "No se pudo conectar. Revisa la contraseña.";
+        console.error("Siembra maestra falló:", e);
+      });
+  }
+  function mostrarSiembra(){
+    const o = document.getElementById("master-overlay");
+    if(o) o.style.display = "flex";
+  }
+  function ocultarSiembra(){
+    const o = document.getElementById("master-overlay");
+    if(o) o.style.display = "none";
+  }
+  window.sembrarSesion = sembrarSesion;
 
   // Envoltura: los listeners en tiempo real esperan a que la sesión
   // maestra esté lista antes de tocar Firestore (no bloquea nada más).
